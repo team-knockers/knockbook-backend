@@ -25,7 +25,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
         c.setAllowedOriginPatterns(List.of(
-                "http://localhost:5174",
+                "http://localhost:5173",
                 "https://knockbook-1a9b7.web.app"
         ));
         c.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
