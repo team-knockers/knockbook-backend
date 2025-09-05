@@ -1,0 +1,42 @@
+package com.knockbook.backend.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.Immutable;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "auth_providers")
+@Immutable // readonly
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA default constructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE) // Builder only
+@Builder
+public class AuthProividerEntity {
+
+    public enum Kind { oauth, local, oidc }
+
+    @Id
+    @Column(name = "provider_code", length = 32, nullable = false, insertable = false, updatable = false)
+    private String providerCode;
+
+    @Column(name = "display_name", length = 64, nullable = false, insertable = false, updatable = false)
+    private String displayName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "kind", length = 32, nullable = false, insertable = false, updatable = false)
+    private Kind kind;
+
+    @Column(name = "is_enabled", nullable = false, insertable = false, updatable = false)
+    private Boolean isEnabled;
+
+    @Column(name = "icon_url", length = 512, insertable = false, updatable = false)
+    private String iconUrl;
+
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
+    private LocalDateTime updatedAt;
+}
