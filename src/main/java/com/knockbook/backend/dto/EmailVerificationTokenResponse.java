@@ -6,6 +6,6 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class RegisterEmailResponse {
-    private String verificationToken;
+public class EmailVerificationTokenResponse {
+    private String emailVerificationToken;
 }
