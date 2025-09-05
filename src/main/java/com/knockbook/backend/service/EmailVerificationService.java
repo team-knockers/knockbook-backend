@@ -1,15 +1,19 @@
 package com.knockbook.backend.service;
 
 import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.DirectDecrypter;
 import com.nimbusds.jose.crypto.DirectEncrypter;
+import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
@@ -23,7 +27,11 @@ public class EmailVerificationService {
     @Autowired
     private OctetSequenceKey jweSecret;
 
-    public String issueAndSend(final String email, final Duration validPeriod) throws JOSEException {
+    private final String issuer = "knockbook";
+
+    public String sendCodeAndIssueVerificationToken(final String email,
+                                                    final Duration validPeriod)
+            throws JOSEException {
         if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("email required");
         }
@@ -32,14 +40,13 @@ public class EmailVerificationService {
         final var code = String.format("%06d", ThreadLocalRandom.current().nextInt(0, 1_000_000));
 
         // calculate expiration
-        final var exp = Instant.now().plus(validPeriod);
+        final var expirationTime = Instant.now().plus(validPeriod);
 
         // JWT claim (code, iss, exp, sub)
-        final var issuer = "knockbook";
         final var claims = new JWTClaimsSet.Builder()
                 .subject(email)
                 .issuer(issuer)
-                .expirationTime(Date.from(exp))
+                .expirationTime(Date.from(expirationTime))
                 .claim("code", code)
                 .build();
 
@@ -57,6 +64,48 @@ public class EmailVerificationService {
         sendCodeMail(email, code, validPeriod);
 
         return verificationToken;
+    }
+
+    public String verifyAndIssueRegistrationToken(final String emailVerificationToken,
+                                                 final String code,
+                                                 final Duration validPeriod)
+            throws ParseException, JOSEException {
+        // decrypt JWE (emailVerificationToken)
+        final var jwe = EncryptedJWT.parse(emailVerificationToken);
+        jwe.decrypt(new DirectDecrypter(jweSecret.toByteArray()));
+        final var verClaims = jwe.getJWTClaimsSet();
+
+        // expiration check
+        if (verClaims.getExpirationTime() == null || Instant.now().isAfter(verClaims.getExpirationTime().toInstant())) {
+            throw new IllegalArgumentException("verification code expired");
+        }
+
+        // check if code matches
+        final var expected = (String)verClaims.getClaim("code");
+        if (!code.equals(expected)) {
+            throw new IllegalArgumentException("invalid verification code");
+        }
+
+        // issue JWS (HS256)
+        final var now = Instant.now();
+        final var expirationTime = now.plus(validPeriod); // registration token TTL
+        final var regClaims = new JWTClaimsSet.Builder()
+                .subject(verClaims.getSubject())
+                .issuer(issuer)
+                .issueTime(Date.from(now))
+                .expirationTime(Date.from(expirationTime))
+                .claim("purpose", "registration")
+                .build();
+
+        final var jwsHeader = new JWSHeader.Builder(JWSAlgorithm.HS256)
+                .type(JOSEObjectType.JWT)
+                .keyID(jweSecret.getKeyID())
+                .build();
+
+        final var jws = new SignedJWT(jwsHeader, regClaims);
+        jws.sign(new MACSigner(jweSecret.toByteArray()));
+
+        return jws.serialize(); // return registration token (compact jws)
     }
 
     private void sendCodeMail(final String email, final String code, final Duration validPeriod) {
