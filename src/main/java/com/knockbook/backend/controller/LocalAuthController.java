@@ -32,8 +32,8 @@ public class LocalAuthController {
     public ResponseEntity<EmailVerificationTokenResponse> registerEmail(
             @RequestBody RegisterEmailRequest req)
             throws JOSEException {
-        final var validPeriod = Duration.ofMinutes(10);
         final var email = req.getEmail();
+        final var validPeriod = Duration.ofMinutes(10);
         final var emailVerificationToken =
                 emailVerificationService.sendCodeAndIssueVerificationToken(email, validPeriod);
         return ResponseEntity.accepted()
@@ -47,9 +47,9 @@ public class LocalAuthController {
     public ResponseEntity<EmailRegistrationTokenResponse> verifyEmail(
             @Valid @RequestBody VerifyEmailRequest req)
             throws ParseException, JOSEException {
-        final var validPeriod = Duration.ofMinutes(10);
         final var emailVerificationToken = req.getEmailVerificationToken();
-        final var code =  req.getCode();
+        final var code = req.getCode();
+        final var validPeriod = Duration.ofMinutes(10);
         final var emailRegistrationToken =
                 emailVerificationService.verifyAndIssueRegistrationToken(emailVerificationToken, code, validPeriod);
         return ResponseEntity.status(HttpStatus.CREATED)
