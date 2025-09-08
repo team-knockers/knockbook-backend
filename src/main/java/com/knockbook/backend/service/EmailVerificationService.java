@@ -5,7 +5,6 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -60,7 +59,7 @@ public class EmailVerificationService {
                 .issuer(JWTComponent.issuer)
                 .issueTime(Date.from(now))
                 .expirationTime(Date.from(expirationTime))
-                .audience(JWTComponent.Audience.EMAIL_REGISTRATION_HANDLER.toString())
+                .audience(JWTComponent.Audience.LOCAL_REGISTRATION_HANDLER.toString())
                 .build();
 
         return jwtComponent.issueJWS(claims);

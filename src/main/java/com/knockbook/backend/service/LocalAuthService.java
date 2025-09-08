@@ -38,7 +38,7 @@ public class LocalAuthService {
                                      final String displayName) throws ParseException, JOSEException {
         // Parse & validate registration token (JWS)
         final var claims = jwtComponent.parseJWS(registrationToken,
-                JWTComponent.Audience.EMAIL_REGISTRATION_HANDLER);
+                JWTComponent.Audience.LOCAL_REGISTRATION_HANDLER);
 
         // Create user
         final var email = claims.getSubject();

@@ -21,8 +21,8 @@ public class JWTComponent {
 
     public enum Audience {
         EMAIL_VERIFICATION_HANDLER,
-        EMAIL_REGISTRATION_HANDLER,
-        ACCESS_TOKEN_REFRESH_HANDLER,
+        LOCAL_REGISTRATION_HANDLER,
+        REFRESH_TOKEN_HANDLER,
         ACCESS_TOKEN_HANDLER,
     }
 
