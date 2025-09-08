@@ -35,9 +35,9 @@ public class CredentialRepositoryImpl implements CredentialRepository {
 
     @Override
     public Optional<Credential> findByIdentityId(Long identityId) {
-        var cb = em.getCriteriaBuilder();
-        var query = cb.createQuery(CredentialEntity.class);
-        var root = query.from(CredentialEntity.class);
+        final var cb = em.getCriteriaBuilder();
+        final var query = cb.createQuery(CredentialEntity.class);
+        final var root = query.from(CredentialEntity.class);
 
         query.select(root)
                 .where(cb.equal(root.get(CredentialEntity_.identityId), identityId));

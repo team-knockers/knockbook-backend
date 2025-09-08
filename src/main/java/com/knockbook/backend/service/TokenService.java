@@ -43,7 +43,7 @@ public class TokenService {
 
     public TokenResult refreshTokens(final String refreshToken)
             throws ParseException, JOSEException {
-        final var audience = JWTComponent.Audience.ACCESS_TOKEN_REFRESH_HANDLER;
+        final var audience = JWTComponent.Audience.REFRESH_TOKEN_HANDLER;
         final var claims = jwtComponent.parseJWS(refreshToken, audience);
         final var subject = claims.getSubject();
         return TokenResult.builder()
@@ -83,7 +83,7 @@ public class TokenService {
                 .issuer(JWTComponent.issuer)
                 .issueTime(Date.from(now))
                 .expirationTime(Date.from(expirationTime))
-                .audience(JWTComponent.Audience.ACCESS_TOKEN_HANDLER.toString())
+                .audience(JWTComponent.Audience.REFRESH_TOKEN_HANDLER.toString())
                 .build();
         return jwtComponent.issueJWS(refreshClaims);
     }

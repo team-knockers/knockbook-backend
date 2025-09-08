@@ -36,9 +36,9 @@ public class IdentityRepositoryImpl implements IdentityRepository {
 
     @Override
     public Optional<Identity> findByProviderCodeAndSubject(String providerCode, String subject) {
-        var cb = em.getCriteriaBuilder();
-        var query = cb.createQuery(IdentityEntity.class);
-        var root = query.from(IdentityEntity.class);
+        final var cb = em.getCriteriaBuilder();
+        final var query = cb.createQuery(IdentityEntity.class);
+        final var root = query.from(IdentityEntity.class);
 
         query.select(root)
                 .where(cb.and(
