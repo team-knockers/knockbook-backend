@@ -9,8 +9,10 @@ import lombok.*;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class VerifyEmailRequest {
+
     @NotBlank
     private String emailVerificationToken;
+
     @NotBlank
     @Pattern(regexp = "^[0-9]{6}$")
     private String code;

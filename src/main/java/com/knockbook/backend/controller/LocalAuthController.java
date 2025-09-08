@@ -2,7 +2,7 @@ package com.knockbook.backend.controller;
 
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.EmailVerificationService;
-import com.knockbook.backend.service.LocalRegistrationService;
+import com.knockbook.backend.service.LocalAuthService;
 import com.knockbook.backend.service.TokenService;
 import com.nimbusds.jose.JOSEException;
 import jakarta.mail.MessagingException;
@@ -28,7 +28,7 @@ public class LocalAuthController {
     private EmailVerificationService emailVerificationService;
 
     @Autowired
-    private LocalRegistrationService localRegistrationService;
+    private LocalAuthService localAuthService;
 
     @Autowired
     private TokenService tokenService;
@@ -37,7 +37,7 @@ public class LocalAuthController {
     // the server will send authentication to the corresponding email
     @PostMapping(path = "/register/email")
     public ResponseEntity<EmailVerificationTokenResponse> registerEmail(
-            @RequestBody RegisterEmailRequest req)
+            @Valid @RequestBody RegisterEmailRequest req)
             throws JOSEException, MessagingException {
         final var email = req.getEmail();
         final var validPeriod = Duration.ofMinutes(10);
@@ -72,7 +72,32 @@ public class LocalAuthController {
         final var registrationToken = req.getRegistrationToken();
         final var password = req.getPassword();
         final var displayName = req.getDisplayName();
-        final var user = localRegistrationService.completeRegistration(registrationToken, password, displayName);
+        final var user = localAuthService.completeRegistration(registrationToken, password, displayName);
+        final var subject = user.getId().toString();
+        final var tokens = tokenService.issueTokens(subject);
+
+        // set refresh token as HttpOnly cookie
+        final var cookieName = TokenService.refreshTokenCookieName;
+        final var refreshCookie = ResponseCookie.from(cookieName, tokens.getRefreshToken())
+                .httpOnly(true)
+                .secure(true)
+                .path("/auth/token/refresh")
+                .sameSite("None")
+                .maxAge(TokenService.refreshTokenValidPeriod)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(AccessTokenResponse.builder()
+                        .accessToken(tokens.getAccessToken())
+                        .build());
+    }
+
+    @PostMapping(path = "/login")
+    public ResponseEntity<AccessTokenResponse> login(
+            @Valid @RequestBody LocalLoginRequest req)
+            throws JOSEException {
+        final var user = localAuthService.authenticate(req.getEmail(), req.getPassword());
         final var subject = user.getId().toString();
         final var tokens = tokenService.issueTokens(subject);
 
