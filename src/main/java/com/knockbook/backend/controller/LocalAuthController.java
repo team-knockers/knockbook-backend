@@ -12,15 +12,15 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.text.ParseException;
 import java.time.Duration;
 
-@Controller
+@RestController
 @RequestMapping(path = "/auth/local")
 public class LocalAuthController {
 
@@ -81,7 +81,7 @@ public class LocalAuthController {
         final var refreshCookie = ResponseCookie.from(cookieName, tokens.getRefreshToken())
                 .httpOnly(true)
                 .secure(true)
-                .path("/auth/token/refresh")
+                .path("/auth/token")
                 .sameSite("None")
                 .maxAge(TokenService.refreshTokenValidPeriod)
                 .build();
@@ -106,7 +106,7 @@ public class LocalAuthController {
         final var refreshCookie = ResponseCookie.from(cookieName, tokens.getRefreshToken())
                 .httpOnly(true)
                 .secure(true)
-                .path("/auth/token/refresh")
+                .path("/auth/token")
                 .sameSite("None")
                 .maxAge(TokenService.refreshTokenValidPeriod)
                 .build();
