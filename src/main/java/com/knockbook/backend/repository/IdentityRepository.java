@@ -1,8 +1,9 @@
 package com.knockbook.backend.repository;
 
-import org.springframework.stereotype.Repository;
+import com.knockbook.backend.domain.Identity;
 
-@Repository
 public interface IdentityRepository {
-
+    Identity insert(final Long userId,
+                    final String providerCode,
+                    final String subject);
 }

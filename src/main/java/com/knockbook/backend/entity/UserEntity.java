@@ -2,13 +2,11 @@ package com.knockbook.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Immutable;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "users")
-@Immutable // readonly
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA default constructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE) // Builder only
@@ -18,31 +16,32 @@ public class UserEntity {
     public enum Status { ACTIVE, PENDING, LOCKED }
 
     @Id
-    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id; // BIGINT(UNSIGNED) ↔ Java Long
 
-    @Column(name = "email", length = 255, nullable = false, insertable = false, updatable = false)
+    @Column(name = "email", length = 255, nullable = false)
     private String email;
 
-    @Column(name = "display_name", length = 100, nullable = false, insertable = false, updatable = false)
+    @Column(name = "display_name", length = 100, nullable = false)
     private String displayName;
 
-    @Column(name = "avatar_url", length = 2048, insertable = false, updatable = false)
+    @Column(name = "avatar_url", length = 2048)
     private String avatarUrl;
 
-    @Column(name = "mbti", length = 4, insertable = false, updatable = false)
+    @Column(name = "mbti", length = 4)
     private String mbti;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, insertable = false, updatable = false)
+    @Column(name = "status", nullable = false)
     private Status status;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
 
-    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
-    private LocalDateTime updatedAt;
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
 
-    @Column(name = "deleted_at", insertable = false, updatable = false)
-    private LocalDateTime deletedAt;
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
 }

@@ -9,8 +9,14 @@ import java.util.UUID;
 
 @Configuration
 public class SymmetricJweConfig {
+
     @Bean
-    public OctetSequenceKey jweSecret() {
+    public OctetSequenceKey jweSecret() { return issueSecret(); }
+
+    @Bean
+    public OctetSequenceKey jwsSecret() { return issueSecret(); }
+
+    private OctetSequenceKey issueSecret() {
         final var key = new byte[32]; // 256-bit
         new SecureRandom().nextBytes(key);
         return new OctetSequenceKey.Builder(key)

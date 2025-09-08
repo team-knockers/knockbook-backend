@@ -1,8 +1,8 @@
 package com.knockbook.backend.repository;
 
-import org.springframework.stereotype.Repository;
+import com.knockbook.backend.domain.User;
 
-@Repository
 public interface UserRepository {
-
+    User insert(final String email,
+                final String displayName);
 }

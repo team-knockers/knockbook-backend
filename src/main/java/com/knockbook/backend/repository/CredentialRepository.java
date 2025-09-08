@@ -1,8 +1,8 @@
 package com.knockbook.backend.repository;
 
-import org.springframework.stereotype.Repository;
+import com.knockbook.backend.domain.Credential;
 
-@Repository
 public interface CredentialRepository {
-
+    Credential insert(final Long identityId,
+                      final String passwordHash);
 }
