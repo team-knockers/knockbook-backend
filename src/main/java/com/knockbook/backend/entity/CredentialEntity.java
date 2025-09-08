@@ -20,6 +20,6 @@ public class CredentialEntity {
     @Column(name = "password_hash", length = 255, nullable = false)
     private String passwordHash;
 
-    @Column(name = "password_updated_at", nullable = false)
+    @Column(name = "password_updated_at", nullable = false, insertable = false, updatable = false)
     private Instant passwordUpdatedAt;
 }

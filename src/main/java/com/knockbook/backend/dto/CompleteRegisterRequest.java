@@ -18,7 +18,7 @@ public class CompleteRegisterRequest {
     @NotBlank
     @Size(min = 8, max = 12)
     @Pattern(
-            regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,12}$",
+            regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*?&+=])[A-Za-z\\d@$!%*?&+=]{8,12}$",
             message = "Password must be 8-12 characters long and include at least one letter, one digit," +
                     " and one special character (@$!%*?&)."
     )
