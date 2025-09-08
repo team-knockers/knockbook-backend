@@ -8,13 +8,14 @@ import com.knockbook.backend.repository.UserRepository;
 import com.nimbusds.jose.JOSEException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 
 @Service
-public class LocalRegistrationService {
+public class LocalAuthService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -52,5 +53,21 @@ public class LocalRegistrationService {
 
         // returns user
         return user;
+    }
+
+    public User authenticate(final String email,
+                             final String password) {
+        final var identity = identityRepository.findByProviderCodeAndSubject("local", email)
+                .orElseThrow(() -> new BadCredentialsException("Identity not found"));
+
+        final var credential = credentialRepository.findByIdentityId(identity.getId())
+                .orElseThrow(() -> new BadCredentialsException("Credential not found"));
+
+        if (!passwordEncoder.matches(password, credential.getPasswordHash())) {
+            throw new BadCredentialsException("Invalid password");
+        }
+        
+        return userRepository.findById(identity.getUserId())
+                .orElseThrow(() -> new BadCredentialsException("User not found"));
     }
 }

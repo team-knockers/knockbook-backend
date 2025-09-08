@@ -1,5 +1,7 @@
 package com.knockbook.backend.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Getter
@@ -7,5 +9,7 @@ import lombok.*;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class RegisterEmailRequest {
+    @NotBlank
+    @Email
     private String email;
 }

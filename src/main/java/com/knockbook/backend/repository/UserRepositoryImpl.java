@@ -6,6 +6,8 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 @RequiredArgsConstructor
 public class UserRepositoryImpl implements UserRepository {
@@ -27,4 +29,18 @@ public class UserRepositoryImpl implements UserRepository {
                 .displayName(userEntity.getDisplayName())
                 .build();
     }
+
+    @Override
+    public Optional<User> findById(Long id) {
+        return Optional.ofNullable(em.find(UserEntity.class, id))
+                .map(entity -> User.builder()
+                        .id(entity.getId())
+                        .email(entity.getEmail())
+                        .displayName(entity.getDisplayName())
+                        .avatarUrl(entity.getAvatarUrl())
+                        .mbti(entity.getMbti())
+                        .status(User.Status.valueOf(entity.getStatus().name()))
+                        .build());
+    }
 }
+

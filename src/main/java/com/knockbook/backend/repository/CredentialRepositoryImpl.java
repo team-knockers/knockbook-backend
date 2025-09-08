@@ -2,9 +2,12 @@ package com.knockbook.backend.repository;
 
 import com.knockbook.backend.domain.Credential;
 import com.knockbook.backend.entity.CredentialEntity;
+import com.knockbook.backend.entity.CredentialEntity_;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,5 +31,24 @@ public class CredentialRepositoryImpl implements CredentialRepository {
                 .passwordHash(credentialEntity.getPasswordHash())
                 .passwordUpdatedAt(credentialEntity.getPasswordUpdatedAt())
                 .build();
+    }
+
+    @Override
+    public Optional<Credential> findByIdentityId(Long identityId) {
+        var cb = em.getCriteriaBuilder();
+        var query = cb.createQuery(CredentialEntity.class);
+        var root = query.from(CredentialEntity.class);
+
+        query.select(root)
+                .where(cb.equal(root.get(CredentialEntity_.identityId), identityId));
+
+        return em.createQuery(query)
+                .getResultStream()
+                .findFirst()
+                .map(entity -> Credential.builder()
+                        .identityId(entity.getIdentityId())
+                        .passwordHash(entity.getPasswordHash())
+                        .passwordUpdatedAt(entity.getPasswordUpdatedAt())
+                        .build());
     }
 }
