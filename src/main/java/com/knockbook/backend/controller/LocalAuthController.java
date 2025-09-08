@@ -5,6 +5,7 @@ import com.knockbook.backend.service.EmailVerificationService;
 import com.knockbook.backend.service.LocalRegistrationService;
 import com.knockbook.backend.service.TokenService;
 import com.nimbusds.jose.JOSEException;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -37,7 +38,7 @@ public class LocalAuthController {
     @PostMapping(path = "/register/email")
     public ResponseEntity<EmailVerificationTokenResponse> registerEmail(
             @RequestBody RegisterEmailRequest req)
-            throws JOSEException {
+            throws JOSEException, MessagingException {
         final var email = req.getEmail();
         final var validPeriod = Duration.ofMinutes(10);
         final var emailVerificationToken =

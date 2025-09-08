@@ -29,6 +29,6 @@ public class IdentityEntity {
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
 }

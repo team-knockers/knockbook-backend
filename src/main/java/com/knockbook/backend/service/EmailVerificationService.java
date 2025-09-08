@@ -3,9 +3,11 @@ package com.knockbook.backend.service;
 import com.knockbook.backend.component.JWTComponent;
 import com.nimbusds.jose.*;
 import com.nimbusds.jwt.JWTClaimsSet;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
@@ -25,7 +27,7 @@ public class EmailVerificationService {
 
     public String sendCodeAndIssueVerificationToken(final String email,
                                                     final Duration validPeriod)
-            throws JOSEException {
+            throws JOSEException, MessagingException {
         if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("email required");
         }
@@ -33,7 +35,7 @@ public class EmailVerificationService {
         // create 6-digit code
         final var code = String.format("%06d", ThreadLocalRandom.current().nextInt(0, 1_000_000));
         final var verificationToken = issueVerificationToken(email, code, validPeriod);
-        sendCodeMail(email, code, validPeriod); // send code via email
+        sendAuthCodeViaEmail(email, code, validPeriod); // send code via email
         return verificationToken;
     }
 
@@ -80,12 +82,27 @@ public class EmailVerificationService {
         return jwtComponent.issueJWE(claims);
     }
 
-    private void sendCodeMail(final String email, final String code, final Duration validPeriod) {
-        final var msg = new SimpleMailMessage();
-        msg.setTo(email);
-        msg.setSubject("[문앞의책방] 이메일 인증 코드");
-        msg.setText("아래 6자리 인증 코드를 입력해 주세요:\n> %s\n\n유효 시간: %d분\n".formatted(code, validPeriod.toMinutes()));
-        mailSender.send(msg);
+    private void sendAuthCodeViaEmail(final String email,
+                                      final String code,
+                                      final Duration validPeriod)
+            throws MessagingException {
+        final var message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+
+        helper.setFrom("noreply@knockbook.store"); // Postmark 인증된 발신자
+        helper.setTo(email);
+        helper.setSubject("[문앞의책방] 이메일 인증 코드");
+
+        String body = """
+                아래 6자리 인증 코드를 입력해 주세요:
+                > %s
+
+                유효 시간: %d분
+                """.formatted(code, validPeriod.toMinutes());
+
+        helper.setText(body, false);
+        message.addHeader("X-PM-Message-Stream", "outbound");
+        mailSender.send(message);
     }
 
     private void verifyVerificationToken(final JWTClaimsSet claims,
