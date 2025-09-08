@@ -31,7 +31,7 @@ public class AuthTokenController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("Lax")
-                .path("/auth/token/refresh")
+                .path("/auth/token")
                 .maxAge(TokenService.refreshTokenValidPeriod)
                 .build();
 
@@ -40,5 +40,21 @@ public class AuthTokenController {
                 .body(AccessTokenResponse.builder()
                         .accessToken(tokens.getAccessToken())
                         .build());
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @CookieValue(TokenService.refreshTokenCookieName) String refreshToken) {
+        final var deleteCookie = ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
+                .path("/auth/token")
+                .maxAge(0) // expires immediately
+                .build();
+
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
+                .build();
     }
 }
