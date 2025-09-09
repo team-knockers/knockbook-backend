@@ -16,7 +16,7 @@ public class BookSubcategoryEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "book_subcategory_id", nullable = false)
-    private Long bookSubcategoryId;
+    private Long id;
 
     @Column(name = "subcategory_code_name", length = 50, nullable = false)
     private String subcategoryCodeName;
@@ -32,5 +32,4 @@ public class BookSubcategoryEntity {
 
     @Column(name = "deleted_at", insertable = false, updatable = true)
     private Instant deletedAt;
-
 }

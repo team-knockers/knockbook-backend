@@ -16,7 +16,7 @@ public class BookWishlistEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "book_wishlist_id", nullable = false)
-    private Long bookWishlistId;
+    private Long id;
 
     @Column(name = "book_id", nullable = false)
     private Long bookId;
@@ -35,5 +35,4 @@ public class BookWishlistEntity {
 
     @Column(name = "deleted_at", insertable = false, updatable = true)
     private Instant deletedAt;
-
 }
