@@ -29,7 +29,7 @@ public class ProductReviewEntity {
     private String body;
 
     @Column(name = "rating", nullable = false)
-    private Integer rating; // 1..5 (DB CHECK로 보장)
+    private Integer rating;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
