@@ -11,7 +11,7 @@ import java.time.Instant;
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA default constructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE) // Builder only
 @Builder
-public class AuthProividerEntity {
+public class AuthProviderEntity {
 
     public enum Kind { oauth, local, oidc }
 
