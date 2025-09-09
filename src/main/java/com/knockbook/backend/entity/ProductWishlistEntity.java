@@ -24,6 +24,6 @@ public class ProductWishlistEntity {
 
     @Builder.Default
     @Column(name = "is_wished", nullable = false)
-    private Boolean isWished = true; // 토글: true=찜, false=해제
+    private Boolean isWished = true; 
 }
 
