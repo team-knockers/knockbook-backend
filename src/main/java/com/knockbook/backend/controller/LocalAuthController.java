@@ -1,9 +1,9 @@
 package com.knockbook.backend.controller;
 
 import com.knockbook.backend.dto.*;
-import com.knockbook.backend.service.EmailVerificationService;
 import com.knockbook.backend.service.LocalAuthService;
 import com.knockbook.backend.service.TokenService;
+import com.knockbook.backend.service.UserService;
 import com.nimbusds.jose.JOSEException;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
@@ -25,13 +25,13 @@ import java.time.Duration;
 public class LocalAuthController {
 
     @Autowired
-    private EmailVerificationService emailVerificationService;
-
-    @Autowired
     private LocalAuthService localAuthService;
 
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private UserService userService;
 
     // submit email for registration
     // the server will send authentication to the corresponding email
@@ -42,7 +42,7 @@ public class LocalAuthController {
         final var email = req.getEmail();
         final var validPeriod = Duration.ofMinutes(10);
         final var emailVerificationToken =
-                emailVerificationService.sendCodeAndIssueVerificationToken(email, validPeriod);
+                localAuthService.sendCodeViaEmailAndIssueVerificationToken(email, validPeriod);
         return ResponseEntity.accepted()
                 .header(HttpHeaders.RETRY_AFTER, String.valueOf(validPeriod.toSeconds()))
                 .body(EmailVerificationTokenResponse.builder()
@@ -58,7 +58,7 @@ public class LocalAuthController {
         final var code = req.getCode();
         final var validPeriod = Duration.ofMinutes(30);
         final var emailRegistrationToken =
-                emailVerificationService.verifyAndIssueRegistrationToken(emailVerificationToken, code, validPeriod);
+                localAuthService.verifyEmailVerificationTokenAndIssueRegistrationToken(emailVerificationToken, code, validPeriod);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(EmailRegistrationTokenResponse.builder()
                         .emailRegistrationToken(emailRegistrationToken)
@@ -70,11 +70,11 @@ public class LocalAuthController {
             @Valid @RequestBody CompleteRegisterRequest req)
             throws ParseException, JOSEException {
         final var registrationToken = req.getRegistrationToken();
-        final var password = req.getPassword();
-        final var displayName = req.getDisplayName();
-        final var user = localAuthService.completeRegistration(registrationToken, password, displayName);
-        final var subject = user.getId().toString();
-        final var tokens = tokenService.issueTokens(subject);
+        final var subject = localAuthService.getSubjectFromRegistrationToken(registrationToken);
+        final var user = userService.registerUser(subject, req.getPassword(), req.getDisplayName());
+
+        // issues refresh and access token
+        final var tokens = tokenService.issueTokens(user.getId().toString());
 
         // set refresh token as HttpOnly cookie
         final var cookieName = TokenService.refreshTokenCookieName;
@@ -97,7 +97,7 @@ public class LocalAuthController {
     public ResponseEntity<AccessTokenResponse> login(
             @Valid @RequestBody LocalLoginRequest req)
             throws JOSEException {
-        final var user = localAuthService.authenticate(req.getEmail(), req.getPassword());
+        final var user = userService.getUser(req.getEmail(), req.getPassword());
         final var subject = user.getId().toString();
         final var tokens = tokenService.issueTokens(subject);
 
