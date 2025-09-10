@@ -2,6 +2,8 @@ package com.knockbook.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -34,6 +36,9 @@ public class ProductEntity {
     @Column(name = "unit_price_amount", nullable = false)
     private Integer unitPriceAmount;
 
+    @Column(name = "sale_price_amount")
+    private Integer salePriceAmount;
+
     @Column(name = "manufacturer_name", length = 100, nullable = false )
     private String manufacturerName;
 
@@ -62,4 +67,12 @@ public class ProductEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "availability", nullable = false)
     private Availability availability;
+
+    @Builder.Default
+    @Column(name = "average_rating", nullable = false, precision = 2, scale = 1)
+    private BigDecimal averageRating = new BigDecimal("0.0");
+
+    @Builder.Default
+    @Column(name = "review_count", nullable = false)
+    private Integer reviewCount = 0;
 }
