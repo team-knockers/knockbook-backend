@@ -18,7 +18,7 @@ public class BookReviewEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "book_review_id", nullable = false)
-    private Long bookReviewId;
+    private Long id;
 
     @Column(name = "book_id", nullable = false)
     private Long bookId;
@@ -47,5 +47,4 @@ public class BookReviewEntity {
 
     @Column(name = "deleted_at", insertable = false, updatable = true)
     private Instant deletedAt;
-
 }

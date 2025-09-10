@@ -3,6 +3,7 @@ package com.knockbook.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -14,10 +15,13 @@ import java.time.LocalDate;
 @Builder
 public class BookEntity {
 
+    public enum Status { VISIBLE, HIDDEN }
+    public enum Availability { AVAILABLE, OUT_OF_STOCK }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "book_id", nullable = false)
-    private Long bookId;
+    private Long id;
 
     @Column(name = "title", length = 255, nullable = false)
     private String title;
@@ -91,6 +95,33 @@ public class BookEntity {
     @Column(name = "cover_image_url", length = 2048, nullable = false)
     private String coverImageUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private Status status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rental_availability", nullable = false)
+    private Availability rentalAvailability;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "purchase_availability", nullable = false)
+    private Availability purchaseAvailability;
+
+    @Column(name = "view_count", nullable = false)
+    private Integer viewCount;
+
+    @Column(name = "sales_count", nullable = false)
+    private Integer salesCount;
+
+    @Column(name = "rental_count", nullable = false)
+    private Integer rentalCount;
+
+    @Column(name = "average_rating", precision = 2, scale = 1, nullable = false)
+    private BigDecimal averageRating;
+
+    @Column(name = "rating_count", nullable = false)
+    private Integer ratingCount;
+
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
 
@@ -99,5 +130,4 @@ public class BookEntity {
 
     @Column(name = "deleted_at", insertable = false, updatable = true)
     private Instant deletedAt;
-
 }
