@@ -1,6 +1,9 @@
 package com.knockbook.backend.service;
 
 import com.knockbook.backend.domain.User;
+import com.knockbook.backend.exception.CredentialNotFoundException;
+import com.knockbook.backend.exception.IdentityNotFoundException;
+import com.knockbook.backend.exception.UserNotFoundException;
 import com.knockbook.backend.repository.CredentialRepository;
 import com.knockbook.backend.repository.IdentityRepository;
 import com.knockbook.backend.repository.UserRepository;
@@ -38,16 +41,23 @@ public class UserService {
 
     public User getUser(final String email, final String password) {
         final var identity = identityRepository.findByProviderCodeAndSubject("local", email)
-                .orElseThrow(() -> new BadCredentialsException("Identity not found"));
+                .orElseThrow(() -> new IdentityNotFoundException(email));
 
-        final var credential = credentialRepository.findByIdentityId(identity.getId())
-                .orElseThrow(() -> new BadCredentialsException("Credential not found"));
+        final var identityId = identity.getId();
+        final var credential = credentialRepository.findByIdentityId(identityId)
+                .orElseThrow(() -> new CredentialNotFoundException(identityId));
 
         if (!passwordEncoder.matches(password, credential.getPasswordHash())) {
             throw new BadCredentialsException("Invalid password");
         }
 
-        return userRepository.findById(identity.getUserId())
-                .orElseThrow(() -> new BadCredentialsException("User not found"));
+        final var userId = identity.getUserId();
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    public User getUser(final Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
     }
 }
