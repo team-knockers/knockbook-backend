@@ -5,12 +5,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class Book {
+
+    public enum Status { VISIBLE, HIDDEN }
+    public enum Availability { AVAILABLE, OUT_OF_STOCK }
 
     private Long    id;
     private String  title;
@@ -37,4 +41,12 @@ public class Book {
     private Integer discountedPurchaseAmount;
     private String  coverThumbnailUrl;
     private String  coverImageUrl;
+    private Status status;
+    private Availability rentalAvailability;
+    private Availability purchaseAvailability;
+    private Integer viewCount;
+    private Integer salesCount;
+    private Integer rentalCount;
+    private BigDecimal averageRating;
+    private Integer ratingCount;
 }
