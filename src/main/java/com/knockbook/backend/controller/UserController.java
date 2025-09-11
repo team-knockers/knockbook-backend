@@ -1,15 +1,14 @@
 package com.knockbook.backend.controller;
 
+import com.knockbook.backend.domain.User;
 import com.knockbook.backend.dto.UserResponse;
 import com.knockbook.backend.service.UserService;
-import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(path = "/users")
@@ -32,5 +31,24 @@ public class UserController {
                         .mbti(user.getMbti())
                         .favoriteBookCategories(user.getFavoriteBookCategories())
                         .build());
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/{userId}")
+    public ResponseEntity<Void> updateUser(
+            @PathVariable("userId") String userId,
+            @RequestParam(required = false) String displayName,
+            @RequestParam(required = false) String avatarUrl,
+            @RequestParam(required = false) String mbti,
+            @RequestParam(required = false) List<String> favoriteBookCategories) {
+        final var patch = User.builder()
+                .id(Long.valueOf(userId))
+                .displayName(displayName)
+                .avatarUrl(avatarUrl)
+                .mbti(mbti)
+                .favoriteBookCategories(favoriteBookCategories)
+                .build();
+        userService.updateUserProfile(patch);
+        return ResponseEntity.noContent().build(); // 204
     }
 }

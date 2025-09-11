@@ -39,7 +39,8 @@ public class UserService {
         return user;
     }
 
-    public User getUser(final String email, final String password) {
+    public User getUser(final String email,
+                        final String password) {
         final var identity = identityRepository.findByProviderCodeAndSubject("local", email)
                 .orElseThrow(() -> new IdentityNotFoundException(email));
 
@@ -59,5 +60,9 @@ public class UserService {
     public User getUser(final Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
+    }
+
+    public void updateUserProfile(final User patch) {
+        userRepository.update(patch);
     }
 }
