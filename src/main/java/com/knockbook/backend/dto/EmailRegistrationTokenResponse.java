@@ -7,5 +7,5 @@ import lombok.*;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class EmailRegistrationTokenResponse {
-    private String emailRegistrationToken;
+    private String registrationToken;
 }
