@@ -15,10 +15,10 @@ public class BookService {
 
     public Page<Book> getBooksByCategory(
             String categoryCodeName, String subcategoryCodeName, Pageable pageable,
-            String sortBy, String order, Integer maxPrice, Integer minPrice) {
+            String searchBy, String searchKeyword, Integer maxPrice, Integer minPrice) {
 
         // BookRepository에 ID 전달 → 페이징 결과(Page<Book>) 반환
-        return bookRepository.findByCategory(categoryCodeName, subcategoryCodeName, pageable,
-                sortBy, order, maxPrice, minPrice);
+        return bookRepository.findBooksByCondition(categoryCodeName, subcategoryCodeName, pageable,
+                searchBy, searchKeyword, maxPrice, minPrice);
     }
 }

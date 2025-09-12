@@ -11,16 +11,15 @@ public interface BookRepository {
     /**
      * Find books by category and subcategory with pagination.
      */
-    Page<Book> findByCategory(
+    Page<Book> findBooksByCondition(
             final String categoryCodeName,
             final String subcategoryCodeName,
             final Pageable pageable,
-            final String sortBy,
-            final String order,
+            final String searchBy,
+            final String searchKeyword,
             final Integer maxPrice,
             final Integer minPrice
 
     );
 
-    // TODO: 추후 검색어 기반 조건 작성 (API-BOOKs_01 추가분)
 }
