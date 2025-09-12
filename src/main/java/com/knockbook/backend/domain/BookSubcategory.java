@@ -33,6 +33,6 @@ public class BookSubcategory {
     }
 
     private Long id;
-    private Subcategory subcategoryCodeName;
-    private String subcategoryDisplayName;
+    private Subcategory codeName;
+    private String displayName;
 }

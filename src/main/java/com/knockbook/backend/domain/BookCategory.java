@@ -18,6 +18,6 @@ public class BookCategory {
     }
 
     private Long id;
-    private Category categoryCodeName;
-    private String categoryDisplayName;
+    private Category codeName;
+    private String displayName;
 }
