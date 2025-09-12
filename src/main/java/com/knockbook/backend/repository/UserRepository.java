@@ -10,4 +10,6 @@ public interface UserRepository {
                 final String displayName);
 
     Optional<User> findById(final Long id);
+
+    void update(final User patch);
 }

@@ -61,7 +61,7 @@ public class LocalAuthController {
                 localAuthService.verifyEmailVerificationTokenAndIssueRegistrationToken(emailVerificationToken, code, validPeriod);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(EmailRegistrationTokenResponse.builder()
-                        .emailRegistrationToken(emailRegistrationToken)
+                        .registrationToken(emailRegistrationToken)
                         .build());
     }
 
