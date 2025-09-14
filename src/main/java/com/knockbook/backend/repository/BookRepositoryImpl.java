@@ -1,6 +1,6 @@
 package com.knockbook.backend.repository;
 
-import com.knockbook.backend.domain.Book;
+import com.knockbook.backend.domain.BookSummary;
 import com.knockbook.backend.entity.*;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -26,53 +26,50 @@ public class BookRepositoryImpl implements BookRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Book> findBooksByCondition(
+    public Page<BookSummary> findBooksByCondition(
             String categoryCodeName, String subcategoryCodeName, Pageable pageable, String searchBy,
             String searchKeyword, Integer minPrice, Integer maxPrice) {
 
-        // 0) 엔티티 조회
+        // 1) 엔티티 조회
         final var book = QBookEntity.bookEntity;
         final var category = QBookCategoryEntity.bookCategoryEntity;
         final var subcategory = QBookSubcategoryEntity.bookSubcategoryEntity;
 
-        // 1) 추가조건
-        if (categoryCodeName.equals("all")) {
-            categoryCodeName = null;
-        }
-        if (subcategoryCodeName.equals("all")) {
-            subcategoryCodeName = null;
-        }
-
-        // 1) 조인 조건(on)
+        // 2) 테이블 조인 조건(on)
         BooleanExpression onCategoryJoin = book.bookCategoryId.eq(category.id);
         BooleanExpression onSubcategoryJoin = book.bookSubcategoryId.eq(subcategory.id);
 
-        // 2) 필터 조건(where)
-        BooleanExpression predicate = book.isNotNull(); // 기본 조건
+        // 3) 필터 조건(where)
+        BooleanExpression predicate = book.status.eq(BookEntity.Status.VISIBLE)
+                .and(book.deletedAt.isNull()); // 기본 조건 (status: VISIBLE, deletedAt: null 인 것)
 
-        if (categoryCodeName != null) {
+        if (categoryCodeName != null && !"all".equals(categoryCodeName)) {
             predicate = predicate.and(
                     book.bookCategoryId.eq(category.id)
                             .and(category.categoryCodeName.eq(categoryCodeName))
             );
-        }
-        if (subcategoryCodeName != null) {
+        } // null이 아니지만 categoryCodeName이 all 인 경우 미실행
+
+        if (subcategoryCodeName != null && !"all".equals(subcategoryCodeName)) {
             predicate = predicate.and(
                     book.bookSubcategoryId.eq(subcategory.id)
                             .and(subcategory.subcategoryCodeName.eq(subcategoryCodeName))
             );
-        }
+        } // null이 아니지만 subcategoryCodeName이 all 인 경우 미실행
+
         if (searchBy != null && searchKeyword != null && !searchKeyword.isBlank()) {
             predicate = predicate.and(buildSearchPredicate(searchBy, searchKeyword));
         }
+
         if (minPrice != null) {
             predicate = predicate.and(book.discountedPurchaseAmount.goe(minPrice));
         }
+
         if (maxPrice != null) {
             predicate = predicate.and(book.discountedPurchaseAmount.loe(maxPrice));
         }
 
-        // 3) 페이징된 컨텐츠 조회 -> 리스트화
+        // 4) 페이징된 컨텐츠 조회 -> 리스트화
         List<BookEntity> entities = queryFactory
                 .select(book)
                 .from(book)
@@ -84,7 +81,7 @@ public class BookRepositoryImpl implements BookRepository {
                 .orderBy(toOrderSpecifiers(pageable.getSort()))
                 .fetch();
 
-        // 4) 전체 건수(count) 조회
+        // 5) 전체 건수(count) 조회
         Long totalItems = queryFactory
                 .select(book.count())
                 .from(book)
@@ -97,12 +94,12 @@ public class BookRepositoryImpl implements BookRepository {
             return new PageImpl<>(List.of(), pageable, 0);
         }
 
-        // 5) 엔티티 → 도메인 매핑
-        List<Book> content = entities.stream()
-                .map(BookEntityMapper::toDomain)
+        // 6) 엔티티 → 도메인 매핑
+        List<BookSummary> content = entities.stream()
+                .map(BookEntityMapper::toSummaryDomain)
                 .toList();
 
-        // 6) Page 구현체 반환
+        // 7) Page 구현체 반환
         return new PageImpl<>(content, pageable, totalItems);
     }
 
@@ -143,7 +140,7 @@ public class BookRepositoryImpl implements BookRepository {
             case "rentals"   -> "rentalCount";
             case "price"     -> "discountedPurchaseAmount";
             case "published" -> "publishedAt";
-            default          -> "null"; // sortBy가 예상 밖 값이면 무시
+            default          -> null; // sortBy가 예상 밖 값이면 무시
         };
     }
 

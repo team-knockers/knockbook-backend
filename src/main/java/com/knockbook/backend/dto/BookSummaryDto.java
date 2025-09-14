@@ -1,6 +1,5 @@
 package com.knockbook.backend.dto;
 
-import com.knockbook.backend.domain.Book;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,18 +14,18 @@ import java.time.LocalDate;
 @Builder
 public class BookSummaryDto {
 
-    private String  id;
-    private String  title;
-    private String  author;
-    private String  publisher;
+    private String id;
+    private String title;
+    private String author;
+    private String publisher;
     private LocalDate publishedAt;
-    private String  categoryId;
-    private String  subcategoryId;
+    private String categoryId;
+    private String subcategoryId;
     private Integer rentalAmount;
     private Integer purchaseAmount;
     private Integer discountedPurchaseAmount;
-    private String  coverThumbnailUrl;
-    private String  rentalAvailability;
+    private String coverThumbnailUrl;
+    private String rentalAvailability;
     private String purchaseAvailability;
     private Integer viewCount;
     private Integer salesCount;

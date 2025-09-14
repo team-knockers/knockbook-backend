@@ -1,6 +1,6 @@
 package com.knockbook.backend.controller;
 
-import com.knockbook.backend.domain.Book;
+import com.knockbook.backend.domain.BookSummary;
 import com.knockbook.backend.dto.BookDtoMapper;
 import com.knockbook.backend.dto.BookSummaryDto;
 import com.knockbook.backend.dto.BookSummaryResponse;
@@ -48,7 +48,7 @@ public class BookController {
         final Pageable pageable = PageRequest.of(zeroBasedPage, size, sort);
 
         // 2) 도메인 Book 페이지 조회
-        final Page<Book> bookPage = bookService.getBooksByCategory(
+        final Page<BookSummary> bookPage = bookService.getBooksByCategory(
                 category, subcategory, pageable, searchBy, searchKeyword, minPrice, maxPrice
         );
 
@@ -58,10 +58,10 @@ public class BookController {
         // 4) BooksSummaryResponse 조립
         final BookSummaryResponse response = BookSummaryResponse.builder()
                 .books(dtoPage.getContent())
-                .page(bookPage.getNumber()+1)
-                .size(bookPage.getSize())
-                .totalItems((int) bookPage.getTotalElements())
-                .totalPages(bookPage.getTotalPages())
+                .page(dtoPage.getNumber()+1)
+                .size(dtoPage.getSize())
+                .totalItems((int) dtoPage.getTotalElements())
+                .totalPages(dtoPage.getTotalPages())
                 .build();
 
         // 5) 최종 반환

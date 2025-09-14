@@ -1,6 +1,6 @@
 package com.knockbook.backend.repository;
 
-import com.knockbook.backend.domain.Book;
+import com.knockbook.backend.domain.BookSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -11,7 +11,7 @@ public interface BookRepository {
     /**
      * Find books by category and subcategory with pagination.
      */
-    Page<Book> findBooksByCondition(
+    Page<BookSummary> findBooksByCondition(
             final String categoryCodeName,
             final String subcategoryCodeName,
             final Pageable pageable,
@@ -19,7 +19,6 @@ public interface BookRepository {
             final String searchKeyword,
             final Integer maxPrice,
             final Integer minPrice
-
     );
 
 }
