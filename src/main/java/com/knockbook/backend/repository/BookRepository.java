@@ -20,5 +20,4 @@ public interface BookRepository {
             final Integer maxPrice,
             final Integer minPrice
     );
-
 }

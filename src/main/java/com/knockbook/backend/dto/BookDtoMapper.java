@@ -36,5 +36,4 @@ public final class BookDtoMapper {
                 .averageRating(b.getAverageRating())
                 .build();
     }
-
 }

@@ -158,5 +158,4 @@ public class BookRepositoryImpl implements BookRepository {
             default          -> null; // searchBy가 예상 밖 값이면 무시
         };
     }
-
 }
