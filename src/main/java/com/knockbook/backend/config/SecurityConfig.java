@@ -3,6 +3,7 @@ package com.knockbook.backend.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -24,6 +25,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/local/**").permitAll()
                         .requestMatchers("/auth/token/**").permitAll()
                         .requestMatchers("/db-ping").permitAll()
@@ -42,7 +44,7 @@ public class SecurityConfig {
         ));
         corsConfig.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         corsConfig.setAllowedHeaders(List.of("*"));
-        corsConfig.setAllowCredentials(false);
+        corsConfig.setAllowCredentials(true);
         corsConfig.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
