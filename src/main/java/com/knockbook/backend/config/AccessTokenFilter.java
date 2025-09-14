@@ -23,10 +23,6 @@ public class AccessTokenFilter extends OncePerRequestFilter {
     @Autowired
     private JWTComponent jwtComponent;
 
-    public AccessTokenFilter(JWTComponent jwtComponent) {
-        this.jwtComponent = jwtComponent;
-    }
-
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
