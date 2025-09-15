@@ -1,5 +1,6 @@
 package com.knockbook.backend.dto;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -7,17 +8,10 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class GetProductsResponse {
     private List<ProductSummaryDTO> products;
-
-    private String category;
-    private String sort;
-    // 선택적
-    private String searchKeyword;
-    private Integer minPrice;
-    private Integer maxPrice;
 
     // pageResult
     private Integer page;
