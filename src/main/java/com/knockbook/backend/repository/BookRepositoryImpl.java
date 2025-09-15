@@ -1,5 +1,6 @@
 package com.knockbook.backend.repository;
 
+import com.knockbook.backend.domain.Book;
 import com.knockbook.backend.domain.BookSummary;
 import com.knockbook.backend.entity.*;
 import com.querydsl.core.types.Order;
@@ -9,6 +10,7 @@ import com.querydsl.core.types.dsl.DatePath;
 import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -18,12 +20,20 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
 public class BookRepositoryImpl implements BookRepository {
 
     private final JPAQueryFactory queryFactory;
+    private final EntityManager em;
+
+    @Override
+    public Optional<Book> findById(Long id) {
+        return Optional.ofNullable(em.find(BookEntity.class, id))
+                .map(BookEntityMapper::toDomain);
+    }
 
     @Override
     public Page<BookSummary> findBooksByCondition(
