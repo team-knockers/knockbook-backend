@@ -1,6 +1,5 @@
 package com.knockbook.backend.domain;
 
-import jdk.jshell.Snippet;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
