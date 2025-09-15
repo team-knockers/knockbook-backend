@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -27,19 +28,58 @@ public class AccessTokenFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-        final var header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
-            final var jws = header.substring(7);
-            final var audience = JWTComponent.Audience.ACCESS_TOKEN_HANDLER;
-            try {
-                final var claims = jwtComponent.parseJWS(jws, audience);
-                final var subject = claims.getSubject();
-                final var auth = new UsernamePasswordAuthenticationToken(subject, null, List.of());
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            } catch (ParseException | JOSEException e) {
-                throw new RuntimeException(e);
-            }
+
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
         }
-        filterChain.doFilter(request, response);
+
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        final var header = request.getHeader("Authorization");
+        if (header == null || !header.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response); // 익명으로 진행
+            return;
+        }
+
+        final var jws = header.substring(7);
+
+        try {
+            final var claims = jwtComponent.parseJWS(jws, JWTComponent.Audience.ACCESS_TOKEN_HANDLER);
+            final var subject = claims.getSubject();
+
+            final var auth = new UsernamePasswordAuthenticationToken(subject, null, List.of());
+            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(auth);
+
+            filterChain.doFilter(request, response);
+        } catch (ParseException | JOSEException e) {
+            SecurityContextHolder.clearContext();
+            writeProblem401(response, request);
+        }
+    }
+
+    private void writeProblem401(HttpServletResponse response,
+                                 HttpServletRequest request)
+            throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json;charset=UTF-8");
+
+        final var body = """
+        {
+          "type": "about:blank",
+          "title": "Unauthorized",
+          "status": 401,
+          "detail": "Invalid or expired access token",
+          "instance": "%s"
+        }
+        """.formatted(request.getRequestURI());
+
+        response.getWriter().write(body);
+        response.getWriter().flush();
     }
 }
+

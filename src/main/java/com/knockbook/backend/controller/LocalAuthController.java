@@ -66,7 +66,7 @@ public class LocalAuthController {
     }
 
     @PostMapping(path = "/register/complete")
-    public ResponseEntity<AccessTokenResponse> completeRegistration(
+    public ResponseEntity<LocalLoginResponse> completeRegistration(
             @Valid @RequestBody CompleteRegisterRequest req)
             throws ParseException, JOSEException {
         final var registrationToken = req.getRegistrationToken();
@@ -88,13 +88,13 @@ public class LocalAuthController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .body(AccessTokenResponse.builder()
+                .body(LocalLoginResponse.builder()
                         .accessToken(tokens.getAccessToken())
                         .build());
     }
 
     @PostMapping(path = "/login")
-    public ResponseEntity<AccessTokenResponse> login(
+    public ResponseEntity<LocalLoginResponse> login(
             @Valid @RequestBody LocalLoginRequest req)
             throws JOSEException {
         final var user = userService.getUser(req.getEmail(), req.getPassword());
@@ -113,8 +113,9 @@ public class LocalAuthController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .body(AccessTokenResponse.builder()
+                .body(LocalLoginResponse.builder()
                         .accessToken(tokens.getAccessToken())
+                        .userId(subject)
                         .build());
     }
 }
