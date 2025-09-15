@@ -1,7 +1,6 @@
 package com.knockbook.backend.controller;
 
 import com.knockbook.backend.dto.AccessTokenResponse;
-import com.knockbook.backend.dto.LocalLoginResponse;
 import com.knockbook.backend.service.TokenService;
 import com.nimbusds.jose.JOSEException;
 import org.springframework.beans.factory.annotation.Autowired;
