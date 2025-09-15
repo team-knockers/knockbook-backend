@@ -1,6 +1,6 @@
 package com.knockbook.backend.dto;
 
-import com.knockbook.backend.domain.Book;
+import com.knockbook.backend.domain.BookSummary;
 
 public final class BookDtoMapper {
 
@@ -11,7 +11,7 @@ public final class BookDtoMapper {
     /**
      * domain.Book → dto.BookSummaryDto
      */
-    public static BookSummaryDto toSummaryDto(Book b) {
+    public static BookSummaryDto toSummaryDto(BookSummary b) {
         if (b == null) {
             return null;
         }
@@ -36,5 +36,4 @@ public final class BookDtoMapper {
                 .averageRating(b.getAverageRating())
                 .build();
     }
-
 }

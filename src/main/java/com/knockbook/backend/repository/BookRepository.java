@@ -1,6 +1,6 @@
 package com.knockbook.backend.repository;
 
-import com.knockbook.backend.domain.Book;
+import com.knockbook.backend.domain.BookSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -11,16 +11,13 @@ public interface BookRepository {
     /**
      * Find books by category and subcategory with pagination.
      */
-    Page<Book> findByCategory(
+    Page<BookSummary> findBooksByCondition(
             final String categoryCodeName,
             final String subcategoryCodeName,
             final Pageable pageable,
-            final String sortBy,
-            final String order,
+            final String searchBy,
+            final String searchKeyword,
             final Integer maxPrice,
             final Integer minPrice
-
     );
-
-    // TODO: 추후 검색어 기반 조건 작성 (API-BOOKs_01 추가분)
 }
