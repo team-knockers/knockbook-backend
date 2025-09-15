@@ -82,5 +82,4 @@ public final class BookEntityMapper {
                 .averageRating(e.getAverageRating())
                 .build();
     }
-
 }

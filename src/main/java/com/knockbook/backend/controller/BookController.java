@@ -97,5 +97,4 @@ public class BookController {
             throw new InvalidRequestParameterException("bookId", bookId);
         }
     }
-
 }
