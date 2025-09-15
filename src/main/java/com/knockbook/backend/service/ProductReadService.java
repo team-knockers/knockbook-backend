@@ -1,5 +1,6 @@
 package com.knockbook.backend.service;
 
+import com.knockbook.backend.domain.ProductDetail;
 import com.knockbook.backend.domain.ProductSummary;
 import com.knockbook.backend.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -7,13 +8,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class ProductReadService {
 
     private final ProductRepository productRepository;
 
-    // 목록 조회: 들어온 값 그대로 Repo로 전달
+    // 목록 조회
     public Page<ProductSummary> getProducts(
             String category,        // "all" 포함 그대로 전달
             String sort,
@@ -32,8 +35,8 @@ public class ProductReadService {
         );
     }
 
-    // 상세 조회는 레포 구현 다시 열리면 아래처럼 추가
-    // public Optional<ProductDetail> getProductDetail(Long productId) {
-    //     return productRepository.findProductDetail(productId);
-    // }
+    // 단건 상세 조회
+     public Optional<ProductDetail> getProductDetail(Long productId) {
+         return productRepository.findProductDetail(productId);
+     }
 }
