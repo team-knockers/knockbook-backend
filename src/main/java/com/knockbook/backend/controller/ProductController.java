@@ -1,20 +1,22 @@
 package com.knockbook.backend.controller;
 
+import com.knockbook.backend.domain.ProductDetail;
 import com.knockbook.backend.domain.ProductSummary;
+import com.knockbook.backend.dto.GetProductDetailResponse;
 import com.knockbook.backend.dto.GetProductsResponse;
+import com.knockbook.backend.dto.ProductDetailDTO;
 import com.knockbook.backend.dto.ProductSummaryDTO;
 import com.knockbook.backend.service.ProductReadService;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/products")
@@ -23,8 +25,10 @@ import java.util.List;
 public class ProductController {
     private final ProductReadService productReadService;
 
-    @GetMapping("")
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}")
     public ResponseEntity<GetProductsResponse> getProducts(
+            @PathVariable("userId") String userId,
             @RequestParam String category,
             @RequestParam String sort,
             @RequestParam(required = false) String searchKeyword,
@@ -32,7 +36,7 @@ public class ProductController {
             @RequestParam(required = false) Integer maxPrice,
             @RequestParam @Min(1)int page,
             @RequestParam @Min(1) int size
-            ){
+            ) {
         // 서비스 호출
         Page<ProductSummary> result = productReadService.getProducts(
                 category, sort, searchKeyword, minPrice, maxPrice, page, size
@@ -51,11 +55,6 @@ public class ProductController {
 
         GetProductsResponse body = GetProductsResponse.builder()
                 .products(items)
-                .category(category)
-                .sort(sort)
-                .searchKeyword(searchKeyword)
-                .minPrice(minPrice)
-                .maxPrice(maxPrice)
                 .page(result.getNumber() + 1)
                 .size(result.getSize())
                 .totalItems(result.getTotalElements())
@@ -65,6 +64,37 @@ public class ProductController {
                 .build();
 
         return ResponseEntity.ok(body);
+    }
 
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{productId}/{userId}")
+    public ResponseEntity<GetProductDetailResponse> getProductDetail(
+            @PathVariable("userId") String userId,
+            @PathVariable("productId") Long productId
+    ){
+        Optional<ProductDetail> result = productReadService.getProductDetail(productId);
+        if(result.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+
+        ProductDetail d = result.get();
+        ProductDetailDTO item = ProductDetailDTO.builder()
+                .name(d.getName())
+                .unitPriceAmount(d.getUnitPriceAmount())
+                .salePriceAmount(d.getSalePriceAmount())
+                .manufacturerName(d.getManufacturerName())
+                .isImported(d.getIsImported())
+                .importCountry(d.getImportCountry())
+                .averageRating(d.getAverageRating())
+                .reviewCount(d.getReviewCount())
+                .galleryImageUrls(d.getGalleryImageUrls())
+                .descriptionImageUrls(d.getDescriptionImageUrls())
+                .build();
+
+        GetProductDetailResponse body = GetProductDetailResponse.builder()
+                .product(item).build();
+
+        return ResponseEntity.ok(body);
     }
 }
