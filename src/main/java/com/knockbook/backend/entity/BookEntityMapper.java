@@ -10,51 +10,6 @@ public final class BookEntityMapper {
     }
 
     /**
-     * domain.Book → entity.BookEntity
-     */
-    public static BookEntity toEntity(Book b) {
-        if (b == null) {
-            return null;
-        }
-
-        return BookEntity.builder()
-                .id(b.getId())
-                .title(b.getTitle())
-                .author(b.getAuthor())
-                .publisher(b.getPublisher())
-                .publishedAt(b.getPublishedAt())
-                .sellableStockQty(b.getSellableStockQty())
-                .rentableStockQty(b.getRentableStockQty())
-                .bookCategoryId(b.getCategoryId())
-                .bookSubcategoryId(b.getSubcategoryId())
-                .introductionTitle(b.getIntroductionTitle())
-                .introductionDetail(b.getIntroductionDetail())
-                .tableOfContents(b.getTableOfContents())
-                .publisherReview(b.getPublisherReview())
-                .isbn13(b.getIsbn13())
-                .pageCount(b.getPageCount())
-                .width(b.getWidth())
-                .height(b.getHeight())
-                .thickness(b.getThickness())
-                .weight(b.getWeight())
-                .totalVolumes(b.getTotalVolumes())
-                .rentalAmount(b.getRentalAmount())
-                .purchaseAmount(b.getPurchaseAmount())
-                .discountedPurchaseAmount(b.getDiscountedPurchaseAmount())
-                .coverThumbnailUrl(b.getCoverThumbnailUrl())
-                .coverImageUrl(b.getCoverImageUrl())
-                .status(BookEntity.Status.valueOf(b.getStatus().name()))
-                .rentalAvailability(BookEntity.Availability.valueOf(b.getRentalAvailability().name()))
-                .purchaseAvailability(BookEntity.Availability.valueOf(b.getPurchaseAvailability().name()))
-                .viewCount(b.getViewCount())
-                .salesCount(b.getSalesCount())
-                .rentalCount(b.getRentalCount())
-                .averageRating(b.getAverageRating())
-                .ratingCount(b.getRatingCount())
-                .build();
-    }
-
-    /**
      * entity.BookEntity → domain.Book
      */
     public static Book toDomain(BookEntity e) {
