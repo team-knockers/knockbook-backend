@@ -17,5 +17,5 @@ public interface ProductRepository {
             Pageable pageable
     );
 
-//    Optional<ProductDetail> findProductDetail(long productId);
+    Optional<ProductDetail> findProductDetail(Long productId);
 }
