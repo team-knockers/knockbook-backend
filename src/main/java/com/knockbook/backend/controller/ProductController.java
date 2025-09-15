@@ -34,7 +34,7 @@ public class ProductController {
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(required = false) Integer minPrice,
             @RequestParam(required = false) Integer maxPrice,
-            @RequestParam @Min(1)int page,
+            @RequestParam @Min(1) int page,
             @RequestParam @Min(1) int size
             ) {
         // 서비스 호출
