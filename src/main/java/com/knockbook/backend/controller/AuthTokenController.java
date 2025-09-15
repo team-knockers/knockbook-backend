@@ -1,6 +1,6 @@
 package com.knockbook.backend.controller;
 
-import com.knockbook.backend.dto.AccessTokenResponse;
+import com.knockbook.backend.dto.LocalLoginResponse;
 import com.knockbook.backend.service.TokenService;
 import com.nimbusds.jose.JOSEException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public class AuthTokenController {
     private TokenService tokenService;
 
     @PostMapping("/refresh")
-    public ResponseEntity<AccessTokenResponse> refresh(
+    public ResponseEntity<LocalLoginResponse> refresh(
             @CookieValue(TokenService.refreshTokenCookieName) String refreshToken)
             throws ParseException, JOSEException { // required=true
 
@@ -37,7 +37,7 @@ public class AuthTokenController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(AccessTokenResponse.builder()
+                .body(LocalLoginResponse.builder()
                         .accessToken(tokens.getAccessToken())
                         .build());
     }
