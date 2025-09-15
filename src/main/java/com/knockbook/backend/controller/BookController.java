@@ -1,9 +1,12 @@
 package com.knockbook.backend.controller;
 
 import com.knockbook.backend.domain.BookSummary;
+import com.knockbook.backend.dto.BookDetailResponse;
 import com.knockbook.backend.dto.BookDtoMapper;
 import com.knockbook.backend.dto.BookSummaryDto;
 import com.knockbook.backend.dto.BookSummaryResponse;
+import com.knockbook.backend.exception.BookNotFoundException;
+import com.knockbook.backend.exception.InvalidRequestParameterException;
 import com.knockbook.backend.service.BookService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -66,6 +69,33 @@ public class BookController {
 
         // 5) 최종 반환
         return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping(path = "/{userId}/{bookId}")
+    public ResponseEntity<BookDetailResponse> getBookDetailById(
+            @PathVariable("userId") String userId,
+            @PathVariable("bookId") String bookId
+
+    ) {
+        try {
+            // 1) 입력받은 id 값의 타입 변경 (String -> Long)
+            final var id = Long.valueOf(bookId);
+
+            // 2) 도서 상세정보 조회
+            final var bookDetail = bookService.getBookDetailById(id);
+
+            // 3) 도메인 → DTO 매핑
+            final BookDetailResponse response = bookDetail
+                    .map(BookDtoMapper::toDetailDto)
+                    .orElseThrow(() -> new BookNotFoundException(bookId));
+
+            // 4) 최종 반환
+            return ResponseEntity.ok(response);
+
+        } catch (NumberFormatException e) {
+            throw new InvalidRequestParameterException("bookId", bookId);
+        }
     }
 
 }
