@@ -34,6 +34,12 @@ public class AccessTokenFilter extends OncePerRequestFilter {
             return;
         }
 
+        final var uri = request.getRequestURI();
+        if (uri.startsWith("/auth/local/") || uri.startsWith("/auth/token/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
             filterChain.doFilter(request, response);
             return;
