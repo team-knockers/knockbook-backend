@@ -5,13 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.math.BigDecimal;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class ProductSummary {
-
     public enum Status { ACTIVE, HIDDEN, DISCONTINUED }
     public enum Availability { AVAILABLE, OUT_OF_STOCK, PREORDER, BACKORDER, COMING_SOON, SOLD_OUT }
 
@@ -25,7 +23,7 @@ public class ProductSummary {
     private Status status;
     private Availability availability;
 
-    private BigDecimal averageRating;
+    private Double averageRating;
     private Integer reviewCount;
     private String thumbnailUrl;
 }

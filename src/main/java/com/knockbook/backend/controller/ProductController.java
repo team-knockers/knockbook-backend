@@ -1,48 +1,57 @@
 package com.knockbook.backend.controller;
 
-import com.knockbook.backend.domain.ProductDetail;
-import com.knockbook.backend.domain.ProductSummary;
-import com.knockbook.backend.dto.GetProductDetailResponse;
 import com.knockbook.backend.dto.GetProductsResponse;
 import com.knockbook.backend.dto.ProductDetailDTO;
 import com.knockbook.backend.dto.ProductSummaryDTO;
-import com.knockbook.backend.service.ProductReadService;
+import com.knockbook.backend.service.ProductService;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/products")
 @RequiredArgsConstructor
 @Validated
 public class ProductController {
-    private final ProductReadService productReadService;
+    private final ProductService productReadService;
 
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}")
     public ResponseEntity<GetProductsResponse> getProducts(
             @PathVariable("userId") String userId,
             @RequestParam String category,
-            @RequestParam String sort,
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(required = false) Integer minPrice,
             @RequestParam(required = false) Integer maxPrice,
             @RequestParam @Min(1) int page,
-            @RequestParam @Min(1) int size
+            @RequestParam @Min(1) int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String order
             ) {
-        // 서비스 호출
-        Page<ProductSummary> result = productReadService.getProducts(
-                category, sort, searchKeyword, minPrice, maxPrice, page, size
+        // Step 1: Validate and normalize sorting & paging inputs
+        final var allowed = java.util.Set.of(
+                "createdAt", "unitPriceAmount", "averageRating", "reviewCount", "name"
+        );
+        final var sortKey = allowed.contains(sortBy) ? sortBy : "createdAt";
+        final var direction = "asc".equalsIgnoreCase(order) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        final var safePage = Math.max(1, page) - 1;
+        final var safeSize = Math.max(1, size);
+
+        // Step 2: Build Pageable from validated inputs
+        final var pageable = PageRequest.of(safePage, safeSize, Sort.by(new Sort.Order(direction, sortKey)));
+
+        // Step 3: Call the service
+        final var result = productReadService.getProducts(
+                category, searchKeyword, minPrice, maxPrice, pageable
         );
 
-        List<ProductSummaryDTO> items = result.getContent().stream().map(s -> ProductSummaryDTO.builder()
+        // Step 4: Map domain -> response DTO
+        final var items = result.getContent().stream().map(s -> ProductSummaryDTO.builder()
                 .name(s.getName())
                 .unitPriceAmount(s.getUnitPriceAmount())
                 .salePriceAmount(s.getSalePriceAmount())
@@ -53,48 +62,43 @@ public class ProductController {
                 .build()
         ).toList();
 
-        GetProductsResponse body = GetProductsResponse.builder()
+        final var body = GetProductsResponse.builder()
                 .products(items)
                 .page(result.getNumber() + 1)
                 .size(result.getSize())
                 .totalItems(result.getTotalElements())
                 .totalPages(result.getTotalPages())
-                .hasNext(result.hasNext())
-                .hasPrevious(result.hasPrevious())
                 .build();
 
+        // Step 5: Return 200 OK
         return ResponseEntity.ok(body);
     }
 
 
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{productId}/{userId}")
-    public ResponseEntity<GetProductDetailResponse> getProductDetail(
+    public ResponseEntity<ProductDetailDTO> getProductDetail(
             @PathVariable("userId") String userId,
             @PathVariable("productId") Long productId
     ){
-        Optional<ProductDetail> result = productReadService.getProductDetail(productId);
-        if(result.isEmpty()){
-            return ResponseEntity.notFound().build();
-        }
+        // Step 1: Call the service
+        final var result = productReadService.getProductDetail(productId);
 
-        ProductDetail d = result.get();
-        ProductDetailDTO item = ProductDetailDTO.builder()
-                .name(d.getName())
-                .unitPriceAmount(d.getUnitPriceAmount())
-                .salePriceAmount(d.getSalePriceAmount())
-                .manufacturerName(d.getManufacturerName())
-                .isImported(d.getIsImported())
-                .importCountry(d.getImportCountry())
-                .averageRating(d.getAverageRating())
-                .reviewCount(d.getReviewCount())
-                .galleryImageUrls(d.getGalleryImageUrls())
-                .descriptionImageUrls(d.getDescriptionImageUrls())
+        // Step 2: Map domain -> response DTO
+        final var body = ProductDetailDTO.builder()
+                .name(result.getName())
+                .unitPriceAmount(result.getUnitPriceAmount())
+                .salePriceAmount(result.getSalePriceAmount())
+                .manufacturerName(result.getManufacturerName())
+                .isImported(result.getIsImported())
+                .importCountry(result.getImportCountry())
+                .averageRating(result.getAverageRating())
+                .reviewCount(result.getReviewCount())
+                .galleryImageUrls(result.getGalleryImageUrls())
+                .descriptionImageUrls(result.getDescriptionImageUrls())
                 .build();
 
-        GetProductDetailResponse body = GetProductDetailResponse.builder()
-                .product(item).build();
-
+        // Step 3: Return 200 OK
         return ResponseEntity.ok(body);
     }
 }

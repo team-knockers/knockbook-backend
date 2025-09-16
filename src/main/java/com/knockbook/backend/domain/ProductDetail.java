@@ -4,8 +4,6 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
@@ -27,7 +25,7 @@ public class ProductDetail {
     private Integer stockQty;
     private Status status;
     private Availability availability;
-    private BigDecimal averageRating;
+    private Double averageRating;
     private Integer reviewCount;
 
     private List<String> galleryImageUrls;

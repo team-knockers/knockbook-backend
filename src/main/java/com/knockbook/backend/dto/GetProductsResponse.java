@@ -13,11 +13,8 @@ import java.util.List;
 public class GetProductsResponse {
     private List<ProductSummaryDTO> products;
 
-    // pageResult
     private Integer page;
     private Integer size;
     private Long totalItems;
     private Integer totalPages;
-    private boolean hasNext;
-    private boolean hasPrevious;
 }
