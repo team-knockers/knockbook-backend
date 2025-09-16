@@ -30,5 +30,5 @@ public class BookSummaryDto {
     private Integer viewCount;
     private Integer salesCount;
     private Integer rentalCount;
-    private BigDecimal averageRating;
+    private Double averageRating;
 }

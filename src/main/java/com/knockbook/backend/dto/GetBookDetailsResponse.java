@@ -5,14 +5,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BookDetailResponse {
+public class GetBookDetailsResponse {
 
     private String id;
     private String title;
@@ -39,6 +38,6 @@ public class BookDetailResponse {
     private Integer viewCount;
     private Integer salesCount;
     private Integer rentalCount;
-    private BigDecimal averageRating;
+    private Double averageRating;
     private Integer ratingCount;
 }

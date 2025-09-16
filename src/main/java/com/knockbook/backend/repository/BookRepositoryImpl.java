@@ -40,16 +40,16 @@ public class BookRepositoryImpl implements BookRepository {
             String categoryCodeName, String subcategoryCodeName, Pageable pageable, String searchBy,
             String searchKeyword, Integer minPrice, Integer maxPrice) {
 
-        // 1) 엔티티 조회
+        // 1) Define query entities
         final var book = QBookEntity.bookEntity;
         final var category = QBookCategoryEntity.bookCategoryEntity;
         final var subcategory = QBookSubcategoryEntity.bookSubcategoryEntity;
 
-        // 2) 테이블 조인 조건(on)
+        // 2) Define join conditions
         BooleanExpression onCategoryJoin = book.bookCategoryId.eq(category.id);
         BooleanExpression onSubcategoryJoin = book.bookSubcategoryId.eq(subcategory.id);
 
-        // 3) 필터 조건(where)
+        // 3) Build filtering conditions (WHERE clause)
         BooleanExpression predicate = book.status.eq(BookEntity.Status.VISIBLE)
                 .and(book.deletedAt.isNull()); // 기본 조건 (status: VISIBLE, deletedAt: null 인 것)
 
@@ -58,14 +58,14 @@ public class BookRepositoryImpl implements BookRepository {
                     book.bookCategoryId.eq(category.id)
                             .and(category.categoryCodeName.eq(categoryCodeName))
             );
-        } // null이 아니지만 categoryCodeName이 all 인 경우 미실행
+        } // Skip if categoryCodeName is "all"
 
         if (subcategoryCodeName != null && !"all".equals(subcategoryCodeName)) {
             predicate = predicate.and(
                     book.bookSubcategoryId.eq(subcategory.id)
                             .and(subcategory.subcategoryCodeName.eq(subcategoryCodeName))
             );
-        } // null이 아니지만 subcategoryCodeName이 all 인 경우 미실행
+        } // Skip if subcategoryCodeName is "all"
 
         if (searchBy != null && searchKeyword != null && !searchKeyword.isBlank()) {
             predicate = predicate.and(buildSearchPredicate(searchBy, searchKeyword));
@@ -79,7 +79,7 @@ public class BookRepositoryImpl implements BookRepository {
             predicate = predicate.and(book.discountedPurchaseAmount.loe(maxPrice));
         }
 
-        // 4) 페이징된 컨텐츠 조회 -> 리스트화
+        // 4) Execute paged query and fetch results
         List<BookEntity> entities = queryFactory
                 .select(book)
                 .from(book)
@@ -91,7 +91,7 @@ public class BookRepositoryImpl implements BookRepository {
                 .orderBy(toOrderSpecifiers(pageable.getSort()))
                 .fetch();
 
-        // 5) 전체 건수(count) 조회
+        // 5) Execute count query
         Long totalItems = queryFactory
                 .select(book.count())
                 .from(book)
@@ -104,17 +104,17 @@ public class BookRepositoryImpl implements BookRepository {
             return new PageImpl<>(List.of(), pageable, 0);
         }
 
-        // 6) 엔티티 → 도메인 매핑
+        // 6) Map entity to domain object
         List<BookSummary> content = entities.stream()
                 .map(BookEntityMapper::toSummaryDomain)
                 .toList();
 
-        // 7) Page 구현체 반환
+        // 7) Return paginated result
         return new PageImpl<>(content, pageable, totalItems);
     }
 
     /**
-     * Spring Data Pageable의 Sort 정보를 QueryDSL OrderSpecifier로 변환
+     * Converts Spring Data Sort to QueryDSL OrderSpecifiers
      */
     private OrderSpecifier<?>[] toOrderSpecifiers(Sort sort) {
         QBookEntity book = QBookEntity.bookEntity;
@@ -125,14 +125,14 @@ public class BookRepositoryImpl implements BookRepository {
                     String prop = mapToEntityField(order.getProperty());
                     Order direction = order.isAscending() ? Order.ASC : Order.DESC;
 
-                    // date-only 필드(published_at) 처리
+                    // Handle date-only field (publishedAt)
                     if ("publishedAt".equals(prop)) {
                         DatePath<LocalDate> datePath =
                                 builder.getDate(prop, LocalDate.class);
                         return new OrderSpecifier<>(direction, datePath);
                     }
 
-                    // 그 외 숫자 필드(view_count, sales_count, ...)
+                    // Handle numeric fields (e.g., viewCount, salesCount, etc.)
                     NumberPath<Integer> numPath =
                             builder.getNumber(prop, Integer.class);
                     return new OrderSpecifier<>(direction, numPath);
@@ -141,7 +141,7 @@ public class BookRepositoryImpl implements BookRepository {
     }
 
     /**
-     * 검색정보 매핑
+     * Maps sortBy string to entity field name
      */
     private String mapToEntityField(String sortBy) {
         return switch (sortBy) {
@@ -150,12 +150,12 @@ public class BookRepositoryImpl implements BookRepository {
             case "rentals"   -> "rentalCount";
             case "price"     -> "discountedPurchaseAmount";
             case "published" -> "publishedAt";
-            default          -> null; // sortBy가 예상 밖 값이면 무시
+            default          -> throw new IllegalArgumentException("Invalid sortBy value: " + sortBy);
         };
     }
 
     /**
-     * searchBy (title, author, publisher) 필드에 대해 LIKE 검색 조건 생성
+     * Builds a LIKE predicate for the given searchBy and keyword
      */
     private BooleanExpression buildSearchPredicate(String searchBy, String searchKeyword) {
         QBookEntity book = QBookEntity.bookEntity;
@@ -165,7 +165,7 @@ public class BookRepositoryImpl implements BookRepository {
             case "title"     -> book.title.likeIgnoreCase(pattern);
             case "author"    -> book.author.likeIgnoreCase(pattern);
             case "publisher" -> book.publisher.likeIgnoreCase(pattern);
-            default          -> null; // searchBy가 예상 밖 값이면 무시
+            default          -> throw new IllegalArgumentException("Invalid searchBy value: " + searchBy);
         };
     }
 }
