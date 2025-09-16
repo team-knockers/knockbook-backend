@@ -1,6 +1,6 @@
 package com.knockbook.backend.repository;
 
-import com.knockbook.backend.domain.ProductDetail;
+import com.knockbook.backend.domain.ProductResult;
 import com.knockbook.backend.domain.ProductSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,5 +15,5 @@ public interface ProductRepository {
             Pageable pageable
     );
 
-    Optional<ProductDetail> findProductDetail(Long productId);
+    Optional<ProductResult> findProductById(Long productId);
 }

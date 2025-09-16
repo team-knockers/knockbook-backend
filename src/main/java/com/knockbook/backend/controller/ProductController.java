@@ -1,5 +1,7 @@
 package com.knockbook.backend.controller;
 
+import com.knockbook.backend.domain.ProductSortBy;
+import com.knockbook.backend.domain.SortOrder;
 import com.knockbook.backend.dto.GetProductsResponse;
 import com.knockbook.backend.dto.ProductDetailDTO;
 import com.knockbook.backend.dto.ProductSummaryDTO;
@@ -33,25 +35,26 @@ public class ProductController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String order
             ) {
-        // Step 1: Validate and normalize sorting & paging inputs
-        final var allowed = java.util.Set.of(
-                "createdAt", "unitPriceAmount", "averageRating", "reviewCount", "name"
-        );
-        final var sortKey = allowed.contains(sortBy) ? sortBy : "createdAt";
-        final var direction = "asc".equalsIgnoreCase(order) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        // Step 1: Normalize paging inputs
         final var safePage = Math.max(1, page) - 1;
         final var safeSize = Math.max(1, size);
 
-        // Step 2: Build Pageable from validated inputs
-        final var pageable = PageRequest.of(safePage, safeSize, Sort.by(new Sort.Order(direction, sortKey)));
+        // Step 2: Parse sorting (string -> enum)
+        final var sortKeyEnum = ProductSortBy.parseOrDefault(sortBy);
+        final var sortOrderEnum = SortOrder.parseOrDefault(order);
 
-        // Step 3: Call the service
-        final var result = productReadService.getProducts(
+        //Step 3 : Build Sort & pageable
+        final var sortDirection = (sortOrderEnum == SortOrder.asc) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        final var sortSpec      = Sort.by(new Sort.Order(sortDirection, sortKeyEnum.name()));
+        final var pageable      = PageRequest.of(safePage, safeSize, sortSpec);
+
+        // Step 4: Call the service
+        final var result = productReadService.getProductList(
                 category, searchKeyword, minPrice, maxPrice, pageable
         );
 
         // Step 4: Map domain -> response DTO
-        final var items = result.getContent().stream().map(s -> ProductSummaryDTO.builder()
+        final var products = result.getContent().stream().map(s -> ProductSummaryDTO.builder()
                 .name(s.getName())
                 .unitPriceAmount(s.getUnitPriceAmount())
                 .salePriceAmount(s.getSalePriceAmount())
@@ -63,7 +66,7 @@ public class ProductController {
         ).toList();
 
         final var body = GetProductsResponse.builder()
-                .products(items)
+                .products(products)
                 .page(result.getNumber() + 1)
                 .size(result.getSize())
                 .totalItems(result.getTotalElements())
@@ -82,20 +85,22 @@ public class ProductController {
             @PathVariable("productId") Long productId
     ){
         // Step 1: Call the service
-        final var result = productReadService.getProductDetail(productId);
+        final var result = productReadService.getProduct(productId);
+        final var s = result.getProductSummary();
+        final var d = result.getProductDetail();
 
         // Step 2: Map domain -> response DTO
         final var body = ProductDetailDTO.builder()
-                .name(result.getName())
-                .unitPriceAmount(result.getUnitPriceAmount())
-                .salePriceAmount(result.getSalePriceAmount())
-                .manufacturerName(result.getManufacturerName())
-                .isImported(result.getIsImported())
-                .importCountry(result.getImportCountry())
-                .averageRating(result.getAverageRating())
-                .reviewCount(result.getReviewCount())
-                .galleryImageUrls(result.getGalleryImageUrls())
-                .descriptionImageUrls(result.getDescriptionImageUrls())
+                .name(s.getName())
+                .unitPriceAmount(s.getUnitPriceAmount())
+                .salePriceAmount(s.getSalePriceAmount())
+                .manufacturerName(d.getManufacturerName())
+                .isImported(d.getIsImported())
+                .importCountry(d.getImportCountry())
+                .averageRating(s.getAverageRating())
+                .reviewCount(s.getReviewCount())
+                .galleryImageUrls(d.getGalleryImageUrls())
+                .descriptionImageUrls(d.getDescriptionImageUrls())
                 .build();
 
         // Step 3: Return 200 OK

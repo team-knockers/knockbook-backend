@@ -1,6 +1,7 @@
 package com.knockbook.backend.repository;
 
 import com.knockbook.backend.domain.ProductDetail;
+import com.knockbook.backend.domain.ProductResult;
 import com.knockbook.backend.domain.ProductSummary;
 import com.knockbook.backend.entity.ProductEntity;
 import com.knockbook.backend.entity.ProductImageEntity;
@@ -115,7 +116,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                                 t.get(P.availability) == null ? null
                                         : ProductSummary.Availability.valueOf(t.get(P.availability).name())
                         )
-                        // BigDecimal → double (scale 2)
+                        // BigDecimal → double (1dp, HALF_UP)
                         .averageRating(toScale(t.get(P.averageRating)))
                         .reviewCount(t.get(P.reviewCount))
                         .thumbnailUrl(t.get(PI.imageUrl))
@@ -127,8 +128,8 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
-    public Optional<ProductDetail> findProductDetail(Long productId) {
-        // Step 1: Fetch main row (ACTIVE + not deleted)
+    public Optional<ProductResult> findProductById(Long productId) {
+        // Step 1: Base row fetch (ACTIVE + not deleted)
         final var t = query
                 .select(
                         P.productId,
@@ -153,10 +154,10 @@ public class ProductRepositoryImpl implements ProductRepository {
                 )
                 .fetchOne();
 
-        // Step 2: No row → empty
+        // Step 2: Not found → empty
         if (t == null) return Optional.empty();
 
-        // Step 3: Fetch GALLERY images (max 4, by sort_order)
+        // Step 3: Load GALLERY images (max 4, by sort_order)
         final var galleryUrls = query
                 .select(PI.imageUrl)
                 .from(PI)
@@ -167,7 +168,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                 .limit(4)
                 .fetch();
 
-        // Step 4: Fetch DESCRIPTION images (all, by sort_order)
+        // Step 4: Load DESCRIPTION images (all, by sort_order)
         final var descriptionUrls = query
                 .select(PI.imageUrl)
                 .from(PI)
@@ -178,31 +179,42 @@ public class ProductRepositoryImpl implements ProductRepository {
                 .orderBy(PI.sortOrder.asc())
                 .fetch();
 
-        // Step 5: Map to domain
+        // Step 5: Map to ProductDetail
         final var detail = ProductDetail.builder()
+                .id(t.get(P.productId))
+                .manufacturerName(t.get(P.manufacturerName))
+                .isImported(t.get(P.isImported))
+                .importCountry(t.get(P.importCountry))
+                .galleryImageUrls(galleryUrls)
+                .descriptionImageUrls(descriptionUrls)
+                .build();
+
+        // Step 6: Map to ProductSummary
+        final var summary = ProductSummary.builder()
                 .id(t.get(P.productId))
                 .categoryId(t.get(P.categoryId))
                 .sku(t.get(P.sku))
                 .name(t.get(P.name))
                 .unitPriceAmount(t.get(P.unitPriceAmount))
                 .salePriceAmount(t.get(P.salePriceAmount))
-                .manufacturerName(t.get(P.manufacturerName))
-                .isImported(t.get(P.isImported))
-                .importCountry(t.get(P.importCountry))
                 .stockQty(t.get(P.stockQty))
                 .status(t.get(P.status) == null ? null
-                        : ProductDetail.Status.valueOf(t.get(P.status).name()))
+                        : ProductSummary.Status.valueOf(t.get(P.status).name()))
                 .availability(t.get(P.availability) == null ? null
-                        : ProductDetail.Availability.valueOf(t.get(P.availability).name()))
+                        : ProductSummary.Availability.valueOf(t.get(P.availability).name()))
                 // BigDecimal → double (1dp, HALF_UP)
                 .averageRating(toScale(t.get(P.averageRating)))
                 .reviewCount(t.get(P.reviewCount))
-                .galleryImageUrls(galleryUrls)
-                .descriptionImageUrls(descriptionUrls)
+                .thumbnailUrl("")
                 .build();
 
-        // Step 6: Return detail
-        return Optional.of(detail);
+        // Step 7: Wrap to ProductResult and return
+        final var result = ProductResult.builder()
+                .productDetail(detail)
+                .productSummary(summary)
+                .build();
+
+        return Optional.of(result);
 
     }
 
@@ -225,7 +237,6 @@ public class ProductRepositoryImpl implements ProductRepository {
                 case "unitPriceAmount" -> list.add(asc ? p.unitPriceAmount.asc() : p.unitPriceAmount.desc());
                 case "averageRating"   -> list.add(asc ? p.averageRating.asc() : p.averageRating.desc());
                 case "reviewCount"     -> list.add(asc ? p.reviewCount.asc() : p.reviewCount.desc());
-                case "name"            -> list.add(asc ? p.name.asc() : p.name.desc());
                 default -> { /* ignore unknown keys */ }
             }
         });

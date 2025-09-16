@@ -22,8 +22,8 @@ public class ProductSummary {
     private Integer stockQty;
     private Status status;
     private Availability availability;
-
     private Double averageRating;
     private Integer reviewCount;
+
     private String thumbnailUrl;
 }

@@ -1,6 +1,6 @@
 package com.knockbook.backend.service;
 
-import com.knockbook.backend.domain.ProductDetail;
+import com.knockbook.backend.domain.ProductResult;
 import com.knockbook.backend.domain.ProductSummary;
 import com.knockbook.backend.exception.ProductNotFoundException;
 import com.knockbook.backend.repository.ProductRepository;
@@ -16,7 +16,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
-    public Page<ProductSummary> getProducts(
+    public Page<ProductSummary> getProductList(
             String category,
             String searchKeyword,
             Integer minPrice,
@@ -28,8 +28,8 @@ public class ProductService {
         );
     }
 
-     public ProductDetail getProductDetail(Long productId) {
-         return productRepository.findProductDetail(productId)
+     public ProductResult getProduct(Long productId) {
+         return productRepository.findProductById(productId)
                  .orElseThrow(()-> new ProductNotFoundException(productId));
      }
 }
