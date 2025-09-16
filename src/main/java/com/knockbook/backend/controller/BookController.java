@@ -1,23 +1,22 @@
 package com.knockbook.backend.controller;
 
-import com.knockbook.backend.domain.BookSummary;
+import com.knockbook.backend.dto.GetBookDetailsResponse;
 import com.knockbook.backend.dto.BookDtoMapper;
-import com.knockbook.backend.dto.BookSummaryDto;
-import com.knockbook.backend.dto.BookSummaryResponse;
+import com.knockbook.backend.dto.GetBooksSummaryResponse;
 import com.knockbook.backend.service.BookService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(path = "/books")
+@Validated
 public class BookController {
 
     @Autowired
@@ -25,7 +24,7 @@ public class BookController {
 
     @PreAuthorize("#userId == authentication.name")
     @GetMapping(path = "/{userId}")
-    public ResponseEntity<BookSummaryResponse> getBooksByCategory(
+    public ResponseEntity<GetBooksSummaryResponse> getBooksSummary(
             @PathVariable("userId") String userId,
             @RequestParam("category") String category,
             @RequestParam("subcategory") String subcategory,
@@ -37,26 +36,25 @@ public class BookController {
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(required = false) Integer minPrice,
             @RequestParam(required = false) Integer maxPrice
-
     ) {
 
-        // 1) PageRequest 생성 및 추가 조건
+        // 1) Create PageRequest
         final var zeroBasedPage = page - 1;
-        final Sort sort = order.equalsIgnoreCase("asc")
+        final var sort = order.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
-        final Pageable pageable = PageRequest.of(zeroBasedPage, size, sort);
+        final var pageable = PageRequest.of(zeroBasedPage, size, sort);
 
-        // 2) 도메인 Book 페이지 조회
-        final Page<BookSummary> bookPage = bookService.getBooksByCategory(
+        // 2) Retrieve paged BookSummary from domain
+        final var bookPage = bookService.getBooksSummary(
                 category, subcategory, pageable, searchBy, searchKeyword, minPrice, maxPrice
         );
 
-        // 3) 도메인 → DTO 매핑
-        final Page<BookSummaryDto> dtoPage = bookPage.map(BookDtoMapper::toSummaryDto);
+        // 3) Map domain object to DTO
+        final var dtoPage = bookPage.map(BookDtoMapper::toSummaryDto);
 
-        // 4) BooksSummaryResponse 조립
-        final BookSummaryResponse response = BookSummaryResponse.builder()
+        // 4) Build BooksSummaryResponse
+        final var response = GetBooksSummaryResponse.builder()
                 .books(dtoPage.getContent())
                 .page(dtoPage.getNumber()+1)
                 .size(dtoPage.getSize())
@@ -64,8 +62,26 @@ public class BookController {
                 .totalPages(dtoPage.getTotalPages())
                 .build();
 
-        // 5) 최종 반환
+        // 5) Return final response
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping(path = "/{userId}/{bookId}")
+    public ResponseEntity<GetBookDetailsResponse> getBookDetails(
+            @PathVariable("userId") String userId,
+            @PathVariable("bookId") String bookId
+    ) {
+        // 1) Convert input ID (String -> Long)
+        final var id = Long.valueOf(bookId);
+
+        // 2) Retrieve detailed book information from domain
+        final var bookDetail = bookService.getBookDetails(id);
+
+        // 3) Map domain object to DTO
+        final var response = BookDtoMapper.toDetailDto(bookDetail);
+
+        // 4) Return final response
+        return ResponseEntity.ok(response);
+    }
 }
