@@ -18,5 +18,17 @@ FROM gcr.io/distroless/java21-debian12:nonroot
 WORKDIR /app
 COPY --from=build /workspace/build/libs/*.jar /app/app.jar
 EXPOSE 8080
-ENV JAVA_TOOL_OPTIONS="-Dserver.port=8080"
+
+ENV JAVA_TOOL_OPTIONS="-Dserver.port=8080" \
+    SPRING_PROFILES_ACTIVE=prod \
+    spring.mail.host=smtp.postmarkapp.com \
+    spring.mail.port=587 \
+    spring.mail.properties.mail.smtp.auth=true \
+    spring.mail.properties.mail.smtp.starttls.enable=true \
+    spring.mail.default-encoding=UTF-8
+
+ARG POSTMARK_SERVER_TOKEN
+ENV spring.mail.username=${POSTMARK_SERVER_TOKEN} \
+    spring.mail.password=${POSTMARK_SERVER_TOKEN}
+
 ENTRYPOINT ["java","-jar","/app/app.jar"]
