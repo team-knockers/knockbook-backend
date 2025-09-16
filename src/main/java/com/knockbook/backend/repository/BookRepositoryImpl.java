@@ -51,7 +51,7 @@ public class BookRepositoryImpl implements BookRepository {
 
         // 3) Build filtering conditions (WHERE clause)
         BooleanExpression predicate = book.status.eq(BookEntity.Status.VISIBLE)
-                .and(book.deletedAt.isNull()); // 기본 조건 (status: VISIBLE, deletedAt: null 인 것)
+                .and(book.deletedAt.isNull()); // Basic condition: only visible and not deleted books
 
         if (categoryCodeName != null && !"all".equals(categoryCodeName)) {
             predicate = predicate.and(
