@@ -90,6 +90,7 @@ public class LocalAuthController {
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .body(LocalLoginResponse.builder()
                         .accessToken(tokens.getAccessToken())
+                        .userId(user.getId().toString())
                         .build());
     }
 
