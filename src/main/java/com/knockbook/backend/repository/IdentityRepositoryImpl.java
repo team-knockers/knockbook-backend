@@ -35,6 +35,28 @@ public class IdentityRepositoryImpl implements IdentityRepository {
     }
 
     @Override
+    public Optional<Identity> findByUserId(Long userId) {
+        final var cb = em.getCriteriaBuilder();
+        final var query = cb.createQuery(IdentityEntity.class);
+        final var root = query.from(IdentityEntity.class);
+
+        query.select(root)
+                .where(cb.equal(root.get(IdentityEntity_.userId), userId));
+
+        return em.createQuery(query)
+                .setMaxResults(1)
+                .getResultStream()
+                .findFirst()
+                .map(entity -> Identity.builder()
+                        .id(entity.getId())
+                        .userId(entity.getUserId())
+                        .providerCode(entity.getProviderCode())
+                        .subject(entity.getSubject())
+                        .lastLoginAt(entity.getLastLoginAt())
+                        .build());
+    }
+
+    @Override
     public Optional<Identity> findByProviderCodeAndSubject(String providerCode, String subject) {
         final var cb = em.getCriteriaBuilder();
         final var query = cb.createQuery(IdentityEntity.class);
@@ -43,8 +65,7 @@ public class IdentityRepositoryImpl implements IdentityRepository {
         query.select(root)
                 .where(cb.and(
                         cb.equal(root.get(IdentityEntity_.providerCode), providerCode),
-                        cb.equal(root.get(IdentityEntity_.subject), subject)
-                ));
+                        cb.equal(root.get(IdentityEntity_.subject), subject)));
 
         return em.createQuery(query)
                 .setMaxResults(1)

@@ -10,6 +10,8 @@ public interface IdentityRepository {
                     final String providerCode,
                     final String subject);
 
+    Optional<Identity> findByUserId(final Long userId);
+
     Optional<Identity> findByProviderCodeAndSubject(final String providerCode,
                                                     final String subject);
 }

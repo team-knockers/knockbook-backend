@@ -2,6 +2,7 @@ package com.knockbook.backend.controller;
 
 import com.knockbook.backend.domain.User;
 import com.knockbook.backend.dto.ChangePasswordRequest;
+import com.knockbook.backend.dto.VerifyPasswordRequest;
 import com.knockbook.backend.dto.UserResponse;
 import com.knockbook.backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +61,16 @@ public class UserController {
             @RequestBody ChangePasswordRequest req
     ) {
         userService.changePassword(Long.valueOf(userId), req.getPassword());
+        return ResponseEntity.noContent().build(); // 204
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PostMapping("/{userId}/password/verify")
+    public ResponseEntity<Void> confirmPassword(
+            @PathVariable("userId") String userId,
+            @RequestBody VerifyPasswordRequest req
+    ) {
+        userService.verifyPassword(Long.valueOf(userId), req.getPassword());
         return ResponseEntity.noContent().build(); // 204
     }
 }
