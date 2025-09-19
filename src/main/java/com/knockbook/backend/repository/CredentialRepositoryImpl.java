@@ -4,6 +4,7 @@ import com.knockbook.backend.domain.Credential;
 import com.knockbook.backend.entity.CredentialEntity;
 import com.knockbook.backend.entity.CredentialEntity_;
 import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -50,5 +51,17 @@ public class CredentialRepositoryImpl implements CredentialRepository {
                         .passwordHash(entity.getPasswordHash())
                         .passwordUpdatedAt(entity.getPasswordUpdatedAt())
                         .build());
+    }
+
+    @Override
+    @Transactional
+    public void update(Long identityId, String passwordHash) {
+        final var cb = em.getCriteriaBuilder();
+        final var cu = cb.createCriteriaUpdate(CredentialEntity.class);
+        final var r = cu.from(CredentialEntity.class);
+        cu.set(r.get(CredentialEntity_.passwordHash), passwordHash)
+                .where(cb.equal(r.get(CredentialEntity_.identityId), identityId));
+        em.createQuery(cu).executeUpdate();
+        em.clear();
     }
 }

@@ -62,7 +62,18 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException(id));
     }
 
-    public void updateUserProfile(final User patch) {
+    public void changePassword(final Long id, final String password) {
+        final var user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+        final var email = user.getEmail();
+        final var identity = identityRepository.findByProviderCodeAndSubject("local", email)
+                .orElseThrow(() -> new IdentityNotFoundException(email));
+        final var identityId = identity.getId();
+        final var hash = passwordEncoder.encode(password);
+        credentialRepository.update(identityId, hash);
+    }
+
+    public void updateProfile(final User patch) {
         userRepository.update(patch);
     }
 }

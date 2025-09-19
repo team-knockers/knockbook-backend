@@ -1,6 +1,7 @@
 package com.knockbook.backend.controller;
 
 import com.knockbook.backend.domain.User;
+import com.knockbook.backend.dto.ChangePasswordRequest;
 import com.knockbook.backend.dto.UserResponse;
 import com.knockbook.backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class UserController {
 
     @PreAuthorize("#userId == authentication.name")
     @PutMapping("/{userId}")
-    public ResponseEntity<Void> updateUser(
+    public ResponseEntity<Void> updateProfile(
             @PathVariable("userId") String userId,
             @RequestParam(required = false) String displayName,
             @RequestParam(required = false) String avatarUrl,
@@ -48,7 +49,17 @@ public class UserController {
                 .mbti(mbti)
                 .favoriteBookCategories(favoriteBookCategories)
                 .build();
-        userService.updateUserProfile(patch);
+        userService.updateProfile(patch);
+        return ResponseEntity.noContent().build(); // 204
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/{userId}/password")
+    public ResponseEntity<Void> changePassword(
+            @PathVariable("userId") String userId,
+            @RequestBody ChangePasswordRequest req
+    ) {
+        userService.changePassword(Long.valueOf(userId), req.getPassword());
         return ResponseEntity.noContent().build(); // 204
     }
 }
