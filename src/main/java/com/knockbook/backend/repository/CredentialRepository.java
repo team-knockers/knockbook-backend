@@ -10,4 +10,7 @@ public interface CredentialRepository {
                       final String passwordHash);
 
     Optional<Credential> findByIdentityId(final Long identityId);
+
+    void update(final Long identityId,
+                final String passwordHash);
 }
