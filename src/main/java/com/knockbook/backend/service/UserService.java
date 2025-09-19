@@ -57,20 +57,28 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
     }
 
-    public User getUser(final Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
+    public User getUser(final Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
     }
 
-    public void changePassword(final Long id, final String password) {
-        final var user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
-        final var email = user.getEmail();
-        final var identity = identityRepository.findByProviderCodeAndSubject("local", email)
-                .orElseThrow(() -> new IdentityNotFoundException(email));
+    public void verifyPassword(final Long userId, final String password) {
+        final var identity = identityRepository.findByUserId(userId)
+                .orElseThrow(() -> new IdentityNotFoundException(userId));
         final var identityId = identity.getId();
+        final var credential = credentialRepository.findByIdentityId(identityId)
+                .orElseThrow(() -> new CredentialNotFoundException(identityId));
+
+        if (!passwordEncoder.matches(password, credential.getPasswordHash())) {
+            throw new BadCredentialsException("Invalid password");
+        }
+    }
+
+    public void changePassword(final Long userId, final String password) {
+        final var identity = identityRepository.findByUserId(userId)
+                .orElseThrow(() -> new IdentityNotFoundException(userId));
         final var hash = passwordEncoder.encode(password);
-        credentialRepository.update(identityId, hash);
+        credentialRepository.update(identity.getId(), hash);
     }
 
     public void updateProfile(final User patch) {
