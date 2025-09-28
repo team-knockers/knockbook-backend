@@ -55,6 +55,7 @@ public class ProductController {
 
         // Step 4: Map domain -> response DTO
         final var products = result.getContent().stream().map(s -> ProductSummaryDTO.builder()
+                .productId(String.valueOf(s.getId()))
                 .name(s.getName())
                 .unitPriceAmount(s.getUnitPriceAmount())
                 .salePriceAmount(s.getSalePriceAmount())
@@ -91,6 +92,7 @@ public class ProductController {
 
         // Step 2: Map domain -> response DTO
         final var body = ProductDetailDTO.builder()
+                .productId(String.valueOf(s.getId()))
                 .name(s.getName())
                 .unitPriceAmount(s.getUnitPriceAmount())
                 .salePriceAmount(s.getSalePriceAmount())
@@ -99,6 +101,7 @@ public class ProductController {
                 .importCountry(d.getImportCountry())
                 .averageRating(s.getAverageRating())
                 .reviewCount(s.getReviewCount())
+                .stockQty(s.getStockQty())
                 .galleryImageUrls(d.getGalleryImageUrls())
                 .descriptionImageUrls(d.getDescriptionImageUrls())
                 .build();

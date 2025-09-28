@@ -10,6 +10,7 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class ProductDetailDTO {
+    private String productId;
     private String name;
     private Integer unitPriceAmount;
     private Integer salePriceAmount;
@@ -18,6 +19,7 @@ public class ProductDetailDTO {
     private String importCountry;
     private Double averageRating;
     private Integer reviewCount;
+    private Integer stockQty;
 
     private List<String> galleryImageUrls;
     private List<String> descriptionImageUrls;
