@@ -9,6 +9,7 @@ import lombok.Getter;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class ProductSummaryDTO {
+    private String productId;
     private String name;
     private Integer unitPriceAmount;
     private Integer salePriceAmount;
