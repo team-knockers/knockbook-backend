@@ -14,19 +14,19 @@ import java.time.Instant;
 @NoArgsConstructor
 public class CustomerQnaFileEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
-    @ManyToOne(fetch=FetchType.LAZY)
-    @JoinColumn(name = "qna_id", nullable = false)
-    private CustomerQnaEntity qna;
+    @Column(name = "qna_id", nullable = false)
+    private Long qnaId;
 
-    @Column(name = "file_url", nullable = false, length = 500)
+    @Column(name = "file_url", nullable = false)
     private String fileUrl;
 
     @Column(name = "file_size", nullable = false)
     private long fileSize;
 
-    @Column(name = "file_type", length = 100)
+    @Column(name = "file_type", nullable = false)
     private String fileType;
 
     @Column(name = "created_at", insertable = false, updatable = false)
