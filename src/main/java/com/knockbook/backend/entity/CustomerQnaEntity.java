@@ -1,15 +1,16 @@
 package com.knockbook.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 
 @Entity
 @Table(name = "customer_qna")
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class CustomerQnaEntity {
 
     public enum Status { PENDING, ANSWERED, CLOSED }
@@ -29,14 +30,18 @@ public class CustomerQnaEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
+    @Builder.Default
     private Status status = Status.PENDING;
 
     @Column(name = "answer")
     private String answer;
 
+    @Column(name="answered_at", insertable = false, updatable = false)
+    private Instant answeredAt;
+
     @Column(name="created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name="updated_at", nullable = false, insertable = false, updatable = false)
-    private Instant udpatedAt;
+    private Instant updatedAt;
 }

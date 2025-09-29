@@ -21,6 +21,7 @@ public class CustomerQna {
     private String content;
     private Status status;
     private String answer;
+    private Instant answeredAt;
     private Instant createdAt;
     private Instant updatedAt;
     private List<CustomerQnaFile> files;

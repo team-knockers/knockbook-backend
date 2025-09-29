@@ -1,9 +1,7 @@
 package com.knockbook.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.Instant;
 
@@ -11,7 +9,9 @@ import java.time.Instant;
 @Table(name = "customer_qna_files")
 @Getter
 @Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class CustomerQnaFileEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -22,6 +22,9 @@ public class CustomerQnaFileEntity {
 
     @Column(name = "file_url", nullable = false)
     private String fileUrl;
+
+    @Column(name = "file_name", nullable = false)
+    private String fileName;
 
     @Column(name = "file_size", nullable = false)
     private long fileSize;
