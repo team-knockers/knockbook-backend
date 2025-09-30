@@ -11,7 +11,6 @@ import lombok.Getter;
 public class BookSubcategory {
 
     public enum Subcategory {
-        all,
         koreanFiction, westernFiction, japaneseFiction,
         koreanPoetry, worldPoetry, essay,
         humanities, philosophy, psychology,

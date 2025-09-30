@@ -11,7 +11,6 @@ import lombok.Getter;
 public class BookCategory {
 
     public enum Category {
-        all,
         fiction, essay, humanities, parenting, cooking, health,
         lifestyle, business, selfImprovement, politics, culture, religion,
         entertainment, technology, language, science, travel, it
