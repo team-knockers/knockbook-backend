@@ -31,4 +31,11 @@ ARG POSTMARK_SERVER_TOKEN
 ENV spring.mail.username=${POSTMARK_SERVER_TOKEN} \
     spring.mail.password=${POSTMARK_SERVER_TOKEN}
 
+ARG IMGBB_API_KEY
+ENV IMGBB_API_KEY=${IMGBB_API_KEY} \
+    IMGBB_API_BASE_URL=https://api.imgbb.com \
+    IMGBB_API_UPLOAD_PATH=/1/upload \
+    IMGBB_API_TIMEOUT_SECONDS=30 \
+    IMGBB_API_CONNECT_TIMEOUT_MILLIS=5000
+
 ENTRYPOINT ["java","-jar","/app/app.jar"]
