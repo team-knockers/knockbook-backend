@@ -8,17 +8,18 @@ import java.util.List;
 public interface BookCategoryRepository {
 
     /**
-     * 모든 카테고리와 그 기본 정보를 조회 (서브카테고리 미포함)
+     * Retrieve all categories (excluding subcategories)
      */
     List<BookCategory> findAllCategories();
 
     /**
-     * categoryCodeName으로 해당 카테고리의 모든 서브카테고리 조회
+     * Retrieve all subcategories for the category identified by the given code name
      */
     List<BookSubcategory> findSubcategoriesByCategoryCodeName(String categoryCodeName);
 
     /**
-     * findSubcategoriesByCategoryCodeName의 조회전 존재여부를 검토(에러 반환용)
+     * Check whether a category with the given code name exists
+     * Intended for pre-checks before performing operations such as subcategory retrieval
      */
     boolean existsByCategoryCodeName(String categoryCodeName);
 
