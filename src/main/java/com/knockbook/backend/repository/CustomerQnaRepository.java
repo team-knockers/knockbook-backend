@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface CustomerQnaRepository {
     CustomerQna insert(CustomerQna qna);
     Optional<CustomerQna> findById(Long id);
+    List<CustomerQna> findAllByUserId(Long userId, int page, int size);
+    long countByUserId(Long userId);
 }

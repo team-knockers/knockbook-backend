@@ -3,6 +3,7 @@ package com.knockbook.backend.service;
 import com.knockbook.backend.component.ImgbbUploader;
 import com.knockbook.backend.domain.CustomerQna;
 import com.knockbook.backend.domain.CustomerQnaFile;
+import com.knockbook.backend.domain.PageSlice;
 import com.knockbook.backend.exception.AttachmentLimitExceededException;
 import com.knockbook.backend.exception.FileTooLargeException;
 import com.knockbook.backend.exception.UnsupportedFileTypeException;
@@ -74,6 +75,15 @@ public class CustomerQnaService {
                 .build();
 
         return repository.insert(qna);
+    }
+
+    @Transactional
+    public PageSlice<CustomerQna> findListByUser(final Long userId,
+                                                 final int page,
+                                                 final int size) {
+        final var items = repository.findAllByUserId(userId, page, size);
+        final var total = repository.countByUserId(userId);
+        return new PageSlice<>(items, total);
     }
 
     private static String getOriginal(MultipartFile file) {
