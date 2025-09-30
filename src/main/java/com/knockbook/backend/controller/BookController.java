@@ -1,8 +1,6 @@
 package com.knockbook.backend.controller;
 
-import com.knockbook.backend.dto.GetBookDetailsResponse;
-import com.knockbook.backend.dto.BookDtoMapper;
-import com.knockbook.backend.dto.GetBooksSummaryResponse;
+import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.BookService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -13,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(path = "/books")
@@ -82,6 +82,43 @@ public class BookController {
         final var response = BookDtoMapper.toDetailDto(bookDetail);
 
         // 4) Return final response
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/categories")
+    public ResponseEntity<List<BookCategoryDto>> getAllCategories(
+            @PathVariable String userId
+    ) {
+        final var bookCategoryList = bookService.getAllCategories();
+
+        final var response = bookCategoryList.stream()
+                .map(c -> BookCategoryDto.builder()
+                        .id(String.valueOf(c.getId()))
+                        .categoryCodeName(c.getCodeName().name())
+                        .categoryDisplayName(c.getDisplayName())
+                        .build())
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/categories/{categoryCodeName}/subcategories")
+    public ResponseEntity<List<BookSubcategoryDto>> getSubcategories(
+            @PathVariable String userId,
+            @PathVariable String categoryCodeName
+    ) {
+        final var bookSubcategoryList = bookService.getSubcategoriesByCategoryCodeName(categoryCodeName);
+
+        final var response = bookSubcategoryList.stream()
+                .map(s -> BookSubcategoryDto.builder()
+                        .id(String.valueOf(s.getId()))
+                        .subcategoryCodeName(s.getCodeName().name())
+                        .subcategoryDisplayName(s.getDisplayName())
+                        .build())
+                .toList();
+
         return ResponseEntity.ok(response);
     }
 }
