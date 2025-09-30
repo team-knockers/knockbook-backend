@@ -11,7 +11,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -100,4 +103,68 @@ public class CustomerQnaRepositoryImpl implements CustomerQnaRepository {
 
         return Optional.of(found);
     }
+
+    @Override
+    public List<CustomerQna> findAllByUserId(Long userId, int page, int size) {
+        final var qnaEntities = query
+                .selectFrom(qQna)
+                .where(qQna.userId.eq(userId))
+                .orderBy(qQna.createdAt.desc(), qQna.id.desc())
+                .offset((long) page * size)
+                .limit(size)
+                .fetch();
+
+        if (qnaEntities == null || qnaEntities.isEmpty()) {
+            return List.of();
+        }
+
+        final var ids = qnaEntities.stream()
+                .map(CustomerQnaEntity::getId).toList();
+
+        final var fileEntities = query
+                .selectFrom(qFile)
+                .where(qFile.qnaId.in(ids))
+                .orderBy(qFile.id.asc())
+                .fetch();
+
+        final var filesByQnaId =
+                fileEntities == null
+                        ? Map.<Long, List<CustomerQnaFileEntity>>of()
+                        : fileEntities.stream()
+                        .collect(Collectors.groupingBy(CustomerQnaFileEntity::getQnaId));
+
+        return qnaEntities.stream().map(e -> {
+            final var files = filesByQnaId.getOrDefault(e.getId(), List.of()).stream()
+                    .map(f -> CustomerQnaFile.builder()
+                            .id(f.getId())
+                            .fileName(f.getFileName())
+                            .fileUrl(f.getFileUrl())
+                            .fileType(f.getFileType())
+                            .fileSize(f.getFileSize())
+                            .build())
+                    .toList();
+
+            return CustomerQna.builder()
+                    .id(e.getId())
+                    .userId(e.getUserId())
+                    .title(e.getTitle())
+                    .content(e.getContent())
+                    .status(CustomerQna.Status.valueOf(e.getStatus().name()))
+                    .answeredAt(e.getAnsweredAt())
+                    .createdAt(e.getCreatedAt())
+                    .updatedAt(e.getUpdatedAt())
+                    .files(files)
+                    .build();
+        }).toList();
+    }
+
+    @Override
+    public long countByUserId(Long userId) {
+        final var total = query.select(qQna.count())
+                .from(qQna)
+                .where(qQna.userId.eq(userId))
+                .fetchOne();
+        return total == null ? 0L : total;
+    }
 }
+
