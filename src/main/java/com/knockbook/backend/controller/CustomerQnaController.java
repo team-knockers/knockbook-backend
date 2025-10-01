@@ -32,9 +32,9 @@ public class CustomerQnaController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CustomerQnaResponse> registerCustomerQna(
             @PathVariable("userId") final String userId,
-            @RequestPart(name = "title") final String title,
-            @RequestPart(name = "content") final String content,
-            @RequestPart(name = "files", required = false) final MultipartFile[] files) {
+            @RequestParam(name = "title") final String title,
+            @RequestParam(name = "content") final String content,
+            @RequestParam(name = "files", required = false) final List<MultipartFile> files) {
         final var qna = customerQnaService.create(Long.valueOf(userId), title, content, files);
         final var location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
