@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -33,7 +34,7 @@ public class CustomerQnaService {
     public CustomerQna create(final Long userId,
                               final String title,
                               final String content,
-                              final MultipartFile[] files) {
+                              final List<MultipartFile> files) {
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("title is required");
         }
@@ -43,10 +44,10 @@ public class CustomerQnaService {
         }
 
         final var qnaFiles = new ArrayList<CustomerQnaFile>();
-        if (files != null && files.length > 0) {
+        if (files != null && !files.isEmpty()) {
 
-            if (files.length > MAX_NUM_FILES) {
-                throw new AttachmentLimitExceededException(MAX_NUM_FILES, files.length);
+            if (files.size() > MAX_NUM_FILES) {
+                throw new AttachmentLimitExceededException(MAX_NUM_FILES, files.size());
             }
 
             for (final var file : files) {
