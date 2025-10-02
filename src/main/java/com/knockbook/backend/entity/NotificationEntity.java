@@ -29,3 +29,4 @@ public class NotificationEntity {
     @Column(name="updated_at", nullable = false, insertable = false, updatable = false)
     private Instant updatedAt;
 }
+
