@@ -16,11 +16,13 @@ public class NotificationRepositoryImpl implements NotificationRepository{
     private final JPAQueryFactory query;
 
     @Override
-    public List<Notification> findAll() {
+    public List<Notification> findAll(final int page, final int size) {
         final var entity = QNotificationEntity.notificationEntity;
         return query
                 .selectFrom(entity)
                 .orderBy(entity.createdAt.desc())
+                .offset((long)page * size)
+                .limit(size)
                 .fetch()
                 .stream()
                 .map(e ->
@@ -32,5 +34,15 @@ public class NotificationRepositoryImpl implements NotificationRepository{
                                 .updatedAt(e.getUpdatedAt())
                                 .build())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public long count() {
+        final var entity = QNotificationEntity.notificationEntity;
+        final var total = query
+                .select(entity.count())
+                .from(entity)
+                .fetchOne();
+        return total == null ? 0L : total;
     }
 }
