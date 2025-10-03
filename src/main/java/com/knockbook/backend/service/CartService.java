@@ -2,6 +2,7 @@ package com.knockbook.backend.service;
 
 import com.knockbook.backend.domain.Cart;
 import com.knockbook.backend.domain.CartItem;
+import com.knockbook.backend.domain.PointsPolicy;
 import com.knockbook.backend.exception.BookNotFoundException;
 import com.knockbook.backend.exception.ProductNotFoundException;
 import com.knockbook.backend.repository.BookRepository;
@@ -26,6 +27,7 @@ public class CartService {
     public Cart addBookPurchase(final Long userId,
                                 final Long bookId,
                                 final int qty) {
+        final var refType = CartItem.RefType.BOOK_PURCHASE;
         final var cart = getOrCreateOpenCart(userId);
         final var book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new BookNotFoundException(bookId.toString()));
@@ -33,7 +35,7 @@ public class CartService {
         final var item = CartItem.builder()
                 .id(null)
                 .cartId(cart.getId())
-                .refType(CartItem.RefType.BOOK_PURCHASE)
+                .refType(refType)
                 .refId(bookId)
                 .titleSnapshot(book.getTitle())
                 .thumbnailUrl(book.getCoverThumbnailUrl())
@@ -42,7 +44,7 @@ public class CartService {
                 .rentalDays(0)
                 .rentalPriceSnapshot(null)
                 .quantity(Math.max(1, qty)) // += qty
-                .pointsRate(5)
+                .pointsRate(PointsPolicy.of(refType))
                 .build();
 
         return cartRepository.addItem(cart.getId(), item);
@@ -52,24 +54,25 @@ public class CartService {
                               final Long bookId,
                               final int days,
                               final int qty) {
+
+        final var refType = CartItem.RefType.BOOK_RENTAL;
         final var cart = getOrCreateOpenCart(userId);
         final var book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new BookNotFoundException(bookId.toString()));
 
-        final var validDays = Math.max(1, days);
         final var item = CartItem.builder()
                 .id(null)
                 .cartId(cart.getId())
-                .refType(CartItem.RefType.BOOK_RENTAL)
+                .refType(refType)
                 .refId(bookId)
                 .titleSnapshot(book.getTitle())
                 .thumbnailUrl(book.getCoverThumbnailUrl())
                 .listPriceSnapshot(null)
                 .salePriceSnapshot(null)
-                .rentalDays(validDays)
+                .rentalDays(days)
                 .rentalPriceSnapshot(book.getRentalAmount())
                 .quantity(Math.max(1, qty)) // += qty
-                .pointsRate(3)
+                .pointsRate(PointsPolicy.of(refType))
                 .build();
         return cartRepository.addItem(cart.getId(), item);
     }
@@ -77,6 +80,8 @@ public class CartService {
     public Cart addProduct(final Long userId,
                            final Long productId,
                            final int qty) {
+
+        final var refType = CartItem.RefType.PRODUCT;
         final var cart = getOrCreateOpenCart(userId);
         final var product = productRepository.findProductById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
@@ -86,7 +91,7 @@ public class CartService {
         final var item = CartItem.builder()
                 .id(null)
                 .cartId(cart.getId())
-                .refType(CartItem.RefType.PRODUCT)
+                .refType(refType)
                 .refId(productId)
                 .titleSnapshot(summary.getName())
                 .thumbnailUrl(summary.getThumbnailUrl())
@@ -95,7 +100,7 @@ public class CartService {
                 .rentalDays(0)
                 .rentalPriceSnapshot(null)
                 .quantity(Math.max(1, qty)) // += qty
-                .pointsRate(5)
+                .pointsRate(PointsPolicy.of(refType))
                 .build();
         return cartRepository.addItem(cart.getId(), item);
     }
