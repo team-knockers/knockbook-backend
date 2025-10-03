@@ -25,10 +25,10 @@ public class CartItem {
     private final Integer listPriceSnapshot;
     private final Integer salePriceSnapshot;
 
-    private final int rentalDays;
+    private final Integer rentalDays;
     private final Integer rentalPriceSnapshot;
 
-    private final int quantity;
-    private final BigDecimal pointsRate;
+    private final Integer quantity;
+    private final Integer pointsRate;
 }
 

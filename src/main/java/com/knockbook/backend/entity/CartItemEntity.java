@@ -27,6 +27,9 @@ public class CartItemEntity {
     @Column(name = "ref_type", nullable = false)
     private RefType refType;
 
+    @Column(name = "ref_id", nullable = false)
+    private Long refId;
+
     @Column(name = "title_snapshot", nullable = false, updatable = false)
     private String titleSnapshot;
 
@@ -46,10 +49,10 @@ public class CartItemEntity {
     private Integer rentalPrice;
 
     @Column(name="quantity", nullable=false)
-    private int quantity;
+    private Integer quantity;
 
     @Column(name="points_rate", nullable=false)
-    private BigDecimal pointsRate;
+    private Integer pointsRate;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;

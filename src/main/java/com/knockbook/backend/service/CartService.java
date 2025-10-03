@@ -1,0 +1,112 @@
+package com.knockbook.backend.service;
+
+import com.knockbook.backend.domain.Cart;
+import com.knockbook.backend.domain.CartItem;
+import com.knockbook.backend.exception.BookNotFoundException;
+import com.knockbook.backend.exception.ProductNotFoundException;
+import com.knockbook.backend.repository.BookRepository;
+import com.knockbook.backend.repository.CartRepository;
+import com.knockbook.backend.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class CartService {
+
+    private final CartRepository cartRepository;
+    private final BookRepository bookRepository;
+    private final ProductRepository productRepository;
+
+    public Cart getOrCreateOpenCart(final Long userId) {
+        return cartRepository.findOpenByUserId(userId)
+                .orElseGet(() -> cartRepository.createEmpty(userId));
+    }
+
+    public Cart addBookPurchase(final Long userId,
+                                final Long bookId,
+                                final int qty) {
+        final var cart = getOrCreateOpenCart(userId);
+        final var book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new BookNotFoundException(bookId.toString()));
+
+        final var item = CartItem.builder()
+                .id(null)
+                .cartId(cart.getId())
+                .refType(CartItem.RefType.BOOK_PURCHASE)
+                .refId(bookId)
+                .titleSnapshot(book.getTitle())
+                .thumbnailUrl(book.getCoverThumbnailUrl())
+                .listPriceSnapshot(book.getPurchaseAmount())
+                .salePriceSnapshot(book.getDiscountedPurchaseAmount())
+                .rentalDays(0)
+                .rentalPriceSnapshot(null)
+                .quantity(Math.max(1, qty)) // += qty
+                .pointsRate(5)
+                .build();
+
+        return cartRepository.addItem(cart.getId(), item);
+    }
+
+    public Cart addBookRental(final Long userId,
+                              final Long bookId,
+                              final int days,
+                              final int qty) {
+        final var cart = getOrCreateOpenCart(userId);
+        final var book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new BookNotFoundException(bookId.toString()));
+
+        final var validDays = Math.max(1, days);
+        final var item = CartItem.builder()
+                .id(null)
+                .cartId(cart.getId())
+                .refType(CartItem.RefType.BOOK_RENTAL)
+                .refId(bookId)
+                .titleSnapshot(book.getTitle())
+                .thumbnailUrl(book.getCoverThumbnailUrl())
+                .listPriceSnapshot(null)
+                .salePriceSnapshot(null)
+                .rentalDays(validDays)
+                .rentalPriceSnapshot(book.getRentalAmount())
+                .quantity(Math.max(1, qty)) // += qty
+                .pointsRate(3)
+                .build();
+        return cartRepository.addItem(cart.getId(), item);
+    }
+
+    public Cart addProduct(final Long userId,
+                           final Long productId,
+                           final int qty) {
+        final var cart = getOrCreateOpenCart(userId);
+        final var product = productRepository.findProductById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        final var summary = product.getProductSummary();
+
+        final var item = CartItem.builder()
+                .id(null)
+                .cartId(cart.getId())
+                .refType(CartItem.RefType.PRODUCT)
+                .refId(productId)
+                .titleSnapshot(summary.getName())
+                .thumbnailUrl(summary.getThumbnailUrl())
+                .listPriceSnapshot(summary.getUnitPriceAmount())
+                .salePriceSnapshot(summary.getSalePriceAmount())
+                .rentalDays(0)
+                .rentalPriceSnapshot(null)
+                .quantity(Math.max(1, qty)) // += qty
+                .pointsRate(5)
+                .build();
+        return cartRepository.addItem(cart.getId(), item);
+    }
+
+    public Cart removeItem(final Long userId,
+                           final Long cartItemId) {
+        final var cart = getOrCreateOpenCart(userId);
+        return cartRepository.deleteItem(cart.getId(), cartItemId);
+    }
+
+    public Cart getCart(final Long userId) {
+        return getOrCreateOpenCart(userId);
+    }
+}
