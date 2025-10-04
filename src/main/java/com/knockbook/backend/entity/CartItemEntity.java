@@ -1,5 +1,6 @@
 package com.knockbook.backend.entity;
 
+import com.knockbook.backend.domain.CartItem;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -59,4 +60,21 @@ public class CartItemEntity {
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private Instant updatedAt;
+
+    public CartItem toDomain() {
+        return CartItem.builder()
+                .id(id)
+                .cartId(cartId)
+                .refType(CartItem.RefType.valueOf(refType.name()))
+                .refId(refId)
+                .titleSnapshot(titleSnapshot)
+                .thumbnailUrl(thumbnailUrl)
+                .listPriceSnapshot(listPrice)
+                .salePriceSnapshot(salePrice)
+                .rentalDays(rentalDays)
+                .rentalPriceSnapshot(rentalPrice)
+                .quantity(quantity)
+                .pointsRate(pointsRate)
+                .build();
+    }
 }

@@ -205,7 +205,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                 // BigDecimal → double (1dp, HALF_UP)
                 .averageRating(toScale(t.get(P.averageRating)))
                 .reviewCount(t.get(P.reviewCount))
-                .thumbnailUrl("")
+                .thumbnailUrl(galleryUrls.getFirst())
                 .build();
 
         // Step 7: Wrap to ProductResult and return

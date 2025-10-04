@@ -6,14 +6,13 @@ import com.knockbook.backend.entity.CartEntity;
 import com.knockbook.backend.entity.CartItemEntity;
 import com.knockbook.backend.entity.QCartEntity;
 import com.knockbook.backend.entity.QCartItemEntity;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,8 +20,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CartRepositoryImpl implements CartRepository {
 
-    private EntityManager em;
-    private JPAQueryFactory query;
+    private final EntityManager em;
+    private final JPAQueryFactory query;
 
     @Override
     public Optional<Cart> findOpenByUserId(Long userId) {
@@ -32,10 +31,7 @@ public class CartRepositoryImpl implements CartRepository {
         final var cartEntity = query.selectFrom(c)
                 .where(c.userId.eq(userId), c.status.eq(CartEntity.Status.OPEN))
                 .fetchOne();
-
-        if (cartEntity == null) {
-            return Optional.empty();
-        }
+        if (cartEntity == null) return Optional.empty();
 
         final var itemsEntity = query.selectFrom(i)
                 .where(i.cartId.eq(cartEntity.getId()))
@@ -49,8 +45,7 @@ public class CartRepositoryImpl implements CartRepository {
         final var c = QCartEntity.cartEntity;
         final var i = QCartItemEntity.cartItemEntity;
 
-        final var cart = query
-                .selectFrom(c)
+        final var cart = query.selectFrom(c)
                 .where(c.id.eq(cartId))
                 .fetchOne();
 
@@ -69,19 +64,21 @@ public class CartRepositoryImpl implements CartRepository {
     @Transactional
     public Cart createEmpty(Long userId) {
         final var existing = findOpenByUserId(userId);
-        if (existing.isPresent()) return existing.get();
+        if (existing.isPresent()) {
+            return existing.get();
+        }
 
         final var e = CartEntity.builder()
-                        .userId(userId)
-                        .status(CartEntity.Status.OPEN)
-                        .itemCount(0)
-                        .subtotalAmount(0)
-                        .discountAmount(0)
-                        .shippingAmount(0)
-                        .rentalAmount(0)
-                        .totalAmount(0)
-                        .pointsEarnable(0)
-                        .build();
+                .userId(userId)
+                .status(CartEntity.Status.OPEN)
+                .itemCount(0)
+                .subtotalAmount(0)
+                .discountAmount(0)
+                .shippingAmount(0)
+                .rentalAmount(0)
+                .totalAmount(0)
+                .pointsEarnable(0)
+                .build();
 
         em.persist(e);
         em.flush();
@@ -91,6 +88,7 @@ public class CartRepositoryImpl implements CartRepository {
     @Override
     @Transactional
     public Cart addItem(Long cartId, CartItem item) {
+
         if (item.getRefType() == null || item.getRefId() == null) {
             throw new IllegalArgumentException("refType/refId required");
         }
@@ -102,16 +100,16 @@ public class CartRepositoryImpl implements CartRepository {
         final var i = QCartItemEntity.cartItemEntity;
         final var refTypeDomain = item.getRefType();
         final var refType = CartItemEntity.RefType.valueOf(refTypeDomain.name());
-        final var rentalDays = (refTypeDomain == CartItem.RefType.BOOK_RENTAL) ?
-                Math.max(1, item.getRentalDays()) : 0;
-        final var delta = Math.max(1, item.getQuantity());
+        final int rentalDays = (refTypeDomain == CartItem.RefType.BOOK_RENTAL)
+                ? Math.max(1, nz(item.getRentalDays())) : 0;
+        final int delta = Math.max(1, item.getQuantity());
 
         final var updated = query.update(i)
                 .set(i.quantity, i.quantity.add(delta))
                 .where(i.cartId.eq(cartId),
                         i.refType.eq(refType),
                         i.refId.eq(item.getRefId()),
-                        i.rentalDays.eq(rentalDays))
+                        i.rentalDays.coalesce(0).eq(rentalDays))
                 .execute();
 
         if (updated == 0) {
@@ -123,12 +121,25 @@ public class CartRepositoryImpl implements CartRepository {
                     .quantity(delta)
                     .titleSnapshot(item.getTitleSnapshot())
                     .thumbnailUrl(item.getThumbnailUrl())
-                    .listPrice(item.getListPriceSnapshot())
-                    .salePrice(item.getSalePriceSnapshot())
-                    .rentalPrice(item.getRentalPriceSnapshot())
-                    .pointsRate(item.getPointsRate())
+                    .listPrice(nz(item.getListPriceSnapshot()))
+                    .salePrice(nz(item.getSalePriceSnapshot()))
+                    .rentalPrice(nz(item.getRentalPriceSnapshot()))
+                    .pointsRate(nz(item.getPointsRate()))
                     .build();
             em.persist(e);
+        } else {
+            query.update(i)
+                    .set(i.titleSnapshot, i.titleSnapshot.coalesce(item.getTitleSnapshot()))
+                    .set(i.thumbnailUrl, i.thumbnailUrl.coalesce(item.getThumbnailUrl()))
+                    .set(i.salePrice, i.salePrice.coalesce(nz(item.getSalePriceSnapshot())))
+                    .set(i.listPrice, i.listPrice.coalesce(nz(item.getListPriceSnapshot())))
+                    .set(i.rentalPrice, i.rentalPrice.coalesce(nz(item.getRentalPriceSnapshot())))
+                    .set(i.pointsRate, i.pointsRate.coalesce(nz(item.getPointsRate())))
+                    .where(i.cartId.eq(cartId),
+                            i.refType.eq(refType),
+                            i.refId.eq(item.getRefId()),
+                            i.rentalDays.coalesce(0).eq(rentalDays))
+                    .execute();
         }
 
         em.flush();
@@ -140,96 +151,93 @@ public class CartRepositoryImpl implements CartRepository {
     @Transactional
     public Cart deleteItem(Long cartId, Long cartItemId) {
         final var i = QCartItemEntity.cartItemEntity;
-        final var target = query.selectFrom(i)
+        final var n = query.delete(i)
                 .where(i.id.eq(cartItemId), i.cartId.eq(cartId))
-                .fetchOne();
-
-        if (target == null) {
-            throw new IllegalArgumentException(
-                    "cart item not found or not in cart: " + cartItemId);
+                .execute();
+        if (n == 0) {
+            throw new IllegalArgumentException("cart item not found or not in cart: " + cartItemId);
         }
 
-        em.remove(target);
         em.flush();
-
         recalcAndPersist(cartId);
         return findById(cartId).orElseThrow();
     }
 
     private void recalcAndPersist(Long cartId) {
-        final var c = em.find(CartEntity.class, cartId);
-        if (c == null) {
-            throw new IllegalArgumentException("cart not found: " + cartId);
-        }
-
+        final var c = QCartEntity.cartEntity;
         final var i = QCartItemEntity.cartItemEntity;
-        final var items = query
-                .selectFrom(i)
-                .where(i.cartId.eq(cartId))
-                .fetch();
 
-        final var itemCount = items.stream()
-                .mapToInt(CartItemEntity::getQuantity)
-                .sum();
+        final var itemCountExpr = i.quantity.sum().coalesce(0);
 
-        final var subtotal = items.stream()
-                .filter(item ->
-                        item.getRefType() != CartItemEntity.RefType.BOOK_RENTAL)
-                .mapToInt(item -> {
-                    int unit = (item.getSalePrice()!=null) ? item.getSalePrice()
-                            : (item.getListPrice()!=null) ? item.getListPrice() : 0;
-                    return unit * item.getQuantity();
-                }).sum();
+        final var subtotalPerRow = new CaseBuilder()
+                .when(i.refType.ne(CartItemEntity.RefType.BOOK_RENTAL))
+                .then(i.listPrice.coalesce(i.salePrice).coalesce(0).multiply(i.quantity))
+                .otherwise(0);
+        final var subtotalExpr = subtotalPerRow.sum().coalesce(0);
 
-        final var rental = items.stream()
-                .filter(item ->
-                        item.getRefType() == CartItemEntity.RefType.BOOK_RENTAL)
-                .mapToInt(item -> {
-                    final var rentalPrice = item.getRentalPrice();
-                    final var perDay = (rentalPrice != null) ? rentalPrice : 0;
-                    return perDay * item.getRentalDays() * item.getQuantity();
-                }).sum();
+        final var effectiveUnitPrice = new CaseBuilder()
+                .when(i.salePrice.isNull().or(i.salePrice.loe(0)))
+                .then(i.listPrice.coalesce(0))
+                .otherwise(i.salePrice.coalesce(0));
 
-        final var discount = c.getDiscountAmount();
-        final var shipping = c.getShippingAmount();
-        final var total = subtotal + rental + shipping - discount;
+        final var discountedPerRow = new CaseBuilder()
+                .when(i.refType.ne(CartItemEntity.RefType.BOOK_RENTAL))
+                .then(effectiveUnitPrice.multiply(i.quantity))
+                .otherwise(0);
+        final var discountedExpr = discountedPerRow.sum().coalesce(0);
 
-        final var points = items.stream()
-                .mapToInt(item -> {
-                    final var refType = item.getRefType();
-                    final var base = ( refType == CartItemEntity.RefType.BOOK_RENTAL)
-                            ? ((long) (item.getRentalPrice() != null ? item.getRentalPrice() : 0)
-                            * item.getRentalDays() * item.getQuantity())
-                            : ((long) ((item.getSalePrice() != null) ?
-                                item.getSalePrice()
-                                : (item.getListPrice() != null ? item.getListPrice() : 0))
-                                * item.getQuantity());
-                    return  BigDecimal.valueOf(item.getPointsRate())
-                            .multiply(BigDecimal.valueOf(base))
-                            .divide(BigDecimal.valueOf(100), RoundingMode.DOWN)
-                            .intValue();
-                }).sum();
+        final var rentalPerRow = new CaseBuilder()
+                .when(i.refType.eq(CartItemEntity.RefType.BOOK_RENTAL))
+                .then(i.rentalPrice.coalesce(0).multiply(i.quantity))
+                .otherwise(0);
+        final var rentalExpr = rentalPerRow.sum().coalesce(0);
 
-        final var updated = CartEntity.builder()
-                        .id(c.getId())
-                        .userId(c.getUserId())
-                        .status(c.getStatus())
-                        .itemCount(itemCount)
-                        .subtotalAmount(subtotal)
-                        .rentalAmount(rental)
-                        .totalAmount(total)
-                        .pointsEarnable(points);
-        em.merge(c);
+        final var nonRentalPointsPerRow =
+                i.pointsRate.coalesce(0)
+                        .multiply(effectiveUnitPrice.multiply(i.quantity))
+                        .divide(100);
+        final var rentalPointsPerRow =
+                i.pointsRate.coalesce(0)
+                        .multiply(i.rentalPrice.coalesce(0).multiply(i.quantity))
+                        .divide(100);
+
+        final var pointsPerRow = new CaseBuilder()
+                .when(i.refType.eq(CartItemEntity.RefType.BOOK_RENTAL)).then(rentalPointsPerRow)
+                .otherwise(nonRentalPointsPerRow);
+        final var pointsExpr = pointsPerRow.sum().coalesce(0);
+
+        final var agg = query.select(itemCountExpr, subtotalExpr, discountedExpr, rentalExpr, pointsExpr)
+                .from(i).where(i.cartId.eq(cartId)).fetchOne();
+
+        final var itemCount  = agg.get(0, Integer.class);
+        final var subtotal   = agg.get(1, Integer.class);
+        final var discounted = agg.get(2, Integer.class);
+        final var rental     = agg.get(3, Integer.class);
+        final var points     = agg.get(4, Integer.class);
+        final var total      = rental + discounted;
+
+        final var n = query.update(c)
+                .set(c.itemCount, itemCount)
+                .set(c.subtotalAmount, subtotal)
+                .set(c.discountAmount, discounted)
+                .set(c.rentalAmount, rental)
+                .set(c.totalAmount, total)
+                .set(c.pointsEarnable, points)
+                .where(c.id.eq(cartId))
+                .execute();
+        if (n == 0) { throw new IllegalStateException("cart update failed: " + cartId); }
         em.flush();
+        em.clear();
     }
 
-    private Cart toDomain(CartEntity e,
-                          List<CartItemEntity> items) {
+    private static int nz(Integer v) { return v == null ? 0 : v; }
+
+    private Cart toDomain(CartEntity e, List<CartItemEntity> items) {
         return Cart.builder()
                 .id(e.getId())
                 .userId(e.getUserId())
                 .status(Cart.Status.valueOf(e.getStatus().name()))
-                .items(items.stream().map(this::toDomain).toList())
+                .items(items.stream().map(CartItemEntity::toDomain).toList())
                 .itemCount(e.getItemCount())
                 .subtotalAmount(e.getSubtotalAmount())
                 .discountAmount(e.getDiscountAmount())
@@ -237,23 +245,6 @@ public class CartRepositoryImpl implements CartRepository {
                 .rentalAmount(e.getRentalAmount())
                 .totalAmount(e.getTotalAmount())
                 .pointsEarnable(e.getPointsEarnable())
-                .build();
-    }
-
-    private CartItem toDomain(CartItemEntity i) {
-        return CartItem.builder()
-                .id(i.getId())
-                .cartId(i.getCartId())
-                .refType(CartItem.RefType.valueOf(i.getRefType().name()))
-                .refId(i.getRefId())
-                .titleSnapshot(i.getTitleSnapshot())
-                .thumbnailUrl(i.getThumbnailUrl())
-                .listPriceSnapshot(i.getListPrice())
-                .salePriceSnapshot(i.getSalePrice())
-                .rentalDays(i.getRentalDays())
-                .rentalPriceSnapshot(i.getRentalPrice())
-                .quantity(i.getQuantity())
-                .pointsRate(i.getPointsRate())
                 .build();
     }
 }

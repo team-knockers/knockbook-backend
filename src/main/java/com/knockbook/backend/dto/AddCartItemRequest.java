@@ -1,6 +1,9 @@
 package com.knockbook.backend.dto;
 
+import com.knockbook.backend.domain.CartItem;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 @Getter
@@ -8,10 +11,15 @@ import lombok.*;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class AddCartItemRequest {
-    private String refType;
+    @NotNull
+    private CartItem.RefType refType;
+
+    @NotNull @Positive
     private String refId;
+
+    @Positive
+    private Integer rentalDays;
+
     @Min(1)
-    private int rentalDays;
-    @Min(1)
-    private int quantity;
+    private Integer quantity;
 }

@@ -1,5 +1,6 @@
 package com.knockbook.backend.entity;
 
+import com.knockbook.backend.domain.Cart;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -52,5 +53,6 @@ public class CartEntity {
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private Instant updatedAt;
+
 }
 
