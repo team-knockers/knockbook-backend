@@ -4,6 +4,7 @@ import com.knockbook.backend.domain.Cart;
 import com.knockbook.backend.domain.CartItem;
 import com.knockbook.backend.domain.PointsPolicy;
 import com.knockbook.backend.exception.BookNotFoundException;
+import com.knockbook.backend.exception.OpenCartNotFoundException;
 import com.knockbook.backend.exception.ProductNotFoundException;
 import com.knockbook.backend.repository.BookRepository;
 import com.knockbook.backend.repository.CartRepository;
@@ -105,10 +106,19 @@ public class CartService {
         return cartRepository.addItem(cart.getId(), item);
     }
 
-    public Cart removeItem(final Long userId,
-                           final Long cartItemId) {
-        final var cart = getOrCreateOpenCart(userId);
+    public Cart removeAllOfThem(final Long userId,
+                                final Long cartItemId) {
+        final var cart = cartRepository.findOpenByUserId(userId)
+                .orElseThrow(() -> new OpenCartNotFoundException(userId));
         return cartRepository.deleteItem(cart.getId(), cartItemId);
+    }
+
+    public Cart decrementItem(final Long userId,
+                              final Long cartItemId,
+                              final int qty) {
+        final var cart = cartRepository.findOpenByUserId(userId)
+                .orElseThrow(() -> new OpenCartNotFoundException(userId));
+        return cartRepository.decrementItem(cart.getId(), cartItemId, qty);
     }
 
     public Cart getCart(final Long userId) {

@@ -11,4 +11,5 @@ public interface CartRepository {
     Cart createEmpty(Long userId);
     Cart addItem(Long cartId, CartItem item);
     Cart deleteItem(Long cartId, Long cartItemId);
+    Cart decrementItem(Long userId, Long cartItemId, int qty);
 }

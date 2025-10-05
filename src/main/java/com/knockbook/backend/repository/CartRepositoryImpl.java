@@ -163,6 +163,36 @@ public class CartRepositoryImpl implements CartRepository {
         return findById(cartId).orElseThrow();
     }
 
+    @Transactional
+    public Cart decrementItem(Long cartId, Long cartItemId, int qty) {
+        if (qty < 1) {
+            throw new IllegalArgumentException("qty must be >= 1");
+        }
+
+        final var i = QCartItemEntity.cartItemEntity;
+
+        final var target = query.selectFrom(i)
+                .where(i.id.eq(cartItemId), i.cartId.eq(cartId))
+                .fetchOne();
+        if (target == null) {
+            throw new IllegalArgumentException("cart item not found or not in cart: " + cartItemId);
+        }
+
+        final var currentQty = target.getQuantity();
+        if (currentQty <= qty) {
+            em.remove(target);
+        } else {
+            query.update(i)
+                    .set(i.quantity, i.quantity.add(-qty))
+                    .where(i.id.eq(cartItemId), i.cartId.eq(cartId))
+                    .execute();
+        }
+
+        em.flush();
+        recalcAndPersist(cartId);
+        return findById(cartId).orElseThrow();
+    }
+
     private void recalcAndPersist(Long cartId) {
         final var c = QCartEntity.cartEntity;
         final var i = QCartItemEntity.cartItemEntity;

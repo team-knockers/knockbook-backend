@@ -3,6 +3,7 @@ package com.knockbook.backend.controller;
 import com.knockbook.backend.dto.AddCartItemRequest;
 import com.knockbook.backend.dto.CartDto;
 import com.knockbook.backend.service.CartService;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,14 +17,6 @@ public class CartController {
 
     private final CartService cartService;
 
-    /**
-     * Add an item to the user's cart (supports book purchase, book rental, and product).
-     * The service will create an OPEN cart if one does not exist, and the repository
-     * will upsert (merge quantity) and recalculate totals internally.
-     *
-     * Security:
-     *  - Only the owner (authenticated principal) can modify their own cart.
-     */
     @PreAuthorize("#userId == authentication.name")
     @PostMapping("/items")
     public ResponseEntity<CartDto> addItem(
@@ -48,37 +41,36 @@ public class CartController {
         return ResponseEntity.ok().body(dto);
     }
 
-    /**
-     * Remove an item from the user's cart by cartItemId.
-     * If the item does not belong to the cart or does not exist, returns 404.
-     *
-     * Security:
-     *  - Only the owner (authenticated principal) can modify their own cart.
-     */
+//    /items/{cartItemId}?all=true
     @PreAuthorize("#userId == authentication.name")
-    @DeleteMapping("/items/{cartItemId}")
+    @DeleteMapping(path = "/items/{cartItemId}", params = "all=true")
     public ResponseEntity<CartDto> deleteItem(
             @PathVariable String userId,
-            @PathVariable String cartItemId) {
-        try {
-            final var userIdLong = Long.valueOf(userId);
-            final var cartItemIdLong = Long.valueOf(cartItemId);
-            final var cart = cartService.removeItem(userIdLong, cartItemIdLong);
-            final var dto = CartDto.fromModel(cart);
-            return ResponseEntity.ok().body(dto);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+            @PathVariable String cartItemId,
+            @RequestParam boolean all) {
+
+        final var userIdLong = Long.valueOf(userId);
+        final var cartItemIdLong = Long.valueOf(cartItemId);
+        final var cart = cartService.removeAllOfThem(userIdLong, cartItemIdLong);
+        final var dto = CartDto.fromModel(cart);
+        return ResponseEntity.ok().body(dto);
     }
 
+//    /items/{cartItemId}?qty={qty} (qty >= 1)
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping(path = "/items/{cartItemId}", params = "qty")
+    public ResponseEntity<CartDto> decrementItem(
+            @PathVariable String userId,
+            @PathVariable String cartItemId,
+            @RequestParam @Min(1) int qty) {
 
-    /**
-     * Fetch the current (OPEN) cart for the user.
-     * If none exists, the service will create an empty cart and return it.
-     *
-     * Security:
-     *  - Only the owner (authenticated principal) can view their own cart.
-     */
+        final var userIdLong = Long.valueOf(userId);
+        final var cartItemIdLong = Long.valueOf(cartItemId);
+        final var cart = cartService.decrementItem(userIdLong, cartItemIdLong, qty);
+        final var dto = CartDto.fromModel(cart);
+        return ResponseEntity.ok().body(dto);
+    }
+
     @PreAuthorize("#userId == authentication.name")
     @GetMapping
     public ResponseEntity<CartDto> getCart(@PathVariable String userId) {
