@@ -56,7 +56,23 @@ public class CartController {
         return ResponseEntity.ok().body(dto);
     }
 
-//    /items/{cartItemId}?qty={qty} (qty >= 1)
+    //    /items/{cartItemId}?qty={qty} (qty >= 1)
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping(path = "/items/{cartItemId}", params = "qty")
+    public ResponseEntity<CartDto> incrementItem(
+            @PathVariable String userId,
+            @PathVariable String cartItemId,
+            @RequestParam @Min(1) int qty) {
+
+        final var userIdLong = Long.valueOf(userId);
+        final var cartItemIdLong = Long.valueOf(cartItemId);
+        final var cart = cartService.incrementItem(userIdLong, cartItemIdLong, qty);
+        final var dto = CartDto.fromModel(cart);
+        return ResponseEntity.ok().body(dto);
+    }
+
+
+    //    /items/{cartItemId}?qty={qty} (qty >= 1)
     @PreAuthorize("#userId == authentication.name")
     @DeleteMapping(path = "/items/{cartItemId}", params = "qty")
     public ResponseEntity<CartDto> decrementItem(

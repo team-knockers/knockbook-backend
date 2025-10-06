@@ -113,6 +113,15 @@ public class CartService {
         return cartRepository.deleteItem(cart.getId(), cartItemId);
     }
 
+    public Cart incrementItem(final Long userId,
+                              final Long cartItemId,
+                              final int qty) {
+        final var cart = cartRepository.findOpenByUserId(userId)
+                .orElseThrow(() -> new OpenCartNotFoundException(userId));
+        final var q = Math.max(1, qty);
+        return cartRepository.incrementItem(cart.getId(), cartItemId, q);
+    }
+
     public Cart decrementItem(final Long userId,
                               final Long cartItemId,
                               final int qty) {
