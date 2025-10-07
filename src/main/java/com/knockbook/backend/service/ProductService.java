@@ -1,20 +1,22 @@
 package com.knockbook.backend.service;
 
 import com.knockbook.backend.domain.ProductResult;
+import com.knockbook.backend.domain.ProductReviewsResult;
 import com.knockbook.backend.domain.ProductSummary;
 import com.knockbook.backend.exception.ProductNotFoundException;
 import com.knockbook.backend.repository.ProductRepository;
+import com.knockbook.backend.repository.ProductReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 
 @Service
 @RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductReviewRepository productReviewRepository;
 
     public Page<ProductSummary> getProductList(
             String category,
@@ -31,5 +33,15 @@ public class ProductService {
      public ProductResult getProduct(Long productId) {
          return productRepository.findProductById(productId)
                  .orElseThrow(()-> new ProductNotFoundException(productId));
+     }
+
+     public ProductReviewsResult getProductReviews (
+             Long productId,
+             Long userId,
+             Pageable pageable
+     ){
+        return productReviewRepository.findProductReviews(
+                productId, userId, pageable
+        );
      }
 }
