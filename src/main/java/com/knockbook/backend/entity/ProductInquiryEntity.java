@@ -32,10 +32,6 @@ public class ProductInquiryEntity {
     private String answerBody;
 
     @Builder.Default
-    @Column(name = "is_answered", nullable = false)
-    private Boolean isAnswered = false;
-
-    @Builder.Default
     @Column(name = "is_public", nullable = false)
     private Boolean isPublic = false;
 
