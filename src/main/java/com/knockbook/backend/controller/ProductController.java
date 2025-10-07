@@ -24,7 +24,7 @@ public class ProductController {
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}")
     public ResponseEntity<GetProductsResponse> getProducts(
-            @PathVariable("userId") Long userId,
+            @PathVariable("userId") String userId,
             @RequestParam String category,
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(required = false) Integer minPrice,
@@ -81,7 +81,7 @@ public class ProductController {
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{productId}/{userId}")
     public ResponseEntity<ProductDetailDTO> getProductDetail(
-            @PathVariable("userId") Long userId,
+            @PathVariable("userId") String userId,
             @PathVariable("productId") Long productId
     ){
         // Step 1: Call the service
@@ -113,12 +113,14 @@ public class ProductController {
     @GetMapping("/{productId}/reviews/{userId}")
     public ResponseEntity<GetProductReviewsResponse> getProductReviews(
             @PathVariable("productId") Long productId,
-            @PathVariable("userId") Long userId,
+            @PathVariable("userId") String userId,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String order,
             @RequestParam @Min(1) int page,
             @RequestParam @Min(1) int size
     ){
+        final long userIdLong = Long.parseLong(userId);
+
         final var safePage = Math.max(1, page) - 1;
         final var safeSize = Math.max(1, size);
 
@@ -129,7 +131,7 @@ public class ProductController {
         final var sortSpec      = Sort.by(new Sort.Order(sortDirection, sortKeyEnum.name()));
         final var pageable      = PageRequest.of(safePage, safeSize, sortSpec);
 
-        final var result = productService.getProductReviews(productId, userId, pageable);
+        final var result = productService.getProductReviews(productId, userIdLong, pageable);
 
         final var productReviews = result.getProductReviews().stream()
                 .map(r -> ProductReviewDTO.builder()
