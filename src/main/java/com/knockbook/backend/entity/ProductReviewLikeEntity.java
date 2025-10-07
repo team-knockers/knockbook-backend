@@ -21,8 +21,4 @@ public class ProductReviewLikeEntity {
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
-
-    @Column(name = "is_liked", nullable = false)
-    @Builder.Default
-    private Boolean isLiked = true;
 }
