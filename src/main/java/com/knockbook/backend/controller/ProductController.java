@@ -139,7 +139,7 @@ public class ProductController {
                         .displayName(r.getDisplayName())
                         .body(r.getBody())
                         .rating(r.getRating())
-                        .createdAt(r.getCreatedAt().toString()) // ISO-8601
+                        .createdAt(r.getCreatedAt().toString()) 
                         .likesCount(r.getLikesCount())
                         .likedByMe(r.isLikedByMe())
                         .build())
