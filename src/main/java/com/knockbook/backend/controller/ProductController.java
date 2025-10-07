@@ -1,10 +1,9 @@
 package com.knockbook.backend.controller;
 
+import com.knockbook.backend.domain.ProductReviewSortBy;
 import com.knockbook.backend.domain.ProductSortBy;
 import com.knockbook.backend.domain.SortOrder;
-import com.knockbook.backend.dto.GetProductsResponse;
-import com.knockbook.backend.dto.ProductDetailDTO;
-import com.knockbook.backend.dto.ProductSummaryDTO;
+import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.ProductService;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +19,12 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated
 public class ProductController {
-    private final ProductService productReadService;
+    private final ProductService productService;
 
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}")
     public ResponseEntity<GetProductsResponse> getProducts(
-            @PathVariable("userId") String userId,
+            @PathVariable("userId") Long userId,
             @RequestParam String category,
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(required = false) Integer minPrice,
@@ -49,7 +48,7 @@ public class ProductController {
         final var pageable      = PageRequest.of(safePage, safeSize, sortSpec);
 
         // Step 4: Call the service
-        final var result = productReadService.getProductList(
+        final var result = productService.getProductList(
                 category, searchKeyword, minPrice, maxPrice, pageable
         );
 
@@ -82,11 +81,11 @@ public class ProductController {
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{productId}/{userId}")
     public ResponseEntity<ProductDetailDTO> getProductDetail(
-            @PathVariable("userId") String userId,
+            @PathVariable("userId") Long userId,
             @PathVariable("productId") Long productId
     ){
         // Step 1: Call the service
-        final var result = productReadService.getProduct(productId);
+        final var result = productService.getProduct(productId);
         final var s = result.getProductSummary();
         final var d = result.getProductDetail();
 
@@ -107,6 +106,54 @@ public class ProductController {
                 .build();
 
         // Step 3: Return 200 OK
+        return ResponseEntity.ok(body);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{productId}/reviews/{userId}")
+    public ResponseEntity<GetProductReviewsResponse> getProductReviews(
+            @PathVariable("productId") Long productId,
+            @PathVariable("userId") Long userId,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String order,
+            @RequestParam @Min(1) int page,
+            @RequestParam @Min(1) int size
+    ){
+        final var safePage = Math.max(1, page) - 1;
+        final var safeSize = Math.max(1, size);
+
+        final var sortKeyEnum = ProductReviewSortBy.parseOrDefault(sortBy);
+        final var sortOrderEnum = SortOrder.parseOrDefault(order);
+
+        final var sortDirection = (sortOrderEnum == SortOrder.asc) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        final var sortSpec      = Sort.by(new Sort.Order(sortDirection, sortKeyEnum.name()));
+        final var pageable      = PageRequest.of(safePage, safeSize, sortSpec);
+
+        final var result = productService.getProductReviews(productId, userId, pageable);
+
+        final var productReviews = result.getProductReviews().stream()
+                .map(r -> ProductReviewDTO.builder()
+                        .reviewId(String.valueOf(r.getReviewId()))
+                        .displayName(r.getDisplayName())
+                        .body(r.getBody())
+                        .rating(r.getRating())
+                        .createdAt(r.getCreatedAt().toString()) // ISO-8601
+                        .likesCount(r.getLikesCount())
+                        .likedByMe(r.isLikedByMe())
+                        .build())
+                .toList();
+
+
+        final var body = GetProductReviewsResponse.builder()
+                .productReviews(productReviews)
+                .page(result.getPage())
+                .size(result.getSize())
+                .totalItems(result.getStats().getTotalItems())
+                .totalPages(result.getTotalPages())
+                .averageRating(result.getStats().getAverageRating())
+                .starCounts(result.getStats().getStarCounts())
+                .build();
+
         return ResponseEntity.ok(body);
     }
 }
