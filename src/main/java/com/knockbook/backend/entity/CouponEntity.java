@@ -3,7 +3,7 @@ package com.knockbook.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "coupons")
@@ -14,7 +14,7 @@ import java.time.Instant;
 public class CouponEntity {
 
     public enum CouponType { AMOUNT, PERCENT, FREESHIP }
-    public enum CouponScope { ALL, PRODUCTS, BOOKS }
+    public enum CouponScope { ALL, BOOK_RENTAL, BOOK_PURCHASE, PRODUCT }
     public enum CouponStatus { ACTIVE, PAUSED, EXPIRED }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,10 +51,13 @@ public class CouponEntity {
     private CouponScope scope;
 
     @Column(name = "starts_at", nullable = false)
-    private Instant startsAt;
+    private LocalDateTime startsAt;
 
     @Column(name = "ends_at", nullable = false)
-    private Instant endsAt;
+    private LocalDateTime endsAt;
+
+    @Column(name = "validity_months")
+    private Integer validityMonths;
 
     @Column(name = "per_user_limit")
     private Integer perUserLimit;
@@ -67,8 +70,9 @@ public class CouponEntity {
     private Long createdBy;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
+
 }

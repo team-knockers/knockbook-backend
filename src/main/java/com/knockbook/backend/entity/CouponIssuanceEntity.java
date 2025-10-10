@@ -3,7 +3,7 @@ package com.knockbook.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "coupon_issuances")
@@ -25,10 +25,10 @@ public class CouponIssuanceEntity {
     private Long userId;
 
     @Column(name = "issued_at", nullable = false)
-    private Instant issuedAt;
+    private LocalDateTime issuedAt;
 
     @Column(name = "expires_at")
-    private Instant expiresAt;
+    private LocalDateTime expiresAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
