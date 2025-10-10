@@ -13,6 +13,7 @@ import java.time.Instant;
 @Builder
 public class BookReviewEntity {
 
+    public enum TransactionType { PURCHASE, RENTAL }
     public enum Status { VISIBLE, HIDDEN }
 
     @Id
@@ -25,6 +26,10 @@ public class BookReviewEntity {
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "transaction_type", nullable = false)
+    private TransactionType transactionType;
 
     @Column(name = "rating", columnDefinition = "TINYINT UNSIGNED", nullable = false)
     private Integer rating;

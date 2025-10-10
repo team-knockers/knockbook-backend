@@ -8,25 +8,21 @@ import com.knockbook.backend.repository.CredentialRepository;
 import com.knockbook.backend.repository.IdentityRepository;
 import com.knockbook.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    final private PasswordEncoder passwordEncoder;
+    final private UserRepository userRepository;
+    final private IdentityRepository identityRepository;
+    final private CredentialRepository credentialRepository;
+    final private CouponService couponService;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private IdentityRepository identityRepository;
-
-    @Autowired
-    private CredentialRepository credentialRepository;
 
     @Transactional
     public User registerUser(final String email,
@@ -36,6 +32,9 @@ public class UserService {
         final var identity = identityRepository.insert(user.getId(), "local", email);
         final var hash = passwordEncoder.encode(password);
         credentialRepository.insert(identity.getId(), hash);
+        try {
+            couponService.grantWelcomeCoupons(user.getId());
+        } catch (Exception ignored) {}
         return user;
     }
 
