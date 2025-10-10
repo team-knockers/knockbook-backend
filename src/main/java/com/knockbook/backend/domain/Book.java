@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
+@Builder(toBuilder = true)
 public class Book {
 
     public enum Status { VISIBLE, HIDDEN }
@@ -49,4 +49,6 @@ public class Book {
     private Integer rentalCount;
     private BigDecimal averageRating;
     private Integer ratingCount;
+    private Integer rentalPoint;
+    private Integer purchasePoint;
 }

@@ -40,4 +40,6 @@ public class GetBookDetailsResponse {
     private Integer rentalCount;
     private Double averageRating;
     private Integer ratingCount;
+    private Integer rentalPoint;
+    private Integer purchasePoint;
 }
