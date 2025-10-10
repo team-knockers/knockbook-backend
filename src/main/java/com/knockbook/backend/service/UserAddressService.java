@@ -52,10 +52,8 @@ public class UserAddressService {
         return saved;
     }
 
-    public void Update(final Long userId,
-                       final Long addressId,
-                       final UserAddress patch) {
-        final var current = get(userId, addressId);
+    public void update(final UserAddress patch) {
+        final var current = get(patch.getUserId(), patch.getId());
         var merged = UserAddress.builder()
                 .id(current.getId())
                 .userId(current.getUserId())
