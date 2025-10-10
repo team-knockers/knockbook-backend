@@ -146,8 +146,8 @@ public class BookReviewRepositoryImpl implements BookReviewRepository  {
                 .where(L.bookReviewId.in(reviewIds)
                         .and(L.userId.eq(userId))
                         .and(L.isLiked.eq(true))
-                        .and(L.deletedAt.isNull()))
-                .fetch();
+//                        .and(L.deletedAt.isNull())
+                ).fetch();
 
         return Set.copyOf(likedReviewIds);
     }
