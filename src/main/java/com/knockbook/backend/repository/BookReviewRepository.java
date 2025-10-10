@@ -19,4 +19,26 @@ public interface BookReviewRepository {
      * Finds review IDs liked by the given user (used for likedByMe check)
      */
     Set<Long> findLikedReviewIdsBy(Long userId, List<Long> reviewIds);
+
+    /**
+     * Persist a like row for the given user and review.
+     * Should throw DataIntegrityViolationException on unique constraint violation (caller may ignore).
+     */
+    void saveReviewLike(Long userId, Long reviewId);
+
+    /**
+     * Delete a like row for the given user and review if exists.
+     * Returns true if a row was deleted, false otherwise.
+     */
+    boolean deleteReviewLikeIfExists(Long userId, Long reviewId);
+
+    /**
+     * Atomic increment of likes count on the review (DB update).
+     */
+    void incrementLikeCount(Long reviewId);
+
+    /**
+     * Atomic decrement of likes count on the review (DB update, should not go below zero).
+     */
+    void decrementLikeCount(Long reviewId);
 }
