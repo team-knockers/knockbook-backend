@@ -12,11 +12,11 @@ public interface BookReviewRepository {
     /**
      * Returns paginated book reviews with optional filters, including images and likes count
      */
-    Page<BookReview> findAllByBookId(Long bookId, Pageable pageable,
+    Page<BookReview> findAllBy(Long bookId, Pageable pageable,
                                      String transactionType, Boolean sameMbti, String currentUserMbti);
 
     /**
      * Finds review IDs liked by the given user (used for likedByMe check)
      */
-    Set<Long> findLikedReviewIdsByUserAndReviewIds(Long userId, List<Long> reviewIds);
+    Set<Long> findLikedReviewIdsBy(Long userId, List<Long> reviewIds);
 }

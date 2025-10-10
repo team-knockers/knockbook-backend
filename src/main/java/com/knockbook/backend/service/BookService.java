@@ -55,11 +55,11 @@ public class BookService {
             currentUserMbti = null;
         }
 
-        return bookReviewRepository.findAllByBookId(bookId, pageable, transactionType, sameMbti, currentUserMbti);
+        return bookReviewRepository.findAllBy(bookId, pageable, transactionType, sameMbti, currentUserMbti);
     }
 
     public Set<Long> getLikedReviewIds(Long userId, List<Long> reviewIds) {
-        return bookReviewRepository.findLikedReviewIdsByUserAndReviewIds(userId, reviewIds);
+        return bookReviewRepository.findLikedReviewIdsBy(userId, reviewIds);
     }
 
     public List<BookCategory> getAllCategories() {

@@ -31,7 +31,7 @@ public class BookReviewRepositoryImpl implements BookReviewRepository  {
     private static final QUserEntity U = QUserEntity.userEntity;
 
     @Override
-    public Page<BookReview> findAllByBookId(Long bookId, Pageable pageable,
+    public Page<BookReview> findAllBy(Long bookId, Pageable pageable,
                                             String transactionType, Boolean sameMbti, String currentUserMbti) {
         // 0) Define base predicate (visible + not deleted) and add filter (transaction type, same MBTI)
         BooleanExpression predicate = R.bookId.eq(bookId)
@@ -130,7 +130,7 @@ public class BookReviewRepositoryImpl implements BookReviewRepository  {
     }
 
     @Override
-    public Set<Long> findLikedReviewIdsByUserAndReviewIds(Long userId, List<Long> reviewIds) {
+    public Set<Long> findLikedReviewIdsBy(Long userId, List<Long> reviewIds) {
         if (userId == null || reviewIds == null || reviewIds.isEmpty()) {
             return Collections.emptySet();
         }
