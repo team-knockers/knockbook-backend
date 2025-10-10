@@ -15,7 +15,7 @@ public class CouponRedemptionEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "redemption_id")
+    @Column(name = "id")
     private Long id;
 
     @Column(name = "issuance_id", nullable = false)
