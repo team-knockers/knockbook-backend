@@ -29,10 +29,4 @@ public class BookReviewLikeEntity {
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
-    private Instant updatedAt;
-
-    @Column(name = "deleted_at", insertable = false, updatable = true)
-    private Instant deletedAt;
 }

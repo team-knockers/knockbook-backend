@@ -7,14 +7,13 @@ import com.knockbook.backend.repository.BookCategoryRepository;
 import com.knockbook.backend.repository.BookRepository;
 import com.knockbook.backend.repository.BookReviewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class BookService {
@@ -70,6 +69,22 @@ public class BookService {
 
     public Set<Long> getLikedReviewIds(Long userId, List<Long> reviewIds) {
         return bookReviewRepository.findLikedReviewIdsBy(userId, reviewIds);
+    }
+
+    public void likeReview(Long userId, Long reviewId) {
+        try {
+            bookReviewRepository.saveReviewLike(userId, reviewId);
+            bookReviewRepository.incrementLikeCount(reviewId);
+        } catch (DataIntegrityViolationException e) {
+            // Ignore if already exists
+        }
+    }
+
+    public void unlikeReview(Long userId, Long reviewId) {
+        final var deleted = bookReviewRepository.deleteReviewLikeIfExists(userId, reviewId);
+        if (deleted) {
+            bookReviewRepository.decrementLikeCount(reviewId);
+        }
     }
 
     public List<BookCategory> getAllCategories() {
