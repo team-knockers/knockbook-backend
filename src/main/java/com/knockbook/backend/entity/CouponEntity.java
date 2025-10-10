@@ -74,4 +74,5 @@ public class CouponEntity {
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedAt;
+
 }
