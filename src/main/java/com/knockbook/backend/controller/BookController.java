@@ -4,7 +4,6 @@ import com.knockbook.backend.domain.BookReview;
 import com.knockbook.backend.domain.BookReviewImage;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.BookService;
-import com.knockbook.backend.service.UserService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
