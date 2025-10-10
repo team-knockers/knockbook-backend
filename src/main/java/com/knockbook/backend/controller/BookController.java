@@ -1,7 +1,10 @@
 package com.knockbook.backend.controller;
 
+import com.knockbook.backend.domain.BookReview;
+import com.knockbook.backend.domain.BookReviewImage;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.BookService;
+import com.knockbook.backend.service.UserService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,6 +85,70 @@ public class BookController {
         final var response = BookDtoMapper.toDetailDto(bookDetail);
 
         // 4) Return final response
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/{bookId}/reviews")
+    public ResponseEntity<GetBookReviewsResponse> getBookReviews(
+            @PathVariable("userId") String userId,
+            @PathVariable("bookId") String bookId,
+            @RequestParam("page") @Min(1) int page,
+            @RequestParam("size") @Min(1) @Max(50) int size,
+            @RequestParam(required = false, defaultValue = "all") String transactionType,
+            @RequestParam(required = false, defaultValue = "likes") String sortBy,
+            @RequestParam(required = false, defaultValue = "desc") String order,
+            @RequestParam(required = false, defaultValue = "false") Boolean sameMbti
+    ) {
+
+        final var zeroBasedPage = page - 1;
+        final var sort = order.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        final var pageable = PageRequest.of(zeroBasedPage, size, sort);
+
+        final var currentUserId = Long.valueOf(userId); // current authenticated user id
+
+        // 1) Fetch paged reviews including reviewer fields
+        final var reviewsPage = bookService.getBookReviews(Long.valueOf(bookId), pageable,
+                transactionType, currentUserId, sameMbti);
+
+        // 2) Fetch liked review ids for the current user
+        final var reviewIds = reviewsPage.stream()
+                .map(BookReview::getId)
+                .toList();
+        final var likedReviewIds = bookService.getLikedReviewIds(currentUserId, reviewIds);
+
+        // 3) Map domain reviews to DTOs
+        final var reviewDtos = reviewsPage.stream()
+                .map(r -> BookReviewDto.builder()
+                        .id(String.valueOf(r.getId()))
+                        .bookId(String.valueOf(r.getBookId()))
+                        .userId(String.valueOf(r.getUserId()))
+                        .displayName(r.getDisplayName())
+                        .mbti(r.getMbti())
+                        .transactionType(r.getTransactionType().name())
+                        .createdAt(r.getCreatedAt())
+                        .content(r.getContent())
+                        .rating(r.getRating())
+                        .imageUrls(r.getImageUrls() == null ? List.of() : r.getImageUrls().stream()
+                                .map(BookReviewImage::getImageUrl)
+                                .toList())
+                        .likesCount(r.getLikesCount())
+                        .likedByMe(likedReviewIds.contains(r.getId()))
+                        .build()
+                )
+                .toList();
+
+        // 4) build response using incoming page/size and page metadata
+        final var response = GetBookReviewsResponse.builder()
+                .reviews(reviewDtos)
+                .page(page)
+                .size(size)
+                .totalItems((int) reviewsPage.getTotalElements())
+                .totalPages(reviewsPage.getTotalPages())
+                .build();
+
         return ResponseEntity.ok(response);
     }
 
