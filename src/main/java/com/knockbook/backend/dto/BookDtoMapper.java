@@ -90,6 +90,8 @@ public final class BookDtoMapper {
                 .rentalCount(b.getRentalCount())
                 .averageRating(roundToFirstDecimal(b.getAverageRating()))
                 .ratingCount(b.getRatingCount())
+                .purchasePoint(b.getPurchasePoint())
+                .rentalPoint(b.getRentalPoint())
                 .build();
     }
 
