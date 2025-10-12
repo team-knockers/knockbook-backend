@@ -60,7 +60,9 @@ public class UserAddressService {
     }
 
     public void update(final UserAddress patch) {
-        final var current = get(patch.getUserId(), patch.getId());
+        final var userId = patch.getUserId();
+        final var addressId = patch.getId();
+        final var current = get(userId, addressId);
         var merged = UserAddress.builder()
                 .id(current.getId())
                 .userId(current.getUserId())
@@ -84,6 +86,10 @@ public class UserAddressService {
                 .build();
 
         repository.update(merged);
+
+        if (Boolean.TRUE.equals(patch.getIsDefault()) && !Boolean.TRUE.equals(current.getIsDefault())) {
+            repository.setDefault(userId, addressId);
+        }
     }
 
     public void makeDefault(Long userId, Long addressId) {
