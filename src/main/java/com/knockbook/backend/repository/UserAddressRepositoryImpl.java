@@ -87,6 +87,9 @@ public class UserAddressRepositoryImpl implements UserAddressRepository {
     @Override
     public Optional<UserAddress> findById(Long id) {
         final var entity = em.find(UserAddressEntity.class, id);
+        if (entity == null) {
+            return Optional.empty();
+        }
         return Optional.ofNullable(entity.toDomain());
     }
 
@@ -110,11 +113,7 @@ public class UserAddressRepositoryImpl implements UserAddressRepository {
                 .where(ua.userId.eq(userId), ua.isDefault.isTrue())
                 .fetchOne();
 
-        if (entity == null) {
-            return Optional.empty();
-        }
-
-        return Optional.ofNullable(entity.toDomain());
+        return entity == null ? Optional.empty() : Optional.of(entity.toDomain());
     }
 
     @Override
@@ -127,6 +126,8 @@ public class UserAddressRepositoryImpl implements UserAddressRepository {
         qf.update(ua).set(ua.isDefault, true)
                 .where(ua.id.eq(addressId), ua.userId.eq(userId))
                 .execute();
+        em.flush();
+        em.clear();
     }
 
     @Override
