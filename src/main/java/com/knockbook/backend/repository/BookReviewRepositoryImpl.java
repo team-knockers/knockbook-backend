@@ -8,12 +8,16 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
@@ -23,6 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BookReviewRepositoryImpl implements BookReviewRepository  {
 
+    private final EntityManager em;
     private final JPAQueryFactory queryFactory;
 
     private static final QBookReviewEntity R = QBookReviewEntity.bookReviewEntity;
@@ -141,10 +146,53 @@ public class BookReviewRepositoryImpl implements BookReviewRepository  {
                 .where(L.bookReviewId.in(reviewIds)
                         .and(L.userId.eq(userId))
                         .and(L.isLiked.eq(true))
-                        .and(L.deletedAt.isNull()))
-                .fetch();
+//                        .and(L.deletedAt.isNull())
+                ).fetch();
 
         return Set.copyOf(likedReviewIds);
+    }
+
+    @Override
+    @Transactional
+    public void saveReviewLike(Long userId, Long reviewId) {
+        final var like = BookReviewLikeEntity.builder()
+                .bookReviewId(reviewId)
+                .userId(userId)
+                .isLiked(true)
+                .build();
+        try {
+            em.persist(like);
+            em.flush();
+        } catch (PersistenceException ex) {
+            throw new DataIntegrityViolationException("Failed to insert review like", ex);
+        }
+    }
+
+    @Override
+    @Transactional
+    public boolean deleteReviewLikeIfExists(Long userId, Long reviewId) {
+        final var deleted = em.createQuery(
+                        "delete from BookReviewLikeEntity l where l.bookReviewId = :reviewId and l.userId = :userId")
+                .setParameter("reviewId", reviewId)
+                .setParameter("userId", userId)
+                .executeUpdate();
+        return deleted > 0;
+    }
+
+    @Override
+    @Transactional
+    public void incrementLikeCount(Long reviewId) {
+        em.createQuery("update BookReviewEntity r set r.likesCount = r.likesCount + 1 where r.id = :id")
+                .setParameter("id", reviewId)
+                .executeUpdate();
+    }
+
+    @Override
+    @Transactional
+    public void decrementLikeCount(Long reviewId) {
+        em.createQuery("update BookReviewEntity r set r.likesCount = r.likesCount - 1 where r.id = :id and r.likesCount > 0")
+                .setParameter("id", reviewId)
+                .executeUpdate();
     }
 
     /**

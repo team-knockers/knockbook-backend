@@ -152,6 +152,30 @@ public class BookController {
     }
 
     @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/{userId}/{bookId}/reviews/{reviewId}/likes")
+    public ResponseEntity<Void> likeReview(
+            @PathVariable String userId,
+            @PathVariable String bookId,
+            @PathVariable String reviewId
+    ) {
+
+        bookService.likeReview(Long.valueOf(userId), Long.valueOf(reviewId));
+        return ResponseEntity.status(201).build();
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/{userId}/{bookId}/reviews/{reviewId}/likes")
+    public ResponseEntity<Void> unlikeReview(
+            @PathVariable String userId,
+            @PathVariable String bookId,
+            @PathVariable String reviewId
+    ) {
+
+        bookService.unlikeReview(Long.valueOf(userId), Long.valueOf(reviewId));
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}/categories")
     public ResponseEntity<List<BookCategoryDto>> getAllCategories(
             @PathVariable String userId
