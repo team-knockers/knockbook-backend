@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -192,5 +193,27 @@ public class ProductController {
                 .build();
 
         return ResponseEntity.ok(body);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/reviews/{reviewId}/likes/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void likeReview(
+            @PathVariable("reviewId") Long reviewId,
+            @PathVariable("userId") String userId
+    ) {
+        final long userIdLong = Long.parseLong(userId);
+        productService.likeReview(reviewId, userIdLong);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/reviews/{reviewId}/likes/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unlikeReview(
+            @PathVariable("reviewId") Long reviewId,
+            @PathVariable("userId") String userId
+    ) {
+        final long userIdLong = Long.parseLong(userId);
+        productService.unlikeReview(reviewId, userIdLong);
     }
 }
