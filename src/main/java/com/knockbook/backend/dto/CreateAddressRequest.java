@@ -21,7 +21,7 @@ public class CreateAddressRequest {
     private String label;
     private String entryInfo;
     private String deliveryMemo;
-    private Boolean setAsDefault;
+    private Boolean isDefault;
 
     public UserAddress toDomain(Long userId) {
         return UserAddress.builder()
@@ -34,6 +34,7 @@ public class CreateAddressRequest {
                 .address2(address2)
                 .entryInfo(entryInfo)
                 .deliveryMemo(deliveryMemo)
+                .isDefault(isDefault)
                 .build();
     }
 }
