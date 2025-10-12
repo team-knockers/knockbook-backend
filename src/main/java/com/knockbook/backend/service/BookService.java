@@ -62,11 +62,9 @@ public class BookService {
     }
 
     public void likeReview(Long userId, Long reviewId) {
-        try {
-            bookReviewRepository.saveReviewLike(userId, reviewId);
+        final var changed = bookReviewRepository.saveReviewLike(userId, reviewId);
+        if (changed) {
             bookReviewRepository.incrementLikeCount(reviewId);
-        } catch (DataIntegrityViolationException e) {
-            // Ignore if already exists
         }
     }
 

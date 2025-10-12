@@ -160,7 +160,7 @@ public class BookController {
     ) {
 
         bookService.likeReview(Long.valueOf(userId), Long.valueOf(reviewId));
-        return ResponseEntity.status(201).build();
+        return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("#userId == authentication.name")

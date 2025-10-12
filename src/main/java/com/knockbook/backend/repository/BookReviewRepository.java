@@ -24,7 +24,7 @@ public interface BookReviewRepository {
      * Persist a like row for the given user and review.
      * Should throw DataIntegrityViolationException on unique constraint violation (caller may ignore).
      */
-    void saveReviewLike(Long userId, Long reviewId);
+    boolean saveReviewLike(Long userId, Long reviewId);
 
     /**
      * Delete a like row for the given user and review if exists.
