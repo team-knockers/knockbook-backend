@@ -4,6 +4,7 @@ import com.knockbook.backend.domain.UserAddress;
 import com.knockbook.backend.exception.AddressNotBelongToUserException;
 import com.knockbook.backend.exception.UserAddressNotFoundException;
 import com.knockbook.backend.repository.UserAddressRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,7 @@ public class UserAddressService {
         return found;
     }
 
+    @Transactional
     public UserAddress create(final Long userId,
                               final UserAddress payload,
                               final boolean setAsDefault) {
@@ -42,14 +44,19 @@ public class UserAddressService {
                 .address2(payload.getAddress2())
                 .entryInfo(payload.getEntryInfo())
                 .deliveryMemo(payload.getDeliveryMemo())
-                .isDefault(Boolean.TRUE.equals(payload.getIsDefault()) || setAsDefault)
+                .isDefault(false)
                 .build();
 
         final var saved = repository.insert(toSave);
-        if (saved.getIsDefault()) {
-            repository.setDefault(userId, saved.getId());
+
+        if (!setAsDefault) {
+            return saved;
         }
-        return saved;
+
+        final var addressId = saved.getId();
+        repository.setDefault(userId, addressId);
+        return repository.findById(addressId)
+                .orElseThrow(() -> new UserAddressNotFoundException(addressId));
     }
 
     public void update(final UserAddress patch) {
