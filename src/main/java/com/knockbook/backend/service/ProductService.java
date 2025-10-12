@@ -8,6 +8,7 @@ import com.knockbook.backend.exception.ProductNotFoundException;
 import com.knockbook.backend.repository.ProductInquiryRepository;
 import com.knockbook.backend.repository.ProductRepository;
 import com.knockbook.backend.repository.ProductReviewRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -56,4 +57,17 @@ public class ProductService {
                 productId, pageable
         );
      }
+
+    @Transactional
+    public void likeReview(Long reviewId, Long userId) {
+        if (productReviewRepository.addLikeIfAbsent(reviewId, userId)) {
+            productReviewRepository.incrementLikesCount(reviewId);
+        }
+    }
+    @Transactional
+    public void unlikeReview(Long reviewId, Long userId) {
+        if (productReviewRepository.removeLikeIfPresent(reviewId, userId)) {
+            productReviewRepository.decrementLikesCount(reviewId);
+        }
+    }
 }
