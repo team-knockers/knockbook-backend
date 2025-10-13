@@ -1,6 +1,7 @@
 package com.knockbook.backend.entity;
 
 import com.knockbook.backend.domain.OrderAggregate;
+import com.knockbook.backend.domain.OrderItem;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,6 +9,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.List;
 
 @Entity
 @Table(name = "orders")
@@ -104,7 +106,7 @@ public class OrderEntity {
                 .build();
     }
 
-    public OrderAggregate toModel() {
+    public OrderAggregate toModel(List<OrderItem> items) {
         return OrderAggregate.builder()
                 .id(this.id)
                 .userId(this.userId)
@@ -124,6 +126,7 @@ public class OrderEntity {
                 .placedAt(toInstant(this.placedAt))
                 .cancelledAt(toInstant(this.cancelledAt))
                 .completedAt(toInstant(this.completedAt))
+                .items(items)
                 .build();
     }
 
