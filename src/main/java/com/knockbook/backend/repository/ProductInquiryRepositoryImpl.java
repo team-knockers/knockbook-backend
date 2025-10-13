@@ -13,9 +13,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-
 @Repository
 @RequiredArgsConstructor
 public class ProductInquiryRepositoryImpl implements ProductInquiryRepository {
@@ -24,7 +21,6 @@ public class ProductInquiryRepositoryImpl implements ProductInquiryRepository {
     // QueryDSL Q-types (entity metamodels)
     private static final QProductInquiryEntity PI = QProductInquiryEntity.productInquiryEntity;
     private static final QUserEntity U = QUserEntity.userEntity;
-    private final java.time.Clock clock = Clock.systemUTC();
 
     @Override
     public Page<ProductInquiry> findProductInquiries(
