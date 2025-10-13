@@ -1,5 +1,6 @@
 package com.knockbook.backend.entity;
 
+import com.knockbook.backend.domain.OrderItem;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -68,4 +69,50 @@ public class OrderItemEntity {
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedAt;
+
+    public static OrderItemEntity fromModel(OrderItem item) {
+        if (item == null) { return null; }
+        return OrderItemEntity.builder()
+                .id(item.getId())
+                .orderId(item.getOrderId())
+                .refType(item.getRefType() == null ? null : RefType.valueOf(item.getRefType().name()))
+                .refId(item.getRefId())
+                .titleSnapshot(item.getTitleSnapshot())
+                .thumbnailUrl(item.getThumbnailUrl())
+                .listPriceSnapshot(nz(item.getListPriceSnapshot()))
+                .salePriceSnapshot(nz(item.getSalePriceSnapshot()))
+                .quantity(nz(item.getQuantity(), 1))
+                .rentalDays(nz(item.getRentalDays()))
+                .rentalPriceSnapshot(nz(item.getRentalPriceSnapshot()))
+                .pointsRate(nz(item.getPointsRate()))
+                .pointsEarnedItem(nz(item.getPointsEarnedItem()))
+                .lineSubtotalAmount(nz(item.getLineSubtotalAmount()))
+                .lineDiscountAmount(nz(item.getLineDiscountAmount()))
+                .lineTotalAmount(nz(item.getLineTotalAmount()))
+                .build();
+    }
+
+    public OrderItem toModel() {
+        return OrderItem.builder()
+                .id(this.id)
+                .orderId(this.orderId)
+                .refType(this.refType == null ? null : OrderItem.RefType.valueOf(this.refType.name()))
+                .refId(this.refId)
+                .titleSnapshot(this.titleSnapshot)
+                .thumbnailUrl(this.thumbnailUrl)
+                .listPriceSnapshot(nz(this.listPriceSnapshot))
+                .salePriceSnapshot(nz(this.salePriceSnapshot))
+                .quantity(nz(this.quantity, 1))
+                .rentalDays(nz(this.rentalDays))
+                .rentalPriceSnapshot(nz(this.rentalPriceSnapshot))
+                .pointsRate(nz(this.pointsRate))
+                .pointsEarnedItem(nz(this.pointsEarnedItem))
+                .lineSubtotalAmount(nz(this.lineSubtotalAmount))
+                .lineDiscountAmount(nz(this.lineDiscountAmount))
+                .lineTotalAmount(nz(this.lineTotalAmount))
+                .build();
+    }
+
+    private static int nz(Integer v) { return v == null ? 0 : v; }
+    private static int nz(Integer v, int d) { return v == null ? d : v; }
 }

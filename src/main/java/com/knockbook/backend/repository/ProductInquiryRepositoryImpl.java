@@ -1,10 +1,12 @@
 package com.knockbook.backend.repository;
 
 import com.knockbook.backend.domain.ProductInquiry;
+import com.knockbook.backend.entity.ProductInquiryEntity;
 import com.knockbook.backend.entity.QProductInquiryEntity;
 import com.knockbook.backend.entity.QUserEntity;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class ProductInquiryRepositoryImpl implements ProductInquiryRepository {
     private final JPAQueryFactory query;
+    private final EntityManager em;
     // QueryDSL Q-types (entity metamodels)
     private static final QProductInquiryEntity PI = QProductInquiryEntity.productInquiryEntity;
     private static final QUserEntity U = QUserEntity.userEntity;
@@ -66,5 +69,23 @@ public class ProductInquiryRepositoryImpl implements ProductInquiryRepository {
         final var totalElements = (total == null) ? 0L : total;
 
         return new PageImpl<>(content, pageable, totalElements);
+    }
+
+    @Override
+    public Long createInquiry(Long productId, Long userId, String title, String questionBody) {
+        final var inquiry = ProductInquiryEntity.builder()
+                .productId(productId)
+                .userId(userId)
+                .title(title)
+                .questionBody(questionBody)
+                .answerBody(null)
+                .isPublic(true)
+                .answeredAt(null)
+                .deletedAt(null)
+                .build();
+
+        em.persist(inquiry);  // insert
+        em.flush();
+        return inquiry.getInquiryId();
     }
 }

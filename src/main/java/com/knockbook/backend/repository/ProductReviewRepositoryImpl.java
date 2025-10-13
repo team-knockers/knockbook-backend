@@ -8,6 +8,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.querydsl.jpa.JPAExpressions;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -23,6 +24,8 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class ProductReviewRepositoryImpl implements ProductReviewRepository{
     private final JPAQueryFactory query;
+    private final EntityManager em;
+
     // QueryDSL Q-types (entity metamodels)
     private static final QProductReviewEntity PR = QProductReviewEntity.productReviewEntity;
     private static final QUserEntity U = QUserEntity.userEntity;
@@ -128,6 +131,46 @@ public class ProductReviewRepositoryImpl implements ProductReviewRepository{
                 .build();
 
         return result;
+    }
+
+    @Override
+    public boolean addLikeIfAbsent(Long reviewId, Long userId) {
+        boolean likeRowExists = query.selectOne()
+                .from(PRL)
+                .where(PRL.reviewId.eq(reviewId).and(PRL.userId.eq(userId)))
+                .fetchFirst() != null;
+        if (likeRowExists) return false;
+
+        var like = ProductReviewLikeEntity.builder()
+                .reviewId(reviewId)
+                .userId(userId)
+                .build();
+        em.persist(like);
+        return true;
+    }
+
+    @Override
+    public boolean removeLikeIfPresent(Long reviewId, Long userId) {
+        long affected = query.delete(PRL)
+                .where(PRL.reviewId.eq(reviewId).and(PRL.userId.eq(userId)))
+                .execute();
+        return affected == 1;
+    }
+
+    @Override
+    public void incrementLikesCount(Long reviewId) {
+        query.update(PR)
+                .set(PR.likesCount, PR.likesCount.add(1))
+                .where(PR.reviewId.eq(reviewId))
+                .execute();
+    }
+
+    @Override
+    public void decrementLikesCount(Long reviewId) {
+        query.update(PR)
+                .set(PR.likesCount, PR.likesCount.subtract(1))
+                .where(PR.reviewId.eq(reviewId).and(PR.likesCount.gt(0)))
+                .execute();
     }
 
     // pageable sort → QueryDSL order

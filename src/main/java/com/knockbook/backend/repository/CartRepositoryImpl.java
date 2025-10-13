@@ -61,6 +61,35 @@ public class CartRepositoryImpl implements CartRepository {
     }
 
     @Override
+    public List<CartItem> findSelectableItems(Long userId, List<Long> cartItemIds) {
+        final var c = QCartEntity.cartEntity;
+        final var ci = QCartItemEntity.cartItemEntity;
+
+        final var rows = query.select(ci)
+                .from(ci, c)
+                .where(
+                        ci.cartId.eq(c.id),
+                        c.userId.eq(userId),
+                        c.status.eq(CartEntity.Status.OPEN),
+                        ci.id.in(cartItemIds)
+                )
+                .fetch();
+
+        return rows.stream().map(it -> CartItem.builder()
+                .id(it.getId())
+                .refType(CartItem.RefType.valueOf(it.getRefType().name()))
+                .refId(it.getRefId())
+                .titleSnapshot(it.getTitleSnapshot())
+                .thumbnailUrl(it.getThumbnailUrl())
+                .listPriceSnapshot(it.getListPrice())
+                .salePriceSnapshot(it.getSalePrice())
+                .rentalPriceSnapshot(it.getRentalPrice())
+                .quantity(it.getQuantity())
+                .build()
+        ).toList();
+    }
+
+    @Override
     @Transactional
     public Cart createEmpty(Long userId) {
         final var existing = findOpenByUserId(userId);

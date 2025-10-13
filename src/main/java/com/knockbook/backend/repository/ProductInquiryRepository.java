@@ -9,4 +9,11 @@ public interface ProductInquiryRepository {
             Long productId,
             Pageable pageable
     );
+
+    public Long createInquiry(
+            Long productId,
+            Long userId,
+            String title,
+            String questionBody
+    );
 }
