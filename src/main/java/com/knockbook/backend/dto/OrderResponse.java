@@ -33,6 +33,7 @@ public class OrderResponse {
         return OrderResponse.builder()
                 .id(String.valueOf(agg.getId()))
                 .userId(String.valueOf(agg.getUserId()))
+                .cartId(String.valueOf(agg.getCartId()))
                 .status(agg.getStatus().name())
                 .paymentStatus(agg.getPaymentStatus().name())
                 .itemCount(agg.getItemCount())

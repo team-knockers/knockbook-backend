@@ -33,6 +33,7 @@ public class OrderItemResponse {
     public static OrderItemResponse toResponse(final OrderItem i) {
         return OrderItemResponse.builder()
                 .id(i.getId() == null ? null : String.valueOf(i.getId()))
+                .orderId(i.getOrderId() == null ? null : String.valueOf(i.getOrderId()))
                 .refType(i.getRefType().name())
                 .refId(String.valueOf(i.getRefId()))
                 .titleSnapshot(i.getTitleSnapshot())
