@@ -2,6 +2,7 @@ package com.knockbook.backend.repository;
 
 import com.knockbook.backend.domain.BookReview;
 import com.knockbook.backend.domain.BookReviewImage;
+import com.knockbook.backend.domain.BookReviewStatistic;
 import com.knockbook.backend.entity.*;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Repository
 @RequiredArgsConstructor
@@ -227,6 +229,71 @@ public class BookReviewRepositoryImpl implements BookReviewRepository  {
                 .where(R.id.eq(reviewId))
                 .fetchOne();
         return likeCount == null ? 0 : likeCount;
+    }
+
+    @Override
+    public BookReviewStatistic findBookReviewStatisticsBy(Long bookId) {
+        BooleanExpression predicate = R.bookId.eq(bookId)
+                .and(R.status.eq(BookReviewEntity.Status.VISIBLE))
+                .and(R.deletedAt.isNull());
+
+        // avg rating (nullable) and total count
+        final var avg = queryFactory.select(R.rating.avg())
+                .from(R)
+                .where(predicate)
+                .fetchOne();
+
+        final var total = queryFactory.select(R.count())
+                .from(R)
+                .where(predicate)
+                .fetchOne();
+
+        final var averageRating = avg == null ? 0.0 : Math.round(avg * 10.0) / 10.0;
+        final var totalCount = total == null ? 0L : total;
+
+        // counts by score
+        final var scoreTuples = queryFactory.select(R.rating, R.count())
+                .from(R)
+                .where(predicate)
+                .groupBy(R.rating)
+                .fetch();
+
+        final var scoreMap = scoreTuples.stream()
+                .filter(t -> t.get(R.rating) != null)
+                .collect(Collectors.toMap(
+                        t -> t.get(R.rating),
+                        t -> Optional.ofNullable(t.get(R.count())).orElse(0L)
+                ));
+
+        final var scoreCounts = IntStream.rangeClosed(1, 5)
+                .mapToObj(score -> BookReviewStatistic.ScoreCount.builder()
+                        .score(score)
+                        .count(scoreMap.getOrDefault(score, 0L))
+                        .build())
+                .collect(Collectors.toList());
+
+        // mbti counts (join user)
+        final var mbtiTuples = queryFactory.select(U.mbti, R.count())
+                .from(R)
+                .leftJoin(U).on(U.id.eq(R.userId))
+                .where(predicate)
+                .groupBy(U.mbti)
+                .fetch();
+
+        final var mbtiCounts = mbtiTuples.stream()
+                .filter(t -> {
+                    String mbti = t.get(U.mbti);
+                    return mbti != null && !mbti.trim().isEmpty();
+                })
+                .map(t -> new BookReviewStatistic.MbtiCount(t.get(U.mbti), Optional.ofNullable(t.get(R.count())).orElse(0L)))
+                .collect(Collectors.toList());
+
+        return BookReviewStatistic.builder()
+                .averageRating(averageRating)
+                .totalCount(totalCount)
+                .scoreCounts(scoreCounts)
+                .mbtiCounts(mbtiCounts)
+                .build();
     }
 
     /**

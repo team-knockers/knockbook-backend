@@ -1,6 +1,7 @@
 package com.knockbook.backend.repository;
 
 import com.knockbook.backend.domain.BookReview;
+import com.knockbook.backend.domain.BookReviewStatistic;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -51,4 +52,9 @@ public interface BookReviewRepository {
      * Returns the total number of likes for the specified review.
      */
     int getLikeCount(Long reviewId);
+
+    /**
+     * Returns book review stats: avg rating, total, score counts, and MBTI counts.
+     */
+    BookReviewStatistic findBookReviewStatisticsBy(Long bookId);
 }
