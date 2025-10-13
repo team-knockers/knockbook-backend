@@ -1,9 +1,11 @@
 package com.knockbook.backend.service;
 
+import com.knockbook.backend.domain.ProductInquiry;
 import com.knockbook.backend.domain.ProductResult;
 import com.knockbook.backend.domain.ProductReviewsResult;
 import com.knockbook.backend.domain.ProductSummary;
 import com.knockbook.backend.exception.ProductNotFoundException;
+import com.knockbook.backend.repository.ProductInquiryRepository;
 import com.knockbook.backend.repository.ProductRepository;
 import com.knockbook.backend.repository.ProductReviewRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductReviewRepository productReviewRepository;
+    private final ProductInquiryRepository productInquiryRepository;
 
     public Page<ProductSummary> getProductList(
             String category,
@@ -42,6 +45,15 @@ public class ProductService {
      ){
         return productReviewRepository.findProductReviews(
                 productId, userId, pageable
+        );
+     }
+
+     public Page<ProductInquiry> getProductInquiries(
+             Long productId,
+             Pageable pageable
+     ){
+        return productInquiryRepository.findProductInquiries(
+                productId, pageable
         );
      }
 }

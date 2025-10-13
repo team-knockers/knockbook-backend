@@ -81,8 +81,8 @@ public class ProductController {
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{productId}/{userId}")
     public ResponseEntity<ProductDetailDTO> getProductDetail(
-            @PathVariable("userId") String userId,
-            @PathVariable("productId") Long productId
+            @PathVariable("productId") Long productId,
+            @PathVariable("userId") String userId
     ){
         // Step 1: Call the service
         final var result = productService.getProduct(productId);
@@ -154,6 +154,41 @@ public class ProductController {
                 .totalPages(result.getTotalPages())
                 .averageRating(result.getStats().getAverageRating())
                 .starCounts(result.getStats().getStarCounts())
+                .build();
+
+        return ResponseEntity.ok(body);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{productId}/inquiries/{userId}")
+    public ResponseEntity<GetProductInquiriesResponse> getProductInquiries(
+            @PathVariable("productId") Long productId,
+            @PathVariable("userId") String userId,
+            @RequestParam @Min(1) int page,
+            @RequestParam @Min(1) int size
+    ) {
+        final var safePage = Math.max(1, page) - 1;
+        final var safeSize = Math.max(1, size);
+        final var pageable = PageRequest.of(safePage, safeSize);
+
+        final var result = productService.getProductInquiries(productId, pageable);
+        final var productInquiries = result.getContent().stream()
+                .map(i -> ProductInquiryDTO.builder()
+                        .inquiryId(String.valueOf(i.getInquiryId()))
+                        .displayName(i.getDisplayName())
+                        .title(i.getTitle())
+                        .questionBody(i.getQuestionBody())
+                        .createdAt(i.getCreatedAt().toString())
+                        .answerBody(i.getAnswerBody())
+                        .answeredAt(i.getAnsweredAt() == null ? null : i.getAnsweredAt().toString())
+                        .status((i.getAnsweredAt() != null) ? "ANSWERED" : "WAITING")
+                        .build())
+                .toList();
+
+        final var body = GetProductInquiriesResponse.builder()
+                .productInquiries(productInquiries)
+                .page(result.getNumber() + 1)
+                .totalPages(result.getTotalPages())
                 .build();
 
         return ResponseEntity.ok(body);

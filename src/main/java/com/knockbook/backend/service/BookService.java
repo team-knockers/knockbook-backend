@@ -7,7 +7,6 @@ import com.knockbook.backend.repository.BookCategoryRepository;
 import com.knockbook.backend.repository.BookRepository;
 import com.knockbook.backend.repository.BookReviewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,8 +38,18 @@ public class BookService {
     }
 
     public Book getBookDetails(Long id) {
-        return bookRepository.findById(id)
+        final var rentalPointRate = PointsPolicy.of(CartItem.RefType.BOOK_RENTAL);
+        final var purchasePointRate = PointsPolicy.of(CartItem.RefType.BOOK_PURCHASE);
+        final var res = bookRepository.findById(id)
                 .orElseThrow(() -> new BookNotFoundException(String.valueOf(id)));
+
+        final var rentalPoint = (int) Math.floor(res.getRentalAmount() * rentalPointRate / 100.0);
+        final var purchasePoint = (int) Math.floor(res.getDiscountedPurchaseAmount() * purchasePointRate / 100.0);
+
+        return res.toBuilder()
+                .rentalPoint(rentalPoint)
+                .purchasePoint(purchasePoint)
+                .build();
     }
 
     public Page<BookReview> getBookReviews(Long bookId, Pageable pageable, String transactionType,
