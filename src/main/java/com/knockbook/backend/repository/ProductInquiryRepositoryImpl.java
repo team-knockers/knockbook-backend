@@ -85,6 +85,7 @@ public class ProductInquiryRepositoryImpl implements ProductInquiryRepository {
                 .build();
 
         em.persist(inquiry);  // insert
+        em.flush();
         return inquiry.getInquiryId();
     }
 }
