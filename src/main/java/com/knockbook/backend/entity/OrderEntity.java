@@ -1,9 +1,13 @@
 package com.knockbook.backend.entity;
 
+import com.knockbook.backend.domain.OrderAggregate;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 
 @Entity
 @Table(name = "orders")
@@ -11,8 +15,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor @AllArgsConstructor @Builder
 public class OrderEntity {
 
-    public enum OrderStatus { PENDING, FULFILLING, COMPLETED, CANCELLED }
+    private static final ZoneId ZONE_SEOUL = ZoneId.of("Asia/Seoul");
 
+    public enum OrderStatus { PENDING, FULFILLING, COMPLETED, CANCELLED }
     public enum PaymentStatus { READY, PAID, PARTIAL_REFUNDED, REFUNDED, FAILED, CANCELLED }
 
     @Id
@@ -74,4 +79,66 @@ public class OrderEntity {
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedAt;
+
+    public static OrderEntity fromModel(OrderAggregate agg) {
+        if (agg == null) return null;
+        return OrderEntity.builder()
+                .id(agg.getId())
+                .userId(agg.getUserId())
+                .cartId(agg.getCartId())
+                .status(agg.getStatus() == null ? OrderStatus.PENDING
+                        : OrderStatus.valueOf(agg.getStatus().name()))
+                .paymentStatus(agg.getPaymentStatus() == null ? PaymentStatus.READY
+                        : PaymentStatus.valueOf(agg.getPaymentStatus().name()))
+                .itemCount(nz(agg.getItemCount()))
+                .subtotalAmount(nz(agg.getSubtotalAmount()))
+                .discountAmount(nz(agg.getDiscountAmount()))
+                .shippingAmount(nz(agg.getShippingAmount()))
+                .rentalAmount(nz(agg.getRentalAmount()))
+                .totalAmount(nz(agg.getTotalAmount()))
+                .pointsSpent(nz(agg.getPointsSpent()))
+                .pointsEarned(nz(agg.getPointsEarned()))
+                .placedAt(toLocalDateTimeOrNow(agg.getPlacedAt()))
+                .cancelledAt(toLocalDateTime(agg.getCancelledAt()))
+                .completedAt(toLocalDateTime(agg.getCompletedAt()))
+                .build();
+    }
+
+    public OrderAggregate toModel() {
+        return OrderAggregate.builder()
+                .id(this.id)
+                .userId(this.userId)
+                .cartId(this.cartId)
+                .status(this.status == null ? null
+                        : OrderAggregate.Status.valueOf(this.status.name()))
+                .paymentStatus(this.paymentStatus == null ? null
+                        : OrderAggregate.PaymentStatus.valueOf(this.paymentStatus.name()))
+                .itemCount(this.itemCount)
+                .subtotalAmount(this.subtotalAmount)
+                .discountAmount(this.discountAmount)
+                .shippingAmount(this.shippingAmount)
+                .rentalAmount(this.rentalAmount)
+                .totalAmount(this.totalAmount)
+                .pointsSpent(this.pointsSpent)
+                .pointsEarned(this.pointsEarned)
+                .placedAt(toInstant(this.placedAt))
+                .cancelledAt(toInstant(this.cancelledAt))
+                .completedAt(toInstant(this.completedAt))
+                .build();
+    }
+
+    private static int nz(Integer v) { return v == null ? 0 : v; }
+
+    private static LocalDateTime toLocalDateTime(Instant instant) {
+        return instant == null ? null : LocalDateTime.ofInstant(instant, ZONE_SEOUL);
+    }
+
+    private static LocalDateTime toLocalDateTimeOrNow(Instant instant) {
+        return instant == null ? LocalDateTime.now(ZONE_SEOUL) : LocalDateTime.ofInstant(instant, ZONE_SEOUL);
+    }
+
+    private static Instant toInstant(LocalDateTime ldt) {
+        return ldt == null ? null : ldt.atZone(ZONE_SEOUL).toInstant();
+    }
 }
+
