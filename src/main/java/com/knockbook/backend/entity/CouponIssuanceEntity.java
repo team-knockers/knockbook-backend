@@ -1,11 +1,9 @@
 package com.knockbook.backend.entity;
 
-import com.knockbook.backend.domain.CouponIssuance;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 @Entity
 @Table(name = "coupon_issuances")
