@@ -152,6 +152,55 @@ public class BookController {
     }
 
     @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/{bookId}/reviews/statistics")
+    public ResponseEntity<GetBookReviewStatisticsResponse> getBookReviewStatistics(
+            @PathVariable("userId") String userId,
+            @PathVariable("bookId") String bookId
+    ) {
+        // 1) Fetch aggregated statistics from service
+        final var stat = bookService.getBookReviewStatistics(Long.valueOf(bookId));
+
+        // 2) Extract aggregated values (totalCount, averageRating)
+        final var totalCount =  stat.getTotalCount();
+        final var averageRating = stat.getAverageRating();
+
+        // 3) Map score counts to DTOs
+        final var scoreDtos = stat.getScoreCounts().stream()
+                .map(s -> BookReviewScoreCountDto.builder()
+                        .score(s.getScore())
+                        .count(s.getCount() == null ? 0 : s.getCount().intValue())
+                        .build())
+                .toList();
+
+        // 4) Compute MBTI percentages (rounded to 1 decimal) and map to DTOs
+        final var mbtiDtos = stat.getMbtiCounts().stream()
+                .map(m -> {
+                    final var pct = totalCount == 0L ? 0.0 : (m.getCount() * 100.0) / totalCount;
+                    final var rounded = Math.round(pct * 10.0) / 10.0;
+                    return BookReviewMbtiPercentageDto.builder()
+                            .mbti(m.getMbti())
+                            .percentage(rounded)
+                            .build();
+                })
+                .sorted(java.util.Comparator.comparing(BookReviewMbtiPercentageDto::getPercentage).reversed())
+                .toList();
+
+        // 5) Build response DTO (clamp reviewCount to Integer.MAX_VALUE to avoid overflow)
+        final var reviewCount = totalCount > Integer.MAX_VALUE
+                ? Integer.MAX_VALUE
+                : totalCount.intValue();
+
+        final var response = GetBookReviewStatisticsResponse.builder()
+                .averageRating(averageRating)
+                .reviewCount(reviewCount)
+                .scoreCounts(scoreDtos)
+                .mbtiPercentage(mbtiDtos)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
     @PutMapping("/{userId}/{bookId}/reviews/{reviewId}/likes")
     public ResponseEntity<BookReviewsLikeResponse> likeReview(
             @PathVariable String userId,
