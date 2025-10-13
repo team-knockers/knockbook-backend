@@ -1,6 +1,7 @@
 package com.knockbook.backend.service;
 
 import com.knockbook.backend.domain.*;
+import com.knockbook.backend.dto.BookReviewsLikeResponse;
 import com.knockbook.backend.exception.BookNotFoundException;
 import com.knockbook.backend.exception.CategoryNotFoundException;
 import com.knockbook.backend.repository.BookCategoryRepository;
@@ -70,11 +71,19 @@ public class BookService {
         return bookReviewRepository.findLikedReviewIdsBy(userId, reviewIds);
     }
 
-    public void likeReview(Long userId, Long reviewId) {
+    public BookReviewsLikeResponse likeReview(Long userId, Long reviewId) {
         final var changed = bookReviewRepository.saveReviewLike(userId, reviewId);
         if (changed) {
             bookReviewRepository.incrementLikeCount(reviewId);
         }
+
+        final var liked = bookReviewRepository.existsReviewLike(userId, reviewId);
+        final var count = bookReviewRepository.getLikeCount(reviewId);
+
+        return BookReviewsLikeResponse.builder()
+                .liked(liked)
+                .count(count)
+                .build();
     }
 
     public void unlikeReview(Long userId, Long reviewId) {

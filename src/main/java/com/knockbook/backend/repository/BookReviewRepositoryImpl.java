@@ -211,6 +211,24 @@ public class BookReviewRepositoryImpl implements BookReviewRepository  {
                 .execute();
     }
 
+    @Override
+    public boolean existsReviewLike(Long userId, Long reviewId) {
+        final var found = queryFactory.selectOne()
+                .from(L)
+                .where(L.bookReviewId.eq(reviewId).and(L.userId.eq(userId)).and(L.isLiked.eq(true)))
+                .fetchFirst();
+        return found != null;
+    }
+
+    @Override
+    public int getLikeCount(Long reviewId) {
+        final var likeCount = queryFactory.select(R.likesCount)
+                .from(R)
+                .where(R.id.eq(reviewId))
+                .fetchOne();
+        return likeCount == null ? 0 : likeCount;
+    }
+
     /**
      * Converts Spring Sort into QueryDSL OrderSpecifiers.
      */

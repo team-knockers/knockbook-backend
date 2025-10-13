@@ -153,14 +153,14 @@ public class BookController {
 
     @PreAuthorize("#userId == authentication.name")
     @PutMapping("/{userId}/{bookId}/reviews/{reviewId}/likes")
-    public ResponseEntity<Void> likeReview(
+    public ResponseEntity<BookReviewsLikeResponse> likeReview(
             @PathVariable String userId,
             @PathVariable String bookId,
             @PathVariable String reviewId
     ) {
 
-        bookService.likeReview(Long.valueOf(userId), Long.valueOf(reviewId));
-        return ResponseEntity.ok().build();
+        var response = bookService.likeReview(Long.valueOf(userId), Long.valueOf(reviewId));
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("#userId == authentication.name")
