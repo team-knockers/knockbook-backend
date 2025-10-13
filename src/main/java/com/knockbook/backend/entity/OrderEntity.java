@@ -8,7 +8,6 @@ import lombok.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.List;
 
 @Entity
@@ -144,4 +143,3 @@ public class OrderEntity {
         return ldt == null ? null : ldt.atZone(ZONE_SEOUL).toInstant();
     }
 }
-
