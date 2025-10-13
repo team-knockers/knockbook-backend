@@ -9,4 +9,16 @@ public interface ProductReviewRepository {
             Long userId,
             Pageable pageable
     );
+
+    boolean addLikeIfAbsent (
+            Long reviewId,
+            Long userId
+    );
+    boolean removeLikeIfPresent (
+            Long reviewId,
+            Long userId
+    );
+
+    void incrementLikesCount (Long reviewId);
+    void decrementLikesCount (Long reviewId);
 }

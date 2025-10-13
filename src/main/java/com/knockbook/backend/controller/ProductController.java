@@ -5,6 +5,7 @@ import com.knockbook.backend.domain.ProductSortBy;
 import com.knockbook.backend.domain.SortOrder;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.ProductService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -13,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/products")
@@ -192,5 +195,45 @@ public class ProductController {
                 .build();
 
         return ResponseEntity.ok(body);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/reviews/{reviewId}/likes/{userId}")
+    public ResponseEntity<Void> likeReview(
+            @PathVariable("reviewId") Long reviewId,
+            @PathVariable("userId") String userId
+    ) {
+        final var userIdLong = Long.parseLong(userId);
+        productService.likeReview(reviewId, userIdLong);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/reviews/{reviewId}/likes/{userId}")
+    public ResponseEntity<Void> unlikeReview(
+            @PathVariable("reviewId") Long reviewId,
+            @PathVariable("userId") String userId
+    ) {
+        final var userIdLong = Long.parseLong(userId);
+        productService.unlikeReview(reviewId, userIdLong);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PostMapping("/{productId}/inquiries/{userId}")
+    public ResponseEntity<Void> createInquiry(
+            @PathVariable("productId") Long productId,
+            @PathVariable("userId") String userId,
+            @RequestBody @Valid CreateProductInquiryRequest req
+    ) {
+        final var userIdLong = Long.parseLong(userId);
+        final var inquiryId = productService.createInquiry(productId, userIdLong, req);
+        final var location = URI.create(
+                "/products/%d/inquiries/%s/%d".formatted(productId, userId, inquiryId)
+        );
+
+        return ResponseEntity.created(location).build();
     }
 }
