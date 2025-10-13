@@ -48,7 +48,7 @@ public class UserAddressController {
             @Valid @RequestBody CreateAddressRequest req) {
         final var userIdLong = Long.valueOf(userId);
         final var domain = req.toDomain(userIdLong);
-        final var setDefault = Boolean.TRUE.equals(req.getSetAsDefault());
+        final var setDefault = Boolean.TRUE.equals(req.getIsDefault());
         final var saved = service.create(userIdLong, domain, setDefault);
         final var body = AddressResponse.fromDomain(saved);
         final var location = URI.create(String.format("/users/%d/addresses/%d", userIdLong, saved.getId()));
@@ -61,7 +61,6 @@ public class UserAddressController {
             @PathVariable String userId,
             @PathVariable String addressId,
             @Valid @RequestBody UpdateAddressRequest req) {
-
         final var patch = req.toPatch(Long.valueOf(addressId), Long.valueOf(userId));
         service.update(patch);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build(); // 204

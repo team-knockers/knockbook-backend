@@ -16,6 +16,7 @@ public class UpdateAddressRequest {
     private String label;
     private String entryInfo;
     private String deliveryMemo;
+    private Boolean isDefault;
 
     public UserAddress toPatch(Long addressId, Long userId) {
         return UserAddress.builder()
@@ -29,6 +30,7 @@ public class UpdateAddressRequest {
                 .address2(address2)
                 .entryInfo(entryInfo)
                 .deliveryMemo(deliveryMemo)
+                .isDefault(isDefault)
                 .build();
     }
 }

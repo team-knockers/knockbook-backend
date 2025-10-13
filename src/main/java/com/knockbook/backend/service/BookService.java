@@ -7,7 +7,6 @@ import com.knockbook.backend.repository.BookCategoryRepository;
 import com.knockbook.backend.repository.BookRepository;
 import com.knockbook.backend.repository.BookReviewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -72,11 +71,9 @@ public class BookService {
     }
 
     public void likeReview(Long userId, Long reviewId) {
-        try {
-            bookReviewRepository.saveReviewLike(userId, reviewId);
+        final var changed = bookReviewRepository.saveReviewLike(userId, reviewId);
+        if (changed) {
             bookReviewRepository.incrementLikeCount(reviewId);
-        } catch (DataIntegrityViolationException e) {
-            // Ignore if already exists
         }
     }
 
