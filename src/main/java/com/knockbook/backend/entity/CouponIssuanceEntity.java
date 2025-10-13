@@ -35,15 +35,4 @@ public class CouponIssuanceEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private IssuanceStatus status;
-
-    public CouponIssuance toDomain() {
-        return CouponIssuance.builder()
-                .id(id)
-                .couponId(couponId)
-                .userId(userId)
-                .issuedAt(issuedAt != null ? issuedAt.atZone(ZoneId.of("Asia/Seoul")).toInstant() : null)
-                .expiresAt(expiresAt != null ? expiresAt.atZone(ZoneId.of("Asia/Seoul")).toInstant() : null)
-                .status(CouponIssuance.Status.valueOf(status.name()))
-                .build();
-    }
 }
