@@ -125,7 +125,7 @@ public class BookController {
                         .bookId(String.valueOf(r.getBookId()))
                         .userId(String.valueOf(r.getUserId()))
                         .displayName(r.getDisplayName())
-                        .mbti(r.getMbti())
+                        .mbti(r.getMbti() == null ? "미설정" : r.getMbti())
                         .transactionType(r.getTransactionType().name())
                         .createdAt(r.getCreatedAt())
                         .content(r.getContent())
