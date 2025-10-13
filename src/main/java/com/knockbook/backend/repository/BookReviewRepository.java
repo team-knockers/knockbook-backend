@@ -41,4 +41,14 @@ public interface BookReviewRepository {
      * Atomic decrement of likes count on the review (DB update, should not go below zero).
      */
     void decrementLikeCount(Long reviewId);
+
+    /**
+     * Checks if the given user has liked the specified review.
+     */
+    boolean existsReviewLike(Long userId, Long reviewId);
+
+    /**
+     * Returns the total number of likes for the specified review.
+     */
+    int getLikeCount(Long reviewId);
 }
