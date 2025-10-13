@@ -4,6 +4,7 @@ import com.knockbook.backend.domain.ProductInquiry;
 import com.knockbook.backend.domain.ProductResult;
 import com.knockbook.backend.domain.ProductReviewsResult;
 import com.knockbook.backend.domain.ProductSummary;
+import com.knockbook.backend.dto.CreateProductInquiryRequest;
 import com.knockbook.backend.exception.ProductNotFoundException;
 import com.knockbook.backend.repository.ProductInquiryRepository;
 import com.knockbook.backend.repository.ProductRepository;
@@ -69,5 +70,13 @@ public class ProductService {
         if (productReviewRepository.removeLikeIfPresent(reviewId, userId)) {
             productReviewRepository.decrementLikesCount(reviewId);
         }
+    }
+
+    @Transactional
+    public Long createInquiry(Long productId, Long userId, CreateProductInquiryRequest req) {
+        final var title = req.getTitle().trim();
+        final var questionBody = req.getQuestionBody().trim();
+
+        return productInquiryRepository.createInquiry(productId, userId, title, questionBody);
     }
 }
