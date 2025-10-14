@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class FeedPostResult {
-    private List<FeedPost> posts;
+public class FeedPostsResult {
+    private List<FeedPost> feedPosts;
     private String nextAfter;
 }
