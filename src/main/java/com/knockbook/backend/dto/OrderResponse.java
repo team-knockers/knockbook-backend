@@ -20,6 +20,7 @@ public class OrderResponse {
     private Integer itemCount;
     private Integer subtotalAmount;
     private Integer discountAmount;
+    private Integer couponDiscountAmount;
     private Integer shippingAmount;
     private Integer rentalAmount;
     private Integer totalAmount;
@@ -44,6 +45,7 @@ public class OrderResponse {
                 .rentalAmount(agg.getRentalAmount())
                 .totalAmount(agg.getTotalAmount())
                 .appliedCouponIssuanceId(safeConvert(agg.getAppliedCouponIssuanceId()))
+                .couponDiscountAmount(agg.getCouponDiscountAmount())
                 .pointsSpent(agg.getPointsSpent())
                 .pointsEarned(agg.getPointsEarned())
                 .items(agg.getItems().stream()

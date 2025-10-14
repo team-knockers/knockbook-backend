@@ -25,6 +25,7 @@ public class OrderAggregate {
     private Integer itemCount;
     private Integer subtotalAmount;
     private Integer discountAmount;
+    private Integer couponDiscountAmount;
     private Integer shippingAmount;
     private Integer rentalAmount;
     private Integer totalAmount;
