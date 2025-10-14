@@ -1,6 +1,7 @@
 package com.knockbook.backend.service;
 
 import com.knockbook.backend.domain.FeedPostsResult;
+import com.knockbook.backend.domain.FeedProfileResult;
 import com.knockbook.backend.repository.FeedRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,5 +18,13 @@ public class FeedService {
             int size
     ) {
         return feedRepository.findFeedPosts(userId, searchKeyword, after, size);
+    }
+
+    public FeedProfileResult getFeedProfile(
+            Long userId,
+            Long after,
+            int size
+    ) {
+        return feedRepository.findFeedProfile(userId, after, size);
     }
 }
