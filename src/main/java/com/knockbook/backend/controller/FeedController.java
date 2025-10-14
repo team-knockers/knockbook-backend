@@ -1,8 +1,9 @@
 package com.knockbook.backend.controller;
 
-import com.knockbook.backend.domain.FeedPostsResult;
 import com.knockbook.backend.dto.FeedPostDTO;
+import com.knockbook.backend.dto.FeedProfileThumbnailDTO;
 import com.knockbook.backend.dto.GetFeedPostsResponse;
+import com.knockbook.backend.dto.GetFeedProfileResponse;
 import com.knockbook.backend.service.FeedService;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 @RestController
 @RequestMapping("/feeds")
@@ -29,12 +29,12 @@ public class FeedController {
             @RequestParam(required = false) String after, // last postId
             @RequestParam @Min(1) int size
     ){
-        final Long uid = Long.parseLong(userId);
-        final Long afterId = (after == null || after.isBlank()) ? null : Long.parseLong(after);
+        final var uid = Long.parseLong(userId);
+        final var afterId = (after == null || after.isBlank()) ? null : Long.parseLong(after);
 
-        final FeedPostsResult result = feedService.getFeedPosts(uid, searchKeyword, afterId, size);
+        final var result = feedService.getFeedPosts(uid, searchKeyword, afterId, size);
 
-        final List<FeedPostDTO> feedPosts = result.getFeedPosts().stream()
+        final var feedPosts = result.getFeedPosts().stream()
                 .map(p -> FeedPostDTO.builder()
                         .postId(p.getPostId())
                         .userId(p.getUserId())
@@ -51,6 +51,35 @@ public class FeedController {
 
         final var body = GetFeedPostsResponse.builder()
                 .feedPosts(feedPosts)
+                .nextAfter(result.getNextAfter())
+                .build();
+
+        return ResponseEntity.ok(body);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/profile/{userId}")
+    public ResponseEntity<GetFeedProfileResponse> getProfilePosts(
+            @PathVariable("userId") String userId,
+            @RequestParam(required = false) String after, // last postId
+            @RequestParam @Min(1) int size
+    ) {
+        final var uid = Long.parseLong(userId);
+        final var afterId = (after == null || after.isBlank()) ? null : Long.parseLong(after);
+        final var result = feedService.getFeedProfile(uid, afterId, size);
+        final var body = GetFeedProfileResponse.builder()
+                .userId(result.getUserId())
+                .displayName(result.getDisplayName())
+                .avatarUrl(result.getAvatarUrl())
+                .bio(result.getBio())
+                .postsCount(result.getPostsCount())
+                .profileThumbnails(
+                        result.getProfileThumbnails().stream()
+                                .map(t -> FeedProfileThumbnailDTO.builder()
+                                        .postId(t.getPostId())
+                                        .thumbnailUrl(t.getThumbnailUrl())
+                                        .build())
+                                .toList())
                 .nextAfter(result.getNextAfter())
                 .build();
 
