@@ -154,7 +154,11 @@ public class FeedRepositoryImpl implements FeedRepository {
         final var afterCreatedAt = (after == null) ? null
                 : query.select(P.createdAt)
                 .from(P)
-                .where(P.postId.eq(after), P.deletedAt.isNull())
+                .where(
+                        P.postId.eq(after),
+                        P.deletedAt.isNull(),
+                        P.userId.eq(userId)
+                )
                 .fetchOne();
 
         // 4) Page predicate = keyset window
