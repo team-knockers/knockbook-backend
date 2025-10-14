@@ -1,5 +1,6 @@
 package com.knockbook.backend.controller;
 
+import com.knockbook.backend.dto.ApplyCouponRequest;
 import com.knockbook.backend.dto.CreateOrderFromCartRequest;
 import com.knockbook.backend.dto.OrderResponse;
 import com.knockbook.backend.service.OrderService;
@@ -34,6 +35,32 @@ public class OrderController {
             @PathVariable final String userId,
             @PathVariable final String orderId) {
         final var domain = orderService.getById(Long.valueOf(userId), Long.valueOf(orderId));
+        final var dto = OrderResponse.toResponse(domain);
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/{orderId}/coupon")
+    @PreAuthorize("#userId == authentication.name")
+    public ResponseEntity<OrderResponse> applyCoupon(
+            @PathVariable final String userId,
+            @PathVariable final String orderId,
+            @RequestBody final ApplyCouponRequest req) {
+
+        final var domain = orderService.applyCoupon(
+                Long.valueOf(userId), Long.valueOf(orderId),
+                req.getCouponIssuanceId(), req.getCode());
+        final var dto = OrderResponse.toResponse(domain);
+        return ResponseEntity.ok(dto);
+    }
+
+    @DeleteMapping("/{orderId}/coupon")
+    @PreAuthorize("#userId == authentication.name")
+    public ResponseEntity<OrderResponse> removeCoupon(
+            @PathVariable final String userId,
+            @PathVariable final String orderId) {
+
+        final var domain = orderService.removeCoupon(
+                Long.valueOf(userId), Long.valueOf(orderId));
         final var dto = OrderResponse.toResponse(domain);
         return ResponseEntity.ok(dto);
     }
