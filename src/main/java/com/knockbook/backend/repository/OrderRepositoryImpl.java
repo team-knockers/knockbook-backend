@@ -121,5 +121,24 @@ public class OrderRepositoryImpl implements OrderRepository {
         return Optional.of(aggregate);
     }
 
+    @Override
+    @Transactional
+    public OrderAggregate updateDraftAmountsAndCoupon(OrderAggregate draft) {
+        final var order = em.find(OrderEntity.class, draft.getId());
+        if (order == null || !order.getUserId().equals(draft.getUserId())) {
+            return null;
+        }
+        order.setSubtotalAmount(nz(draft.getSubtotalAmount()));
+        order.setDiscountAmount(nz(draft.getDiscountAmount()));
+        order.setShippingAmount(nz(draft.getShippingAmount()));
+        order.setRentalAmount(nz(draft.getRentalAmount()));
+        order.setTotalAmount(nz(draft.getTotalAmount()));
+        order.setPointsEarned(nz(draft.getPointsEarned()));
+        order.setAppliedCouponIssuanceId(draft.getAppliedCouponIssuanceId());
+        em.flush();
+
+        return findDraftById(order.getUserId(), order.getId()).orElseThrow();
+    }
+
     private static int nz(final Integer v) { return v == null ? 0 : v; }
 }

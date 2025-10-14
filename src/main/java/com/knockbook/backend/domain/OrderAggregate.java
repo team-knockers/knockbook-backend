@@ -29,6 +29,7 @@ public class OrderAggregate {
     private Integer rentalAmount;
     private Integer totalAmount;
 
+    private Long appliedCouponIssuanceId;
     private Integer pointsSpent;
     private Integer pointsEarned;
 
