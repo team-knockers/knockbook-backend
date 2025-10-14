@@ -63,6 +63,9 @@ public class OrderEntity {
     @Column(name = "points_earned", nullable = false)
     private Integer pointsEarned;
 
+    @Column(name = "applied_coupon_issuance_id")
+    private Long appliedCouponIssuanceId;
+
     @Column(name = "placed_at", nullable = false)
     private LocalDateTime placedAt;
 
@@ -97,6 +100,7 @@ public class OrderEntity {
                 .shippingAmount(nz(agg.getShippingAmount()))
                 .rentalAmount(nz(agg.getRentalAmount()))
                 .totalAmount(nz(agg.getTotalAmount()))
+                .appliedCouponIssuanceId(agg.getAppliedCouponIssuanceId())
                 .pointsSpent(nz(agg.getPointsSpent()))
                 .pointsEarned(nz(agg.getPointsEarned()))
                 .placedAt(toLocalDateTimeOrNow(agg.getPlacedAt()))
@@ -120,6 +124,7 @@ public class OrderEntity {
                 .shippingAmount(this.shippingAmount)
                 .rentalAmount(this.rentalAmount)
                 .totalAmount(this.totalAmount)
+                .appliedCouponIssuanceId(this.appliedCouponIssuanceId)
                 .pointsSpent(this.pointsSpent)
                 .pointsEarned(this.pointsEarned)
                 .placedAt(toInstant(this.placedAt))

@@ -31,7 +31,10 @@ public class SecurityConfig {
                         .requestMatchers("/db-ping").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(accessTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
+                .exceptionHandling(e -> e
+                    .authenticationEntryPoint((req,res,ex)-> res.sendError(401))
+                    .accessDeniedHandler((req,res,ex)-> res.sendError(403))
+                ).build();
     }
 
     @Bean

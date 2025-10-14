@@ -24,6 +24,7 @@ public class OrderResponse {
     private Integer rentalAmount;
     private Integer totalAmount;
 
+    private String appliedCouponIssuanceId;
     private Integer pointsSpent;
     private Integer pointsEarned;
 
@@ -42,11 +43,16 @@ public class OrderResponse {
                 .shippingAmount(agg.getShippingAmount())
                 .rentalAmount(agg.getRentalAmount())
                 .totalAmount(agg.getTotalAmount())
+                .appliedCouponIssuanceId(safeConvert(agg.getAppliedCouponIssuanceId()))
                 .pointsSpent(agg.getPointsSpent())
                 .pointsEarned(agg.getPointsEarned())
                 .items(agg.getItems().stream()
                         .map(OrderItemResponse::toResponse)
                         .collect(Collectors.toList()))
                 .build();
+    }
+
+    private static String safeConvert(final Long value) {
+        return value == null ? null : String.valueOf(value);
     }
 }
