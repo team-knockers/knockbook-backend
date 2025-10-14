@@ -2,6 +2,7 @@ package com.knockbook.backend.exception;
 
 import com.knockbook.backend.controller.OrderController;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
@@ -74,6 +75,16 @@ public class OrderControllerExceptionHandler {
                 HttpStatus.SERVICE_UNAVAILABLE, "Database unavailable",
                 "일시적인 장애입니다. 잠시 후 다시 시도해주세요.",
                 "DB_UNAVAILABLE", "about:blank#db");
+    }
+
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrity(DataIntegrityViolationException ex) {
+        return ProblemDetailFactory.of(
+                HttpStatus.CONFLICT,
+                "Integrity violation",
+                "요청을 처리할 수 없습니다. 이미 다른 주문에 사용되었거나 유효하지 않은 값입니다.",
+                "INTEGRITY_VIOLATION",
+                "about:blank#integrity");
     }
 
     @ExceptionHandler(Exception.class)

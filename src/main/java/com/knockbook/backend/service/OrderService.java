@@ -22,6 +22,7 @@ public class OrderService {
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
     private final CouponService couponService;
+    private final PointsService pointsService;
 
     @Transactional
     public OrderAggregate createDraftFromCart(final Long userId,
@@ -30,6 +31,11 @@ public class OrderService {
         final var items = cartRepository.findSelectableItems(userId, ids);
         if (items.isEmpty() || items.size() != ids.size()) {
             throw new InvalidCartItemsException();
+        }
+
+        final var existing = orderRepository.findPendingDraftByUser(userId);
+        if (existing.isPresent()) {
+            return orderRepository.replaceDraftFromCart(existing.get(), items, /*resetDiscounts=*/true);
         }
 
         final var aggregate = OrderAggregate.builder()
@@ -60,41 +66,76 @@ public class OrderService {
     @Transactional
     public OrderAggregate applyCoupon(final Long userId,
                                       final Long orderId,
-                                      final String issuanceIdRaw,
-                                      final String codeRaw) {
+                                      final String issuanceIdRaw) {
 
         final var order = orderRepository.findDraftById(userId, orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        final var issuance = resolveIssuance(userId, issuanceIdRaw, codeRaw);
+        final var issuance = resolveIssuance(userId, issuanceIdRaw);
         validateIssuanceUsable(order, issuance);
-        final var repriced = repriceWithCoupon(order, issuance);
+        final var repriced = reprice(order, issuance, order.getPointsSpent());
         return orderRepository.updateDraftAmountsAndCoupon(repriced);
     }
 
     @Transactional
     public OrderAggregate removeCoupon(final Long userId,
                                        final Long orderId) {
+        final var order = orderRepository.findDraftById(userId, orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        final var repriced = reprice(order, null, order.getPointsSpent());
+        return orderRepository.updateDraftAmountsAndCoupon(repriced);
+    }
+
+    @Transactional
+    public OrderAggregate applyPoints(final Long userId,
+                                      final Long orderId, final Integer requestedPoints) {
         final var draft = orderRepository.findDraftById(userId, orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        final var repriced = repriceWithCoupon(draft, null);
+        final int want = Math.max(0, requestedPoints == null ? 0 : requestedPoints);
+        final int have = pointsService.getAvailablePoints(userId);
+
+        final CouponIssuance appliedCoupon =
+                draft.getAppliedCouponIssuanceId() == null ? null
+                        : couponService.getOne(userId, draft.getAppliedCouponIssuanceId());
+
+        final var pricedWithCoupon = reprice(draft, appliedCoupon, /*pointsToUse*/ 0);
+        final int payableBase = pricedWithCoupon.getSubtotalAmount()
+                - pricedWithCoupon.getDiscountAmount();
+        final int maxByPayable = Math.max(0, payableBase);
+        final int pointsToUse = Math.min(Math.min(want, have), maxByPayable);
+
+        final var repriced = reprice(draft, appliedCoupon, pointsToUse);
+        return orderRepository.updateDraftAmountsAndCoupon(repriced);
+    }
+
+    @Transactional
+    public OrderAggregate removePoints(final Long userId, final Long orderId) {
+        final var draft = orderRepository.findDraftById(userId, orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        final CouponIssuance appliedCoupon =
+                draft.getAppliedCouponIssuanceId() == null ? null
+                        : couponService.getOne(userId, draft.getAppliedCouponIssuanceId());
+
+        final var repriced = reprice(draft, appliedCoupon, 0);
         return orderRepository.updateDraftAmountsAndCoupon(repriced);
     }
 
     private CouponIssuance resolveIssuance(final Long userId,
-                                           final String issuanceIdRaw,
-                                           final String codeRaw) {
-        if (issuanceIdRaw != null && !issuanceIdRaw.isBlank()) {
-            return couponService.getOne(userId, Long.valueOf(issuanceIdRaw));
+                                           final String issuanceIdRaw) {
+        if (issuanceIdRaw == null || issuanceIdRaw.isBlank()) {
+            throw new IllegalArgumentException("couponIssuanceId is required");
         }
-        if (codeRaw != null && !codeRaw.isBlank()) {
-            final var list = couponService.listByUser(userId, CouponIssuance.Status.AVAILABLE);
-            return list.stream().filter(ci -> codeRaw.equalsIgnoreCase(ci.getCode()))
-                    .findFirst()
-                    .orElseThrow(() -> new CouponIssuanceNotFoundException(null, userId));
+        final long issuanceId;
+        try {
+            issuanceId = Long.parseLong(issuanceIdRaw);
+            if (issuanceId <= 0) throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("couponIssuanceId must be a positive number");
         }
-        throw new IllegalArgumentException("couponIssuanceId or code required");
+        return couponService.getOne(userId, issuanceId);
     }
 
     private void validateIssuanceUsable(OrderAggregate order, CouponIssuance ci) {
@@ -112,36 +153,43 @@ public class OrderService {
         }
     }
 
-    private OrderAggregate repriceWithCoupon(OrderAggregate order, CouponIssuance ciOrNull) {
+    private OrderAggregate reprice(OrderAggregate order,
+                                   CouponIssuance ciOrNull,
+                                   Integer pointsToUseOrNull) {
+
         final var subtotal = order.getItems().stream()
                 .mapToInt(OrderItem::getLineSubtotalAmount).sum();
         final var lineDiscount = order.getItems().stream()
                 .mapToInt(OrderItem::getLineDiscountAmount).sum();
+
         var shipping = nz(order.getShippingAmount());
-        var rental   = nz(order.getRentalAmount());
+        final var rental = nz(order.getRentalAmount());
 
         var couponDiscount = 0;
-        Long appliedId = null;
+        Long appliedCouponId = null;
 
         if (ciOrNull != null) {
-            appliedId = ciOrNull.getId();
+            appliedCouponId = ciOrNull.getId();
 
             if ("FREESHIP".equalsIgnoreCase(ciOrNull.getType())) {
                 shipping = 0;
             } else {
-                final var eligible = eligibleAmountByScope(order, ciOrNull.getScope());
+                final int eligible = eligibleAmountByScope(order, ciOrNull.getScope());
                 if ("PERCENT".equalsIgnoreCase(ciOrNull.getType())) {
-                    final var raw = (eligible * nz(ciOrNull.getDiscountRateBp())) / 10_000; // bp → %
-                    couponDiscount = ciOrNull.getMaxDiscountAmount() == null
+                    final int raw = (eligible * nz(ciOrNull.getDiscountRateBp())) / 10_000;
+                    couponDiscount = (ciOrNull.getMaxDiscountAmount() == null)
                             ? raw : Math.min(raw, ciOrNull.getMaxDiscountAmount());
-                } else {
+                } else { // AMOUNT
                     couponDiscount = Math.min(eligible, nz(ciOrNull.getDiscountAmount()));
                 }
             }
         }
 
-        final var discount = lineDiscount + couponDiscount;
-        final var total    = subtotal - discount + shipping;
+        final var requestedPoints = Math.max(0, pointsToUseOrNull == null ? 0 : pointsToUseOrNull);
+        final var payableBase = Math.max(0, subtotal - lineDiscount - couponDiscount);
+        final var pointsSpent = Math.min(requestedPoints, payableBase);
+
+        final var total = subtotal - lineDiscount - couponDiscount - pointsSpent + shipping;
 
         return OrderAggregate.builder()
                 .id(order.getId())
@@ -150,20 +198,25 @@ public class OrderService {
                 .status(order.getStatus())
                 .paymentStatus(order.getPaymentStatus())
                 .itemCount(order.getItemCount())
+
                 .subtotalAmount(subtotal)
-                .discountAmount(discount)
+                .discountAmount(lineDiscount)
+                .couponDiscountAmount(couponDiscount)
                 .shippingAmount(shipping)
                 .rentalAmount(rental)
                 .totalAmount(total)
-                .pointsSpent(order.getPointsSpent())
-                .pointsEarned(calcPoints(total, order.getItems())) // 네 규칙대로 바꿔도 됨
+
+                .pointsSpent(pointsSpent)
+                .pointsEarned(calcPoints(total, order.getItems()))
+
+                .appliedCouponIssuanceId(appliedCouponId)
                 .placedAt(order.getPlacedAt())
                 .cancelledAt(order.getCancelledAt())
                 .completedAt(order.getCompletedAt())
                 .items(order.getItems())
-                .appliedCouponIssuanceId(appliedId)
                 .build();
     }
+
 
     private int eligibleAmountByScope(OrderAggregate o, String scope) {
         if (scope == null || scope.equalsIgnoreCase("ALL") || scope.equalsIgnoreCase("CART")) {

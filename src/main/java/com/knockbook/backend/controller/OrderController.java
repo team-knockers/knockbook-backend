@@ -1,6 +1,7 @@
 package com.knockbook.backend.controller;
 
 import com.knockbook.backend.dto.ApplyCouponRequest;
+import com.knockbook.backend.dto.ApplyPointsRequest;
 import com.knockbook.backend.dto.CreateOrderFromCartRequest;
 import com.knockbook.backend.dto.OrderResponse;
 import com.knockbook.backend.service.OrderService;
@@ -47,8 +48,9 @@ public class OrderController {
             @RequestBody final ApplyCouponRequest req) {
 
         final var domain = orderService.applyCoupon(
-                Long.valueOf(userId), Long.valueOf(orderId),
-                req.getCouponIssuanceId(), req.getCode());
+                Long.valueOf(userId),
+                Long.valueOf(orderId),
+                req.getCouponIssuanceId());
         final var dto = OrderResponse.toResponse(domain);
         return ResponseEntity.ok(dto);
     }
@@ -61,6 +63,30 @@ public class OrderController {
 
         final var domain = orderService.removeCoupon(
                 Long.valueOf(userId), Long.valueOf(orderId));
+        final var dto = OrderResponse.toResponse(domain);
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/{orderId}/points")
+    @PreAuthorize("#userId == authentication.name")
+    public ResponseEntity<OrderResponse> applyPoints(
+            @PathVariable final String userId,
+            @PathVariable final String orderId,
+            @RequestBody final ApplyPointsRequest req) {
+
+        final var domain = orderService.applyPoints(
+                Long.valueOf(userId), Long.valueOf(orderId), req.getPoints());
+        final var dto = OrderResponse.toResponse(domain);
+        return ResponseEntity.ok(dto);
+    }
+
+    @DeleteMapping("/{orderId}/points")
+    @PreAuthorize("#userId == authentication.name")
+    public ResponseEntity<OrderResponse> removePoints(
+            @PathVariable final String userId,
+            @PathVariable final String orderId) {
+
+        final var domain = orderService.removePoints(Long.valueOf(userId), Long.valueOf(orderId));
         final var dto = OrderResponse.toResponse(domain);
         return ResponseEntity.ok(dto);
     }
