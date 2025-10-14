@@ -48,6 +48,9 @@ public class OrderEntity {
     @Column(name = "discount_amount", nullable = false)
     private Integer discountAmount;
 
+    @Column(name = "coupon_discount_amount", nullable = false)
+    private Integer couponDiscountAmount;
+
     @Column(name = "shipping_amount", nullable = false)
     private Integer shippingAmount;
 
@@ -97,6 +100,7 @@ public class OrderEntity {
                 .itemCount(nz(agg.getItemCount()))
                 .subtotalAmount(nz(agg.getSubtotalAmount()))
                 .discountAmount(nz(agg.getDiscountAmount()))
+                .couponDiscountAmount(nz(agg.getCouponDiscountAmount()))
                 .shippingAmount(nz(agg.getShippingAmount()))
                 .rentalAmount(nz(agg.getRentalAmount()))
                 .totalAmount(nz(agg.getTotalAmount()))
@@ -121,6 +125,7 @@ public class OrderEntity {
                 .itemCount(this.itemCount)
                 .subtotalAmount(this.subtotalAmount)
                 .discountAmount(this.discountAmount)
+                .couponDiscountAmount(this.couponDiscountAmount)
                 .shippingAmount(this.shippingAmount)
                 .rentalAmount(this.rentalAmount)
                 .totalAmount(this.totalAmount)

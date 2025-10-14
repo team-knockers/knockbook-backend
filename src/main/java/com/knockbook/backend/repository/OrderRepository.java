@@ -9,5 +9,7 @@ import java.util.Optional;
 public interface OrderRepository {
     OrderAggregate saveDraftFromCart(OrderAggregate aggregate, List<CartItem> items);
     Optional<OrderAggregate> findDraftById(Long userId, Long orderId);
+    Optional<OrderAggregate> findPendingDraftByUser(Long userId);
+    OrderAggregate replaceDraftFromCart(OrderAggregate existing, List<CartItem> items, boolean resetDiscounts);
     OrderAggregate updateDraftAmountsAndCoupon(OrderAggregate draft);
 }

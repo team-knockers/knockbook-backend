@@ -2,6 +2,7 @@ package com.knockbook.backend.repository;
 
 import com.knockbook.backend.domain.Cart;
 import com.knockbook.backend.domain.CartItem;
+import com.knockbook.backend.domain.PointsPolicy;
 import com.knockbook.backend.entity.CartEntity;
 import com.knockbook.backend.entity.CartItemEntity;
 import com.knockbook.backend.entity.QCartEntity;
@@ -84,6 +85,7 @@ public class CartRepositoryImpl implements CartRepository {
                 .listPriceSnapshot(it.getListPrice())
                 .salePriceSnapshot(it.getSalePrice())
                 .rentalPriceSnapshot(it.getRentalPrice())
+                .pointsRate(it.getPointsRate())
                 .quantity(it.getQuantity())
                 .build()
         ).toList();
