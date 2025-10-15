@@ -1,12 +1,11 @@
 package com.knockbook.backend.repository;
 
-import com.knockbook.backend.domain.FeedPost;
-import com.knockbook.backend.domain.FeedPostsResult;
-import com.knockbook.backend.domain.FeedProfileResult;
-import com.knockbook.backend.domain.FeedProfileThumbnail;
+import com.knockbook.backend.domain.*;
 import com.knockbook.backend.entity.QFeedPostEntity;
 import com.knockbook.backend.entity.QFeedPostImageEntity;
 import com.knockbook.backend.entity.QFeedPostLikeEntity;
+import com.knockbook.backend.entity.QFeedCommentEntity;
+import com.knockbook.backend.entity.QFeedCommentLikeEntity;
 import com.knockbook.backend.entity.QUserEntity;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.JPAExpressions;
@@ -26,6 +25,8 @@ public class FeedRepositoryImpl implements FeedRepository {
     private static final QFeedPostImageEntity I = QFeedPostImageEntity.feedPostImageEntity;
     private static final QFeedPostLikeEntity L = QFeedPostLikeEntity.feedPostLikeEntity;
     private static final QUserEntity U = QUserEntity.userEntity;
+    private static final QFeedCommentEntity C = QFeedCommentEntity.feedCommentEntity;
+    private static final QFeedCommentLikeEntity CL = QFeedCommentLikeEntity.feedCommentLikeEntity;
 
     @Override
     public FeedPostsResult findFeedPosts(
@@ -209,5 +210,13 @@ public class FeedRepositoryImpl implements FeedRepository {
                 .nextAfter(nextAfter)
                 .build();
         return result;
+    }
+
+    @Override
+    public FeedCommentsResult findFeedPostComments(
+            Long userId,
+            Long PostId
+    ) {
+
     }
 }
