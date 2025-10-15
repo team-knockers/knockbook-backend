@@ -1,8 +1,10 @@
 package com.knockbook.backend.repository;
+import com.knockbook.backend.domain.FeedCommentsResult;
 import com.knockbook.backend.domain.FeedPostsResult;
 import com.knockbook.backend.domain.FeedProfileResult;
+import com.knockbook.backend.domain.FeedResult;
 
-public interface FeedRepository {
+public interface FeedReadRepository {
     FeedPostsResult findFeedPosts(
             Long userId,
             String searchKeyword,
@@ -14,5 +16,15 @@ public interface FeedRepository {
             Long userId,
             Long after,
             int size
+    );
+
+    FeedCommentsResult findFeedPostComments(
+            Long userId,
+            Long postId
+    );
+
+    FeedResult findFeedPostWithComments(
+            Long userId,
+            Long PostId
     );
 }
