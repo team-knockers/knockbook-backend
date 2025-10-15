@@ -17,7 +17,7 @@ import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
-public class FeedRepositoryImpl implements FeedRepository {
+public class FeedReadRepositoryImpl implements FeedReadRepository {
 
     private final JPAQueryFactory query;
 
@@ -215,8 +215,127 @@ public class FeedRepositoryImpl implements FeedRepository {
     @Override
     public FeedCommentsResult findFeedPostComments(
             Long userId,
-            Long PostId
+            Long postId
     ) {
+        final var predicate = new BooleanBuilder()
+                .and(C.deletedAt.isNull())
+                .and(C.postId.eq(postId));
 
+        final var likedByMeExpr = JPAExpressions
+                .selectOne()
+                .from(CL)
+                .where(CL.commentId.eq(C.commentId).and(CL.userId.eq(userId)))
+                .exists();
+
+        final var rows = query
+                .select(
+                    C.commentId,
+                    U.id,
+                    U.displayName,
+                    U.avatarUrl,
+                    C.body,
+                    C.createdAt,
+                    C.likesCount,
+                    likedByMeExpr
+                )
+                .from(C)
+                .leftJoin(U).on(U.id.eq(C.userId))
+                .where(predicate)
+                .orderBy(C.createdAt.desc(), C.commentId.desc())
+                .fetch();
+
+        final var feedComments = rows.stream()
+                .map(t -> FeedComment.builder()
+                        .commentId(String.valueOf(t.get(C.commentId)))
+                        .userId(String.valueOf(t.get(U.id)))
+                        .displayName(t.get(U.displayName))
+                        .avatarUrl(t.get(U.avatarUrl))
+                        .body(t.get(C.body))
+                        .createdAt(t.get(C.createdAt))
+                        .likesCount(t.get(C.likesCount))
+                        .likedByMe(Boolean.TRUE.equals(t.get(likedByMeExpr)))
+                        .build()
+        ).toList();
+
+        final var result = FeedCommentsResult.builder()
+                .feedComments(feedComments)
+                .postId(String.valueOf(postId))
+                .build();
+
+        return result;
+    }
+
+    @Override
+    public FeedResult findFeedPostWithComments(final Long userId, final Long postId) {
+        final var likedByMePost = JPAExpressions.selectOne()
+                .from(L)
+                .where(L.postId.eq(P.postId).and(L.userId.eq(userId)))
+                .exists();
+
+        final var postTuple = query
+                .select(P.postId, P.userId, U.displayName, U.avatarUrl,
+                        P.content, P.likesCount, P.commentsCount, P.createdAt, likedByMePost)
+                .from(P)
+                .leftJoin(U).on(U.id.eq(P.userId))
+                .where(P.deletedAt.isNull().and(P.postId.eq(postId)))
+                .fetchOne();
+
+        if (postTuple == null) {
+            return FeedResult.builder().feedPost(null).feedComments(List.of()).build();
+        }
+
+        final var images = query
+                .select(I.imageUrl)
+                .from(I)
+                .where(I.postId.eq(postId))
+                .orderBy(I.sortOrder.asc())
+                .fetch();
+
+        final var likedByMeComment = JPAExpressions.selectOne()
+                .from(CL)
+                .where(CL.commentId.eq(C.commentId).and(CL.userId.eq(userId)))
+                .exists();
+
+        final var rows = query
+                .select(C.commentId, C.userId, U.displayName, U.avatarUrl,
+                        C.body, C.createdAt, C.likesCount, likedByMeComment)
+                .from(C)
+                .leftJoin(U).on(U.id.eq(C.userId))
+                .where(C.deletedAt.isNull().and(C.postId.eq(postId)))
+                .orderBy(C.createdAt.desc(), C.commentId.desc())
+                .fetch();
+
+        final var feedComments = rows.stream()
+                .map(t -> FeedComment.builder()
+                        .commentId(String.valueOf(t.get(C.commentId)))
+                        .userId(String.valueOf(t.get(C.userId)))
+                        .displayName(t.get(U.displayName))
+                        .avatarUrl(t.get(U.avatarUrl))
+                        .body(t.get(C.body))
+                        .createdAt(t.get(C.createdAt))
+                        .likesCount(t.get(C.likesCount))
+                        .likedByMe(Boolean.TRUE.equals(t.get(likedByMeComment)))
+                        .build()
+                ).toList();
+
+        final var feedPost = FeedPost.builder()
+                .postId(String.valueOf(postTuple.get(P.postId)))
+                .userId(String.valueOf(postTuple.get(P.userId)))
+                .displayName(postTuple.get(U.displayName))
+                .avatarUrl(postTuple.get(U.avatarUrl))
+                .content(postTuple.get(P.content))
+                .images(images)
+                .likesCount(postTuple.get(P.likesCount))
+                .commentsCount(postTuple.get(P.commentsCount))
+                .likedByMe(Boolean.TRUE.equals(postTuple.get(likedByMePost)))
+                .createdAt(postTuple.get(P.createdAt))
+                .build();
+
+        final var result = FeedResult.builder()
+                .feedPost(feedPost)
+                .feedComments(feedComments)
+                .build();
+
+        return result;
     }
 }
