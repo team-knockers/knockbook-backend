@@ -13,7 +13,7 @@ import java.time.Instant;
 @Builder
 public class UserEntity {
 
-    public enum Status { ACTIVE, PENDING, LOCKED }
+    public enum Status {ACTIVE, PENDING, LOCKED}
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,4 +44,7 @@ public class UserEntity {
 
     @Column(name = "deleted_at", insertable = false, updatable = true)
     private Instant deletedAt;
+
+    @Column(name = "bio", length = 160)
+    private String bio;
 }
