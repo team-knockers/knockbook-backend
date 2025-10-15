@@ -3,7 +3,7 @@ package com.knockbook.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "lounge_post_likes")
@@ -27,11 +27,11 @@ public class LoungePostLikeEntity {
     private String content;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     @Column(name = "deleted_at", insertable = false, updatable = true)
-    private LocalDateTime deletedAt;
+    private Instant deletedAt;
 }
