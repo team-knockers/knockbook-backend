@@ -1,15 +1,17 @@
 package com.knockbook.backend.service;
 
+import com.knockbook.backend.domain.FeedCommentsResult;
 import com.knockbook.backend.domain.FeedPostsResult;
 import com.knockbook.backend.domain.FeedProfileResult;
-import com.knockbook.backend.repository.FeedRepository;
+import com.knockbook.backend.domain.FeedResult;
+import com.knockbook.backend.repository.FeedReadRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class FeedService {
-    private final FeedRepository feedRepository;
+    private final FeedReadRepository feedReadRepository;
 
     public FeedPostsResult getFeedPosts(
             Long userId,
@@ -17,7 +19,7 @@ public class FeedService {
             Long after,
             int size
     ) {
-        return feedRepository.findFeedPosts(userId, searchKeyword, after, size);
+        return feedReadRepository.findFeedPosts(userId, searchKeyword, after, size);
     }
 
     public FeedProfileResult getFeedProfile(
@@ -25,6 +27,20 @@ public class FeedService {
             Long after,
             int size
     ) {
-        return feedRepository.findFeedProfile(userId, after, size);
+        return feedReadRepository.findFeedProfile(userId, after, size);
+    }
+
+    public FeedCommentsResult getFeedPostComments(
+            Long userId,
+            Long postId
+    ) {
+        return feedReadRepository.findFeedPostComments(userId, postId);
+    }
+
+    public FeedResult getFeedPostWithComments(
+            Long userId,
+            Long postId
+    ) {
+        return feedReadRepository.findFeedPostWithComments(userId, postId);
     }
 }
