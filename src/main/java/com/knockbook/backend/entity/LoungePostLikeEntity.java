@@ -23,15 +23,12 @@ public class LoungePostLikeEntity {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column
-    private String content;
+    @Column(name = "is_liked", columnDefinition = "TINYINT(1)", nullable = false)
+    private Boolean isLiked;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private Instant updatedAt;
-
-    @Column(name = "deleted_at", insertable = false, updatable = true)
-    private Instant deletedAt;
 }
