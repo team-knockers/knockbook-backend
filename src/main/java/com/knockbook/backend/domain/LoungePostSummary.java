@@ -16,6 +16,7 @@ public class LoungePostSummary {
 
     private final Long id;
     private final Long userId;
+    private final String displayName;
     private final String title;
     private final String previewImageUrl; // nullable
     private final Status status;

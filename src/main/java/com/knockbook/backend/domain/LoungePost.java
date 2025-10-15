@@ -16,6 +16,9 @@ public class LoungePost {
 
     private final Long id;
     private final Long userId;
+    private final String displayName;
+    private final String avatarUrl;
+    private final String bio;
     private final String title;
     private final String subtitle; // nullable
     private final String content;
