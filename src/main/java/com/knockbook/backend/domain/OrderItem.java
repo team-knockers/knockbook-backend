@@ -33,4 +33,26 @@ public class OrderItem {
     private Integer lineSubtotalAmount;
     private Integer lineDiscountAmount;
     private Integer lineTotalAmount;
+
+    // Return a copy with only the orderId injected
+    public OrderItem withOrderId(final Long newOrderId) {
+        return OrderItem.builder()
+                .id(id)
+                .orderId(newOrderId)
+                .refType(refType)
+                .refId(refId)
+                .titleSnapshot(titleSnapshot)
+                .thumbnailUrl(thumbnailUrl)
+                .listPriceSnapshot(listPriceSnapshot)
+                .salePriceSnapshot(salePriceSnapshot)
+                .quantity(quantity)
+                .rentalDays(rentalDays)
+                .rentalPriceSnapshot(rentalPriceSnapshot)
+                .pointsRate(pointsRate)
+                .pointsEarnedItem(pointsEarnedItem)
+                .lineSubtotalAmount(lineSubtotalAmount)
+                .lineDiscountAmount(lineDiscountAmount)
+                .lineTotalAmount(lineTotalAmount)
+                .build();
+    }
 }

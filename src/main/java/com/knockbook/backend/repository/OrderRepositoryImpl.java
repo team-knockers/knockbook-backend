@@ -5,12 +5,14 @@ import com.knockbook.backend.domain.OrderAggregate;
 import com.knockbook.backend.domain.OrderItem;
 import com.knockbook.backend.entity.OrderEntity;
 import com.knockbook.backend.entity.OrderItemEntity;
+import com.knockbook.backend.entity.QOrderEntity;
 import com.knockbook.backend.entity.QOrderItemEntity;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,13 +20,14 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class OrderRepositoryImpl implements OrderRepository {
 
     private final EntityManager em;
-    private final JPAQueryFactory query;
+    private final JPAQueryFactory qf;
 
-    private static final QOrderItemEntity OI = QOrderItemEntity.orderItemEntity;
-    private static final com.knockbook.backend.entity.QOrderEntity O = com.knockbook.backend.entity.QOrderEntity.orderEntity;
+    private static final QOrderEntity qOrder = QOrderEntity.orderEntity;
+    private static final QOrderItemEntity qOrderItem = QOrderItemEntity.orderItemEntity;
 
     @Override
     @Transactional
@@ -100,7 +103,7 @@ public class OrderRepositoryImpl implements OrderRepository {
         order.setPointsEarned(points);
         em.flush();
 
-        return order.toModel(savedDomainItems);
+        return order.toDomain(savedDomainItems);
     }
 
     @Override
@@ -112,7 +115,7 @@ public class OrderRepositoryImpl implements OrderRepository {
         }
 
         final var oi = QOrderItemEntity.orderItemEntity;
-        final var itemEntities = query
+        final var itemEntities = qf
                 .selectFrom(oi)
                 .where(oi.orderId.eq(orderId))
                 .orderBy(oi.id.asc())
@@ -121,32 +124,34 @@ public class OrderRepositoryImpl implements OrderRepository {
         final var domainItems = itemEntities.stream()
                 .map(OrderItemEntity::toModel).toList();
 
-        final var aggregate = order.toModel(domainItems);
+        final var aggregate = order.toDomain(domainItems);
         return Optional.of(aggregate);
     }
 
     @Override
     @Transactional
     public Optional<OrderAggregate> findPendingDraftByUser(Long userId) {
-        final var entity = query
-                .selectFrom(O)
+        final var entity = qf
+                .selectFrom(qOrder)
                 .where(
-                        O.userId.eq(userId),
-                        O.status.eq(com.knockbook.backend.entity.OrderEntity.OrderStatus.PENDING),
-                        O.paymentStatus.eq(com.knockbook.backend.entity.OrderEntity.PaymentStatus.READY)
+                        qOrder.userId.eq(userId),
+                        qOrder.status.eq(com.knockbook.backend.entity.OrderEntity.OrderStatus.PENDING),
+                        qOrder.paymentStatus.eq(com.knockbook.backend.entity.OrderEntity.PaymentStatus.READY)
                 )
-                .orderBy(O.id.desc())
+                .orderBy(qOrder.id.desc())
                 .fetchFirst();
 
-        if (entity == null) return Optional.empty();
+        if (entity == null) {
+            return Optional.empty();
+        }
 
-        final var items = query.selectFrom(OI)
-                .where(OI.orderId.eq(entity.getId()))
-                .orderBy(OI.id.asc())
+        final var items = qf.selectFrom(qOrderItem)
+                .where(qOrderItem.orderId.eq(entity.getId()))
+                .orderBy(qOrderItem.id.asc())
                 .fetch()
                 .stream().map(OrderItemEntity::toModel).toList();
 
-        return Optional.of(entity.toModel(items));
+        return Optional.of(entity.toDomain(items));
     }
 
     @Override
@@ -157,7 +162,7 @@ public class OrderRepositoryImpl implements OrderRepository {
             throw new IllegalStateException("ORDER_NOT_OWNED");
         }
 
-        query.delete(OI).where(OI.orderId.eq(order.getId())).execute();
+        qf.delete(qOrderItem).where(qOrderItem.orderId.eq(order.getId())).execute();
 
         final var savedDomainItems = new ArrayList<OrderItem>();
         int subtotal = 0, discount = 0, rental = 0, total = 0, points = 0, count = 0;
@@ -233,7 +238,7 @@ public class OrderRepositoryImpl implements OrderRepository {
         }
 
         em.flush();
-        return order.toModel(savedDomainItems);
+        return order.toDomain(savedDomainItems);
     }
 
     @Override
@@ -269,5 +274,64 @@ public class OrderRepositoryImpl implements OrderRepository {
         return findDraftById(order.getUserId(), order.getId()).orElseThrow();
     }
 
-    private static int nz(final Integer v) { return v == null ? 0 : v; }
+    @Override
+    public Optional<OrderAggregate> findByIdAndUserIdForUpdate(Long userId, Long orderId) {
+        final var entity = qf.selectFrom(qOrder)
+                .where(qOrder.id.eq(orderId).and(qOrder.userId.eq(userId)))
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE).fetchOne();
+
+        if (entity == null) {
+            return Optional.empty();
+        }
+
+        final var items = loadItems(entity.getId());
+        return Optional.of(entity.toDomain(items));
+    }
+
+    @Override
+    @Transactional
+    public OrderAggregate saveAggregate(OrderAggregate aggregate) {
+        var entity = OrderEntity.fromModel(aggregate);
+        if (entity.getId() == null) {
+            em.persist(entity);
+        } else {
+            entity = em.merge(entity);
+        }
+        if (aggregate.getItems() != null) {
+            replaceItems(entity.getId(), aggregate.getItems());
+        }
+
+        final var items = loadItems(entity.getId());
+        return entity.toDomain(items);
+    }
+
+    private static int nz(final Integer v) {
+        return v == null ? 0 : v;
+    }
+
+    private List<OrderItem> loadItems(final Long orderId) {
+        final var rows = qf.selectFrom(qOrderItem)
+                .where(qOrderItem.orderId.eq(orderId))
+                .orderBy(qOrderItem.id.asc())
+                .fetch();
+        final var items = new ArrayList<OrderItem>(rows.size());
+        for (final var e : rows) {
+            items.add(e.toModel());
+        }
+        return items;
+    }
+
+    private void replaceItems(final Long orderId,
+                              final List<OrderItem> items) {
+        qf.delete(qOrderItem).where(qOrderItem.orderId.eq(orderId)).execute();
+        em.flush();
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        for (final var it : items) {
+            final var fixed = (it.getOrderId() != null && it.getOrderId().equals(orderId))
+                    ? it : it.withOrderId(orderId);
+            em.persist(OrderItemEntity.fromModel(fixed));
+        }
+    }
 }

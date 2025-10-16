@@ -7,9 +7,17 @@ import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository {
-    OrderAggregate saveDraftFromCart(OrderAggregate aggregate, List<CartItem> items);
-    Optional<OrderAggregate> findDraftById(Long userId, Long orderId);
-    Optional<OrderAggregate> findPendingDraftByUser(Long userId);
-    OrderAggregate replaceDraftFromCart(OrderAggregate existing, List<CartItem> items, boolean resetDiscounts);
-    OrderAggregate updateDraftAmountsAndCoupon(OrderAggregate draft);
+    OrderAggregate saveDraftFromCart(final OrderAggregate aggregate,
+                                     final List<CartItem> items);
+    Optional<OrderAggregate> findDraftById(final Long userId,
+                                           final Long orderId);
+    Optional<OrderAggregate> findPendingDraftByUser(final Long userId);
+    OrderAggregate replaceDraftFromCart(final OrderAggregate existing,
+                                        final List<CartItem> items,
+                                        final boolean resetDiscounts);
+    OrderAggregate updateDraftAmountsAndCoupon(final OrderAggregate draft);
+
+    Optional<OrderAggregate> findByIdAndUserIdForUpdate(final Long userId,
+                                                        final Long orderId); // for payment approval
+    OrderAggregate saveAggregate(final OrderAggregate aggregate); // save timeline
 }

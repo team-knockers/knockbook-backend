@@ -9,6 +9,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CouponIssuanceRepositoryImpl implements CouponIssuanceRepository {
 
     private final JPAQueryFactory qf;
@@ -28,6 +30,7 @@ public class CouponIssuanceRepositoryImpl implements CouponIssuanceRepository {
 
     private static final QCouponIssuanceEntity ci = QCouponIssuanceEntity.couponIssuanceEntity;
     private static final QCouponEntity c = QCouponEntity.couponEntity;
+    private static final QCouponIssuanceEntity iss = QCouponIssuanceEntity.couponIssuanceEntity;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     @Override
@@ -102,6 +105,27 @@ public class CouponIssuanceRepositoryImpl implements CouponIssuanceRepository {
                 .where(ci.id.eq(id), ci.userId.eq(userId))
                 .fetchOne();
         return Optional.ofNullable(t).map(this::toDomain);
+    }
+
+    @Override
+    public Optional<CouponIssuance> findByIdAndUserIdForUpdate(Long id, Long userId) {
+        final var entity = qf.selectFrom(iss)
+                .where(iss.id.eq(id).and(iss.userId.eq(userId)))
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .fetchOne();
+        return Optional.ofNullable(entity).map(CouponIssuanceEntity::toDomain);
+    }
+
+    @Override
+    @Transactional
+    public CouponIssuance save(CouponIssuance issuance) {
+        var entity = CouponIssuanceEntity.toEntity(issuance);
+        if (entity.getId() == null) {
+            em.persist(entity);
+        } else {
+            entity = em.merge(entity);
+        }
+        return entity.toDomain();
     }
 
     private CouponIssuance toDomain(Tuple t) {
