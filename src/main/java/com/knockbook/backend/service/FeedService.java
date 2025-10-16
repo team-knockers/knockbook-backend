@@ -4,8 +4,10 @@ import com.knockbook.backend.domain.FeedCommentsResult;
 import com.knockbook.backend.domain.FeedPostsResult;
 import com.knockbook.backend.domain.FeedProfileResult;
 import com.knockbook.backend.domain.FeedResult;
+import com.knockbook.backend.dto.CreateFeedCommentRequest;
 import com.knockbook.backend.repository.FeedLikeRepository;
 import com.knockbook.backend.repository.FeedReadRepository;
+import com.knockbook.backend.repository.FeedWriteRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 public class FeedService {
     private final FeedReadRepository feedReadRepository;
     private final FeedLikeRepository feedLikeRepository;
+    private final FeedWriteRepository feedWriteRepository;
 
     public FeedPostsResult getFeedPosts(
             Long userId,
@@ -85,5 +88,18 @@ public class FeedService {
         if(feedLikeRepository.deleteCommentLikeIfPresent(commentId, userId)) {
             feedLikeRepository.decrementCommentLikesCount(commentId);
         }
+    }
+
+    @Transactional
+    public Long createComment (
+            Long postId,
+            Long userId,
+            CreateFeedCommentRequest req
+    ) {
+        final var commentBody = req.getCommentBody().trim();
+        final var commentId = feedWriteRepository.insertComment(postId, userId, commentBody);
+        feedWriteRepository.incrementPostCommentsCount(postId);
+
+        return commentId;
     }
 }
