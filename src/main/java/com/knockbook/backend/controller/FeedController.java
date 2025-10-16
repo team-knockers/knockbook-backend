@@ -2,6 +2,7 @@ package com.knockbook.backend.controller;
 
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.FeedService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.time.format.DateTimeFormatter;
 
 @RestController
@@ -206,5 +208,21 @@ public class FeedController {
         feedService.unlikeComment(commentId, uid);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PostMapping("/comment/{postId}/{userId}")
+    public ResponseEntity<Void> createComment(
+            @PathVariable("postId") Long postId,
+            @PathVariable("userId") String userId,
+            @RequestBody @Valid CreateFeedCommentRequest req
+            ) {
+        final var uid = Long.parseLong(userId);
+        final var commentId = feedService.createComment(postId, uid, req);
+        final var location = URI.create(
+                "/feeds/comment/%d".formatted(commentId)
+        );
+
+        return ResponseEntity.created(location).build();
     }
 }
