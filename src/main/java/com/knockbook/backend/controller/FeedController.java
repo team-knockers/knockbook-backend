@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 public class FeedController {
     private final FeedService feedService;
 
+    // Read
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}")
     public ResponseEntity<GetFeedPostsResponse> getFeedPosts (
@@ -156,5 +157,54 @@ public class FeedController {
                 .build();
 
         return ResponseEntity.ok(body);
+    }
+
+    // Like
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/post/{postId}/likes/{userId}")
+    public ResponseEntity<Void> likePost(
+            @PathVariable("postId") Long postId,
+            @PathVariable("userId") String userId
+    ) {
+        final var uid = Long.parseLong(userId);
+        feedService.likePost(postId, uid);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/post/{postId}/likes/{userId}")
+    public ResponseEntity<Void> unlikePost(
+            @PathVariable("postId") Long postId,
+            @PathVariable("userId") String userId
+    ) {
+        final var uid = Long.parseLong(userId);
+        feedService.unlikePost(postId, uid);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/comment/{commentId}/likes/{userId}")
+    public ResponseEntity<Void> likeComment(
+            @PathVariable("commentId") Long commentId,
+            @PathVariable("userId") String userId
+    ) {
+        final var uid = Long.parseLong(userId);
+        feedService.likeComment(commentId, uid);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/comment/{commentId}/likes/{userId}")
+    public ResponseEntity<Void> unlikeComment(
+            @PathVariable("commentId") Long commentId,
+            @PathVariable("userId") String userId
+    ) {
+        final var uid = Long.parseLong(userId);
+        feedService.unlikeComment(commentId, uid);
+
+        return ResponseEntity.noContent().build();
     }
 }
