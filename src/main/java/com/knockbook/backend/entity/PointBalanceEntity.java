@@ -1,5 +1,6 @@
 package com.knockbook.backend.entity;
 
+import com.knockbook.backend.domain.PointBalance;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,4 +23,23 @@ public class PointBalanceEntity {
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private Instant updatedAt;
+
+    public static PointBalanceEntity toEntity(PointBalance d) {
+        if (d == null) {
+            return null;
+        }
+        return PointBalanceEntity.builder()
+                .userId(d.getUserId())
+                .balance(d.getBalance())
+                .updatedAt(d.getUpdatedAt())
+                .build();
+    }
+
+    public PointBalance toDomain() {
+        return PointBalance.builder()
+                .userId(userId)
+                .balance(balance)
+                .updatedAt(updatedAt)
+                .build();
+    }
 }

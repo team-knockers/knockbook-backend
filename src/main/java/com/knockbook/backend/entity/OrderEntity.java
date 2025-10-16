@@ -113,7 +113,7 @@ public class OrderEntity {
                 .build();
     }
 
-    public OrderAggregate toModel(List<OrderItem> items) {
+    public OrderAggregate toDomain(List<OrderItem> items) {
         return OrderAggregate.builder()
                 .id(this.id)
                 .userId(this.userId)

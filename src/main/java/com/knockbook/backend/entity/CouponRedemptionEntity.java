@@ -1,5 +1,6 @@
 package com.knockbook.backend.entity;
 
+import com.knockbook.backend.domain.CouponRedemption;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,4 +30,28 @@ public class CouponRedemptionEntity {
 
     @Column(name = "redeemed_at", nullable = false)
     private Instant redeemedAt;
+
+    public static CouponRedemptionEntity toEntity(CouponRedemption d){
+        if (d == null) {
+            return null;
+        }
+        return CouponRedemptionEntity.builder()
+                .id(d.getId())
+                .issuanceId(d.getIssuanceId())
+                .orderId(d.getOrderId())
+                .redeemedAmount(d.getRedeemedAmount())
+                .redeemedAt(d.getRedeemedAt())
+                .build();
+    }
+
+    public CouponRedemption toDomain() {
+        return CouponRedemption.builder()
+                .id(id)
+                .issuanceId(issuanceId)
+                .orderId(orderId)
+                .redeemedAmount(redeemedAmount)
+                .redeemedAt(redeemedAt)
+                .build();
+    }
 }
+

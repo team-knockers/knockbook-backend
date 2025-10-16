@@ -39,4 +39,51 @@ public class OrderAggregate {
     private Instant completedAt;
 
     private List<OrderItem> items;
+
+    // return a new object with coupons, points, and discounts reset
+    public OrderAggregate withDiscountsReset() {
+        return OrderAggregate.builder()
+                .id(id).userId(userId).cartId(cartId)
+                .status(status).paymentStatus(paymentStatus)
+                .itemCount(itemCount).subtotalAmount(subtotalAmount)
+                .discountAmount(0).couponDiscountAmount(0)
+                .shippingAmount(shippingAmount).rentalAmount(rentalAmount)
+                .totalAmount(totalAmount)
+                .appliedCouponIssuanceId(null)
+                .pointsSpent(0).pointsEarned(0)
+                .placedAt(placedAt).cancelledAt(cancelledAt).completedAt(completedAt)
+                .items(items)
+                .build();
+    }
+
+    // Optionally update status, payment status, and completion time
+    public OrderAggregate withStatuses(final Status newStatus,
+                                       final PaymentStatus newPaymentStatus,
+                                       final Instant newCompletedAt) {
+        return OrderAggregate.builder()
+                .id(id).userId(userId).cartId(cartId)
+                .status(newStatus != null ? newStatus : status)
+                .paymentStatus(newPaymentStatus != null ? newPaymentStatus : paymentStatus)
+                .itemCount(itemCount).subtotalAmount(subtotalAmount)
+                .discountAmount(discountAmount).couponDiscountAmount(couponDiscountAmount)
+                .shippingAmount(shippingAmount).rentalAmount(rentalAmount)
+                .totalAmount(totalAmount)
+                .appliedCouponIssuanceId(appliedCouponIssuanceId)
+                .pointsSpent(pointsSpent).pointsEarned(pointsEarned)
+                .placedAt(placedAt).cancelledAt(cancelledAt)
+                .completedAt(newCompletedAt != null ? newCompletedAt : completedAt)
+                .items(items)
+                .build();
+    }
+
+    // Transition before payment completion (PAID).
+    // If completeNow is true, set status to COMPLETED and assign completedAt immediately
+    public OrderAggregate paid(final Instant paidAt,
+                               final boolean completeNow) {
+        var next = this.withStatuses(null, PaymentStatus.PAID, completeNow ? paidAt : completedAt);
+        if (completeNow) {
+            next = next.withStatuses(Status.COMPLETED, null, paidAt);
+        }
+        return next;
+    }
 }

@@ -13,4 +13,8 @@ public interface CouponIssuanceRepository {
                                       final CouponIssuance.Status status);
     Optional<CouponIssuance> findByIdAndUserId(final Long id,
                                                final Long userId);
+
+    Optional<CouponIssuance> findByIdAndUserIdForUpdate(final Long id,
+                                                        final Long userId);
+    CouponIssuance save(final CouponIssuance issuance);
 }

@@ -1,5 +1,6 @@
 package com.knockbook.backend.entity;
 
+import com.knockbook.backend.domain.PointTransaction;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -39,4 +40,33 @@ public class PointTransactionEntity {
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private Instant createdAt;
+
+    public static PointTransactionEntity toEntity(PointTransaction d) {
+        if (d == null) {
+            return null;
+        }
+        return PointTransactionEntity.builder()
+                .id(d.getId())
+                .userId(d.getUserId())
+                .kind(PointTransactionEntity.PointTransactionKind.valueOf(d.getKind().name()))
+                .amountSigned(d.getAmountSigned())
+                .expiresAt(d.getExpiresAt())
+                .orderId(d.getOrderId())
+                .memo(d.getMemo())
+                .build();
+    }
+
+    public PointTransaction toDomain() {
+        return PointTransaction.builder()
+                .id(id)
+                .userId(userId)
+                .kind(PointTransaction.Kind.valueOf(kind.name()))
+                .amountSigned(amountSigned)
+                .expiresAt(expiresAt)
+                .orderId(orderId)
+                .memo(memo)
+                .createdAt(createdAt)
+                .build();
+    }
 }
+

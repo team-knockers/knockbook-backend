@@ -1,8 +1,10 @@
 package com.knockbook.backend.entity;
 
+import com.knockbook.backend.domain.OrderPayment;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
@@ -49,4 +51,37 @@ public class OrderPaymentEntity {
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedAt;
+
+    public static OrderPaymentEntity toEntity(OrderPayment d) {
+        if (d == null) {
+            return null;
+        }
+        return OrderPaymentEntity.builder()
+                .id(d.getId())
+                .orderId(d.getOrderId())
+                .method(OrderPaymentEntity.PaymentMethod.valueOf(d.getMethod().name()))
+                .provider(d.getProvider())
+                .txId(d.getTxId())
+                .amount(d.getAmount())
+                .status(OrderPaymentEntity.PaymentTxStatus.valueOf(d.getStatus().name()))
+                .approvedAt(LocalDateTime.from(d.getApprovedAt()))
+                .cancelledAt(LocalDateTime.from(d.getCancelledAt()))
+                .build();
+    }
+
+    public OrderPayment toDomain() {
+        return OrderPayment.builder()
+                .id(id)
+                .orderId(orderId)
+                .method(OrderPayment.Method.valueOf(method.name()))
+                .provider(provider)
+                .txId(txId)
+                .amount(amount)
+                .status(OrderPayment.TxStatus.valueOf(status.name()))
+                .approvedAt(Instant.from(approvedAt))
+                .cancelledAt(Instant.from(cancelledAt))
+                .createdAt(Instant.from(createdAt))
+                .updatedAt(Instant.from(updatedAt))
+                .build();
+    }
 }
