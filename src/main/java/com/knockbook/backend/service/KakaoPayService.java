@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -33,23 +34,23 @@ public class KakaoPayService {
                 .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
         final var amount = draft.getTotalAmount();
 
-        final var q = "orderId=" + URLEncoder.encode(String.valueOf(orderId), StandardCharsets.UTF_8);
-        final var approvalUrl = props.getApprovalReturnBase() + "?" + q;
-        final var cancelUrl   = props.getCancelReturnBase()   + "?" + q;
-        final var failUrl     = props.getFailReturnBase()     + "?" + q;
+        final var approvalUrl = appendQuery(props.getApprovalReturnBase(), String.valueOf(orderId));
+        final var cancelUrl   = appendQuery(props.getCancelReturnBase(), String.valueOf(orderId));
+        final var failUrl     = appendQuery(props.getFailReturnBase(), String.valueOf(orderId));
 
-        final var res = kakao.ready(Map.of(
-                "cid", props.getCid(),
-                "partner_order_id", String.valueOf(orderId),
-                "partner_user_id", String.valueOf(userId),
-                "item_name", "Knockbook Order #" + orderId,
-                "quantity", 1,
-                "total_amount", amount,
-                "tax_free_amount", 0,
-                "approval_url", approvalUrl,
-                "cancel_url", cancelUrl,
-                "fail_url", failUrl
-        ));
+        final var body = new HashMap<String, Object>();
+        body.put("cid", props.getCid());
+        body.put("partner_order_id", String.valueOf(orderId));
+        body.put("partner_user_id", String.valueOf(userId));
+        body.put("item_name", "Knockbook Order #" + orderId);
+        body.put("quantity", 1);
+        body.put("total_amount", amount);
+        body.put("tax_free_amount", 0);
+        body.put("approval_url", approvalUrl);
+        body.put("cancel_url", cancelUrl);
+        body.put("fail_url", failUrl);
+
+        final var res = kakao.ready(body);
 
         final var tid = (String) res.get("tid");
         final var pc  = (String) res.get("next_redirect_pc_url");
@@ -97,5 +98,11 @@ public class KakaoPayService {
         // Internal approval (coupon, points, order, payment)
         return paymentApprovalService.approve(userId, orderId, OrderPayment.Method.KAKAOPAY,
                 "kakao", tid, ready.getAmount());
+    }
+
+    private static String appendQuery(String base, String v) {
+        var sep = base.contains("?") ? "&" : "?";
+        return base + sep + URLEncoder.encode("orderId", StandardCharsets.UTF_8) + "="
+                + URLEncoder.encode(v, StandardCharsets.UTF_8);
     }
 }
