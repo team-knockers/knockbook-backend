@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Entity
 @Table(name = "order_payments")
@@ -15,6 +16,8 @@ public class OrderPaymentEntity {
 
     public enum PaymentMethod { KAKAOPAY, TOSSPAY }
     public enum PaymentTxStatus { READY, APPROVED, PARTIAL_CANCELLED, CANCELLED, FAILED }
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -64,8 +67,8 @@ public class OrderPaymentEntity {
                 .txId(d.getTxId())
                 .amount(d.getAmount())
                 .status(OrderPaymentEntity.PaymentTxStatus.valueOf(d.getStatus().name()))
-                .approvedAt(LocalDateTime.from(d.getApprovedAt()))
-                .cancelledAt(LocalDateTime.from(d.getCancelledAt()))
+                .approvedAt(toLocalDateTime(d.getApprovedAt()))
+                .cancelledAt(toLocalDateTime(d.getCancelledAt()))
                 .build();
     }
 
@@ -78,10 +81,18 @@ public class OrderPaymentEntity {
                 .txId(txId)
                 .amount(amount)
                 .status(OrderPayment.TxStatus.valueOf(status.name()))
-                .approvedAt(Instant.from(approvedAt))
-                .cancelledAt(Instant.from(cancelledAt))
-                .createdAt(Instant.from(createdAt))
-                .updatedAt(Instant.from(updatedAt))
+                .approvedAt(toInstant(approvedAt))
+                .cancelledAt(toInstant(cancelledAt))
+                .createdAt(toInstant(createdAt))
+                .updatedAt(toInstant(updatedAt))
                 .build();
+    }
+
+    private static LocalDateTime toLocalDateTime(final Instant i) {
+        return i == null ? null : LocalDateTime.ofInstant(i, KST);
+    }
+
+    private static Instant toInstant(LocalDateTime ldt) {
+        return ldt == null ? null : ldt.atZone(KST).toInstant();
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Component
@@ -24,11 +25,13 @@ public class KakaoPayClient {
         return headers;
     }
 
-    public Map<String, Object> ready(Map<String, Object> body) {
+    public Map<String, Object> ready(HashMap<String, Object> body) {
+        System.out.print(body);
+        final var headers = headers();
         final var res = restTemplate.exchange(
                 props.getApiBase() + "/online/v1/payment/ready",
                 HttpMethod.POST,
-                new HttpEntity<>(body, headers()),
+                new HttpEntity<>(body, headers),
                 Map.class
         );
         return res.getBody();
