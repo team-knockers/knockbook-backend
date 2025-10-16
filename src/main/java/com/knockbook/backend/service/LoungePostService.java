@@ -62,10 +62,12 @@ public class LoungePostService {
 
         final var user = userService.getUser(userId);
 
+        /* TODO. UserService에서 bio정보 전달되면 변경할 것 */
         return post.toBuilder()
                 .displayName(user.getDisplayName())
                 .avatarUrl(user.getAvatarUrl())
-                .bio(user.getBio())
+//                .bio(user.getBio())
+                .bio("임시 테스트 bio입니다.")
                 .build();
     }
 }
