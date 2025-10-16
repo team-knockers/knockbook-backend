@@ -15,8 +15,8 @@ public class FeedLikeRepositoryImpl implements FeedLikeRepository{
     private static final QFeedPostLikeEntity PL = QFeedPostLikeEntity.feedPostLikeEntity;
     private static final QFeedPostEntity P = QFeedPostEntity.feedPostEntity;
 
-    private final QFeedCommentLikeEntity CL = QFeedCommentLikeEntity.feedCommentLikeEntity;
-    private final QFeedCommentEntity C = QFeedCommentEntity.feedCommentEntity;
+    private static final QFeedCommentLikeEntity CL = QFeedCommentLikeEntity.feedCommentLikeEntity;
+    private static final QFeedCommentEntity C = QFeedCommentEntity.feedCommentEntity;
 
     @Override
     public boolean insertPostLikeIfAbsent (
