@@ -28,8 +28,6 @@ public class LoungePostController {
             @RequestParam("page") @Min(value = 1) int page,
             @RequestParam("size") @Min(value = 1) @Max(value = 50) int size,
             @RequestParam(required = false, defaultValue ="newest") String sortBy
-//            @RequestParam(required = false, defaultValue ="published") String sortBy,
-//            @RequestParam(required = false, defaultValue ="desc") String order
     ) {
 
         // 1) Create PageRequest
@@ -61,6 +59,36 @@ public class LoungePostController {
                 .build();
 
         // 5) Return final response
+        return ResponseEntity.ok(response);
+    }
+
+    // API-LOUNGE-02
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping(path = "/{userId}/{postId}")
+    public ResponseEntity<GetLoungePostDetailsResponse> getLoungePostDetails(
+            @PathVariable("userId") String userId,
+            @PathVariable("postId") String postId
+    ) {
+        // 1) Convert input ID (String -> Long)
+        final var id = Long.valueOf(postId);
+
+        // 2) Retrieve LoungePostDetails from domain
+        final var postDetails = loungePostService.getPostDetails(id);
+
+        // 3) Map domain object to DTO
+        final var response = GetLoungePostDetailsResponse.builder()
+                .id(String.valueOf(postDetails.getId()))
+                .displayName(postDetails.getDisplayName())
+                .avatarUrl(postDetails.getAvatarUrl())
+                .bio(postDetails.getBio())
+                .title(postDetails.getTitle())
+                .subtitle(postDetails.getSubtitle())
+                .content(postDetails.getContent())
+                .likeCount(postDetails.getLikeCount())
+                .createdAt(postDetails.getCreatedAt())
+                .build();
+
+        // 4) Return final response
         return ResponseEntity.ok(response);
     }
 }
