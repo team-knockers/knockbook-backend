@@ -26,6 +26,7 @@ public class PaymentApprovalService {
     private final OrderPaymentRepository orderPaymentRepository;
     private final PointBalanceRepository pointBalanceRepository;
     private final PointTransactionRepository pointTransactionRepository;
+    private final CartRepository cartRepository;
 
     @Transactional
     public PaymentApprovalResult approve(final Long userId,
@@ -129,7 +130,7 @@ public class PaymentApprovalService {
                 .txId(txId)
                 .amount(amount)
                 .status(OrderPayment.TxStatus.APPROVED)
-                .approvedAt(Instant.from(nowLdt))
+                .approvedAt(nowInstant)
                 .build());
 
         // 5) Update order status and timeline (COMPLETED immediately if virtual/instant, set completeNow=false for shippable orders)
@@ -137,7 +138,18 @@ public class PaymentApprovalService {
         final var orderUpdated = order.paid(nowInstant, completeNow);
         final var orderSaved = orderRepository.saveAggregate(orderUpdated);
 
+        final var refs = orderSaved.getItems().stream().map(i ->
+                CartRef.builder()
+                        .refId(i.getRefId())
+                        .refType(i.getRefType().name())
+                        .rentalDays(i.getRefType() == OrderItem.RefType.BOOK_RENTAL ? i.getRentalDays() : 0)
+                        .build())
+                .distinct().toList();
+
+        cartRepository.deleteByUserIdAndRefs(userId, refs);
+
         return PaymentApprovalResult.builder()
+                .userId(userId)
                 .orderId(orderSaved.getId())
                 .order(orderSaved)
                 .payment(payment)

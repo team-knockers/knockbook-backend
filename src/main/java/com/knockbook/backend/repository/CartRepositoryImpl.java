@@ -2,11 +2,12 @@ package com.knockbook.backend.repository;
 
 import com.knockbook.backend.domain.Cart;
 import com.knockbook.backend.domain.CartItem;
-import com.knockbook.backend.domain.PointsPolicy;
+import com.knockbook.backend.domain.CartRef;
 import com.knockbook.backend.entity.CartEntity;
 import com.knockbook.backend.entity.CartItemEntity;
 import com.knockbook.backend.entity.QCartEntity;
 import com.knockbook.backend.entity.QCartItemEntity;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -245,6 +247,38 @@ public class CartRepositoryImpl implements CartRepository {
         em.flush();
         recalcAndPersist(cartId);
         return findById(cartId).orElseThrow();
+    }
+
+    @Override
+    @Transactional
+    public void deleteByUserIdAndRefs(Long userId, Collection<CartRef> refs) {
+        if (refs == null || refs.isEmpty()) { return; }
+
+        final var c  = QCartEntity.cartEntity;
+        final var ci = QCartItemEntity.cartItemEntity;
+
+        final var cart = query.selectFrom(c)
+                .where(c.userId.eq(userId), c.status.eq(CartEntity.Status.OPEN))
+                .fetchOne();
+        if (cart == null) { return; }
+
+        final var or = new BooleanBuilder();
+        for (final var r : refs) {
+            final var type = CartItemEntity.RefType.valueOf(r.getRefType());
+            final var base = ci.cartId.eq(cart.getId())
+                    .and(ci.refType.eq(type))
+                    .and(ci.refId.eq(r.getRefId()));
+
+            if (type == CartItemEntity.RefType.BOOK_RENTAL) {
+                or.or(base);
+            } else {
+                or.or(base.and(ci.rentalDays.coalesce(0).eq(0)));
+            }
+        }
+
+        query.delete(ci).where(or).execute();
+        em.flush();
+        recalcAndPersist(cart.getId());
     }
 
     private void recalcAndPersist(Long cartId) {
