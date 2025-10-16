@@ -12,6 +12,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+
 @RestController
 @RequestMapping(path = "/lounge")
 @Validated
@@ -46,7 +50,7 @@ public class LoungePostController {
                         .title(p.getTitle())
                         .previewImageUrl(p.getPreviewImageUrl())
                         .likeCount(p.getLikeCount())
-                        .createdAt(p.getCreatedAt())
+                        .createdAt(toLocalDate(p.getCreatedAt()))
                         .build());
 
         // 4) Build LoungePostSummaryResponse
@@ -85,10 +89,15 @@ public class LoungePostController {
                 .subtitle(postDetails.getSubtitle())
                 .content(postDetails.getContent())
                 .likeCount(postDetails.getLikeCount())
-                .createdAt(postDetails.getCreatedAt())
+                .createdAt(toLocalDate(postDetails.getCreatedAt()))
                 .build();
 
         // 4) Return final response
         return ResponseEntity.ok(response);
+    }
+
+    // Helper: Change Instant to LocalDate
+    private static LocalDate toLocalDate(Instant instant) {
+        return instant == null ? null : LocalDate.ofInstant(instant, ZoneId.of("Asia/Seoul"));
     }
 }

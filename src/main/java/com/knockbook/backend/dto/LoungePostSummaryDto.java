@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 @NoArgsConstructor
@@ -18,5 +18,5 @@ public class LoungePostSummaryDto {
     private String title;
     private String previewImageUrl;
     private Integer likeCount;
-    private Instant createdAt;
+    private LocalDate createdAt;
 }

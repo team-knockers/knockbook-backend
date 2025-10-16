@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 @NoArgsConstructor
@@ -21,5 +21,5 @@ public class GetLoungePostDetailsResponse {
     private String subtitle; // nullable
     private String content;
     private Integer likeCount;
-    private Instant createdAt;
+    private LocalDate createdAt;
 }
