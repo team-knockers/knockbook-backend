@@ -5,6 +5,7 @@ import com.knockbook.backend.component.KakaoPayProps;
 import com.knockbook.backend.domain.KakaoReadyInfo;
 import com.knockbook.backend.domain.OrderPayment;
 import com.knockbook.backend.domain.PaymentApprovalResult;
+import com.knockbook.backend.exception.OrderNotFoundException;
 import com.knockbook.backend.repository.OrderPaymentQueryRepository;
 import com.knockbook.backend.repository.OrderPaymentRepository;
 import com.knockbook.backend.repository.OrderRepository;
@@ -78,26 +79,27 @@ public class KakaoPayService {
                 .build();
     }
 
-    /** Approve payment: use pg_token to call the internal payment approval domain */
     @Transactional
-    public PaymentApprovalResult approve(Long userId, Long orderId, String pgToken) {
+    public PaymentApprovalResult approve(Long orderId, String pgToken) {
         final var ready = orderPaymentQueryRepository.findReadyByOrderId(orderId)
                 .orElseThrow(() -> new IllegalStateException("READY_PAYMENT_NOT_FOUND"));
-        final var tid = ready.getTxId();
 
-        // Kakao approve API call
+        final var order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        final var userId = order.getUserId();
+
         kakao.approve(Map.of(
                 "cid", props.getCid(),
-                "tid", tid,
+                "tid", ready.getTxId(),
                 "partner_order_id", String.valueOf(orderId),
                 "partner_user_id", String.valueOf(userId),
                 "pg_token", pgToken,
                 "total_amount", ready.getAmount()
         ));
 
-        // Internal approval (coupon, points, order, payment)
-        return paymentApprovalService.approve(userId, orderId, OrderPayment.Method.KAKAOPAY,
-                "kakao", tid, ready.getAmount());
+        return paymentApprovalService.approve(
+                userId, orderId, OrderPayment.Method.KAKAOPAY, "kakao", ready.getTxId(), ready.getAmount()
+        );
     }
 
     private static String appendQuery(String base, String v) {

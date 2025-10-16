@@ -14,9 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -290,6 +288,27 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     @Transactional
+    public Optional<OrderAggregate> findById(Long orderId) {
+        final var entity = em.find(OrderEntity.class, orderId);
+        if (entity == null) { return Optional.empty(); }
+        final var items = loadItems(orderId);
+        return Optional.of(entity.toDomain(items));
+    }
+
+    @Override
+    @Transactional
+    public Optional<OrderAggregate> findByIdForUpdate(Long orderId) {
+        final var entity = qf.selectFrom(qOrder)
+                .where(qOrder.id.eq(orderId))
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .fetchOne();
+        if (entity == null) { return Optional.empty(); }
+        final var items = loadItems(entity.getId());
+        return Optional.of(entity.toDomain(items));
+    }
+
+    @Override
+    @Transactional
     public OrderAggregate saveAggregate(OrderAggregate aggregate) {
         var entity = OrderEntity.fromModel(aggregate);
         if (entity.getId() == null) {
@@ -323,15 +342,62 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     private void replaceItems(final Long orderId,
                               final List<OrderItem> items) {
-        qf.delete(qOrderItem).where(qOrderItem.orderId.eq(orderId)).execute();
+
+        final var existingRows = qf.selectFrom(qOrderItem)
+                .where(qOrderItem.orderId.eq(orderId))
+                .orderBy(qOrderItem.id.asc())
+                .fetch();
+
+        record Key(String refType, Long refId, Integer rentalDays) {}
+        final var existingMap = new HashMap<Key, OrderItemEntity>(existingRows.size());
+        for (final var e : existingRows) {
+            existingMap.put(new Key(
+                    e.getRefType().name(),
+                    e.getRefId(),
+                    e.getRentalDays()
+            ), e);
+        }
+
+        final var seen = new HashSet<>();
+        if (items != null) {
+            for (final var it : items) {
+                Key k = new Key(
+                        it.getRefType().name(),
+                        it.getRefId(),
+                        it.getRentalDays()
+                );
+                seen.add(k);
+
+                OrderItemEntity target = existingMap.get(k);
+                if (target != null) {
+                    target.setTitleSnapshot(it.getTitleSnapshot());
+                    target.setThumbnailUrl(it.getThumbnailUrl());
+                    target.setListPriceSnapshot(nz(it.getListPriceSnapshot()));
+                    target.setSalePriceSnapshot(nz(it.getSalePriceSnapshot()));
+                    target.setRentalPriceSnapshot(nz(it.getRentalPriceSnapshot()));
+                    target.setQuantity(it.getQuantity() == null ? 1 : it.getQuantity());
+                    target.setPointsRate(nz(it.getPointsRate()));
+                    target.setPointsEarnedItem(nz(it.getPointsEarnedItem()));
+                    target.setLineSubtotalAmount(nz(it.getLineSubtotalAmount()));
+                    target.setLineDiscountAmount(nz(it.getLineDiscountAmount()));
+                    target.setLineTotalAmount(nz(it.getLineTotalAmount()));
+                } else {
+                    final var fresh = OrderItemEntity.fromModel(
+                            it.getOrderId() != null && it.getOrderId().equals(orderId) ? it : it.withOrderId(orderId)
+                    );
+                    fresh.setId(null);
+                    fresh.setOrderId(orderId);
+                    em.persist(fresh);
+                }
+            }
+        }
+
+        for (var entry : existingMap.entrySet()) {
+            if (!seen.contains(entry.getKey())) {
+                em.remove(entry.getValue());
+            }
+        }
+
         em.flush();
-        if (items == null || items.isEmpty()) {
-            return;
-        }
-        for (final var it : items) {
-            final var fixed = (it.getOrderId() != null && it.getOrderId().equals(orderId))
-                    ? it : it.withOrderId(orderId);
-            em.persist(OrderItemEntity.fromModel(fixed));
-        }
     }
 }

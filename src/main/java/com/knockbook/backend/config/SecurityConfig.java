@@ -28,6 +28,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/local/**").permitAll()
                         .requestMatchers("/auth/token/**").permitAll()
+                        .requestMatchers("/checkout/kakao/**","/error").permitAll()
                         .requestMatchers("/db-ping").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(accessTokenFilter, UsernamePasswordAuthenticationFilter.class)
@@ -50,7 +51,7 @@ public class SecurityConfig {
         corsConfig.setAllowCredentials(true);
         corsConfig.setMaxAge(3600L);
 
-        UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
+        final var src = new UrlBasedCorsConfigurationSource();
         src.registerCorsConfiguration("/**", corsConfig);
         return src;
     }

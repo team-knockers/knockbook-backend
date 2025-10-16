@@ -19,5 +19,7 @@ public interface OrderRepository {
 
     Optional<OrderAggregate> findByIdAndUserIdForUpdate(final Long userId,
                                                         final Long orderId); // for payment approval
+    Optional<OrderAggregate> findById(final Long orderId);
+    Optional<OrderAggregate> findByIdForUpdate(final Long orderId);
     OrderAggregate saveAggregate(final OrderAggregate aggregate); // save timeline
 }

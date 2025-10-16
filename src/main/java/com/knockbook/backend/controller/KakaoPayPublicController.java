@@ -1,0 +1,67 @@
+package com.knockbook.backend.controller;
+
+import com.knockbook.backend.service.KakaoPayService;
+import com.knockbook.backend.service.TokenService;
+import com.nimbusds.jose.JOSEException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.util.Map;
+
+@RestController
+@RequestMapping(path = "/checkout/kakao")
+@RequiredArgsConstructor
+public class KakaoPayPublicController {
+
+    private final KakaoPayService kakaoPayService;
+    private final TokenService tokenService;
+
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
+
+    // Kakao → server(success)
+    @GetMapping("/success")
+    public ResponseEntity<Void> success(
+            @RequestParam Long orderId,
+            @RequestParam("pg_token") String pgToken) throws JOSEException {
+
+        final var result = kakaoPayService.approve(orderId, pgToken);
+        final var userId = String.valueOf(result.getUserId());
+        final var tokens = tokenService.issueTokens(userId);
+
+        // set refresh token as HttpOnly cookie
+        final var cookieName = TokenService.refreshTokenCookieName;
+        final var refreshCookie = ResponseCookie.from(cookieName, tokens.getRefreshToken())
+                .httpOnly(true)
+                .secure(true)
+                .path("/auth/token")
+                .sameSite("None")
+                .maxAge(TokenService.refreshTokenValidPeriod)
+                .build();
+
+        return ResponseEntity.status(302)
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .location(URI.create(frontendBaseUrl + "/order/" + orderId + "/complete"))
+                .build();
+    }
+
+    @GetMapping("/cancel")
+    public ResponseEntity<Void> cancel(@RequestParam Long orderId) {
+        return ResponseEntity.status(302)
+                .location(URI.create(frontendBaseUrl + "/order/" + orderId + "/cancelled"))
+                .build();
+    }
+
+    @GetMapping("/fail")
+    public ResponseEntity<Void> fail(@RequestParam Long orderId) {
+        return ResponseEntity.status(302)
+                .location(URI.create(frontendBaseUrl + "/order/" + orderId + "/failed"))
+                .build();
+    }
+}
