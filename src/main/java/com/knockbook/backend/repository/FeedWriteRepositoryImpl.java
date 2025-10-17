@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -19,6 +20,7 @@ public class FeedWriteRepositoryImpl implements FeedWriteRepository{
 
     private static final QFeedPostEntity P = QFeedPostEntity.feedPostEntity;
     private static final QUserEntity U = QUserEntity.userEntity;
+    private static final QFeedCommentEntity C = QFeedCommentEntity.feedCommentEntity;
 
     @Override
     public FeedComment insertComment (
@@ -101,5 +103,53 @@ public class FeedWriteRepositoryImpl implements FeedWriteRepository{
                 .postId(String.valueOf(postId))
                 .thumbnailUrl(thumbUrl)
                 .build();
+    }
+
+    @Override
+    public Optional<Long> findPostIdByCommentIdAndUserId (
+            Long commentId,
+            Long userId
+    ) {
+        final var postId = query
+                .select(C.postId)
+                .from(C)
+                .where(C.commentId.eq(commentId).and(C.userId.eq(userId)))
+                .fetchOne();
+
+        return Optional.ofNullable(postId);
+    }
+
+    @Override
+    public long deleteCommentByIdAndUserId (
+            Long commentId,
+            Long userId
+    ) {
+        final var affected = query.delete(C)
+                .where(C.commentId.eq(commentId).and(C.userId.eq(userId)))
+                .execute();
+
+        return affected;
+    }
+
+    @Override
+    public void decrementPostCommentsCount (
+            Long postId
+    ) {
+        query.update(P)
+                .set(P.commentsCount, P.commentsCount.add(-1))
+                .where(P.postId.eq(postId))
+                .execute();
+    }
+
+    @Override
+    public long deletePostByIdAndUserId (
+            Long postId,
+            Long userId
+    ) {
+        final var affected = query.delete(P)
+                .where(P.postId.eq(postId).and(P.userId.eq(userId)))
+                .execute();
+
+        return affected;
     }
 }
