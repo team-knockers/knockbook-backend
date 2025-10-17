@@ -30,7 +30,7 @@ public class LoungePostController {
     @Autowired
     private LoungePostService loungePostService;
 
-    // API-LOUNGE-01
+    // API-LOUNGE-01: Get a summary of lounge posts
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}")
     public ResponseEntity<GetLoungePostSummaryResponse> getLoungePostsSummary(
@@ -72,7 +72,7 @@ public class LoungePostController {
         return ResponseEntity.ok(response);
     }
 
-    // API-LOUNGE-02
+    // API-LOUNGE-02: Get details of a single lounge post
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}/{postId}")
     public ResponseEntity<GetLoungePostDetailsResponse> getLoungePostDetails(
@@ -102,52 +102,56 @@ public class LoungePostController {
         return ResponseEntity.ok(response);
     }
 
-    // API-LOUNGE-03 댓글 작성 (완료 후 반영된 페이지 반환)
+    // API-LOUNGE-03: Create a comment and return the updated page of comments
     @PreAuthorize("#userId == authentication.name")
     @PostMapping("/{userId}/{postId}/comments")
-    public ResponseEntity<List<LoungePostCommentDTO>> createComment(
+    public ResponseEntity<List<GetLoungePostCommentResponse>> createComment(
             @PathVariable("userId") String userId,
             @PathVariable("postId") String postId,
             @RequestBody String content,
             @PageableDefault(page = 0, size = 20, sort = "createdAt") Pageable pageable
     ) {
-        // 1) Convert input ID (String -> Long)
+        // 1) Convert IDs to Long
         final var longPostId = Long.valueOf(postId);
         final var longUserId = Long.valueOf(userId);
 
-        // 2) Retrieve paged LoungePostSummary from domain
+        // 2) Create comment via service
         final var comment = loungePostService.createComment(longPostId, longUserId, content);
 
-        // 3) 생성후 바로 갱신할 단위 댓글 조회
+        // 3) Retrieve updated page of comments
         final List<LoungePostComment> comments = loungePostService.getCommentsByPostId(longPostId, pageable);
 
-        // 4) 결과값 return
+        // 4) Return response
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(toDTOList(comments));
     }
 
-    // API-LOUNGE-04 댓글 여러 건 조회 (페이지네이션)
+    // API-LOUNGE-04: Get multiple comments with pagination (1-based page)
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}/{postId}/comments")
-    public ResponseEntity<List<LoungePostCommentDTO>> getCommentsByPost(
+    public ResponseEntity<List<GetLoungePostCommentResponse>> getCommentsByPost(
             @PathVariable("userId") String userId,
             @PathVariable("postId") String postId,
             @RequestParam(defaultValue = "1") @Min(1) int page,  // 1-based 입력
             @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size
     ) {
+        // 1) Convert 1-based page to 0-based
         final var zeroBasedPage = page - 1;
         final var pageable = PageRequest.of(zeroBasedPage, size, Sort.by("createdAt").descending());
 
+        // 2) Convert postId to Long
         final var longPostId = Long.valueOf(postId);
+
+        // 3) Retrieve comments from service
         final var comments = loungePostService.getCommentsByPostId(longPostId, pageable);
 
         return ResponseEntity.ok(toDTOList(comments));
     }
 
-    // API-LOUNGE-05 댓글 단건 조회 (수정 작업 전 글자 띄우는 용도)
+    // API-LOUNGE-05: Get a single comment (for edit preview)
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}/comments/{commentId}")
-    public ResponseEntity<LoungePostCommentDTO> getCommentById(
+    public ResponseEntity<GetLoungePostCommentResponse> getCommentById(
             @PathVariable("userId") String userId,
             @PathVariable("commentId") String commentId
     ) {
@@ -157,39 +161,44 @@ public class LoungePostController {
         return ResponseEntity.ok(toDTO(comment));
     }
 
-    // API-LOUNGE-06 댓글 수정 (완료 후 반영된 페이지 반환)
+    // API-LOUNGE-06: Update a comment and return the updated page
     @PreAuthorize("#userId == authentication.name")
     @PutMapping("/{userId}/comments/{commentId}")
-    public ResponseEntity<List<LoungePostCommentDTO>> updateComment(
+    public ResponseEntity<List<GetLoungePostCommentResponse>> updateComment(
             @PathVariable("userId") String userId,
             @PathVariable("commentId") String commentId,
             @RequestBody String content,
             @PageableDefault(page = 0, size = 20, sort = "createdAt") Pageable pageable
     ) {
+        // 1) Convert postId to Long
         final var longCommentId = Long.valueOf(commentId);
         final var longUserId = Long.valueOf(userId);
 
+        // 2) Update comment via service
         final var updated = loungePostService.updateComment(longCommentId, longUserId, content);
 
-        // 업데이트 후 같은 게시글의 페이지 단위 댓글 반환
+        // 3) Retrieve updated page of comment
         final var comments = loungePostService.getCommentsByPostId(updated.getPostId(), pageable);
 
         return ResponseEntity.ok(toDTOList(comments));
     }
 
-    // API-LOUNGE-07 댓글 삭제 (완료 후 반영된 페이지 반환)
+    // API-LOUNGE-07: Delete a comment and return the updated page
     @PreAuthorize("#userId == authentication.name")
     @DeleteMapping("/{userId}/comments/{commentId}")
-    public ResponseEntity<List<LoungePostCommentDTO>> deleteComment(
+    public ResponseEntity<List<GetLoungePostCommentResponse>> deleteComment(
             @PathVariable("userId") String userId,
             @PathVariable("commentId") String commentId,
             @PageableDefault(page = 0, size = 20, sort = "createdAt") Pageable pageable
     ) {
+        // 1) Convert postId to Long
         final var longCommentId = Long.valueOf(commentId);
         final var longUserId = Long.valueOf(userId);
 
+        // 2) Delete comment via service
         final var deleted = loungePostService.deleteComment(longCommentId, longUserId);
 
+        // 3) Retrieve updated page of comment
         final var comments = loungePostService.getCommentsByPostId(deleted.getPostId(), pageable);
 
         return ResponseEntity.ok(toDTOList(comments));
@@ -200,9 +209,9 @@ public class LoungePostController {
         return instant == null ? null : LocalDate.ofInstant(instant, ZoneId.of("Asia/Seoul"));
     }
 
-    /** Domain -> DTO 변환 */
-    private LoungePostCommentDTO toDTO(LoungePostComment comment) {
-        return LoungePostCommentDTO.builder()
+    /** Domain -> DTO */
+    private GetLoungePostCommentResponse toDTO(LoungePostComment comment) {
+        return GetLoungePostCommentResponse.builder()
                 .id(comment.getId())
                 .postId(comment.getPostId())
                 .userId(comment.getUserId())
@@ -212,7 +221,7 @@ public class LoungePostController {
                 .build();
     }
 
-    private List<LoungePostCommentDTO> toDTOList(List<LoungePostComment> comments) {
+    private List<GetLoungePostCommentResponse> toDTOList(List<LoungePostComment> comments) {
         return comments.stream().map(this::toDTO).collect(Collectors.toList());
     }
 }

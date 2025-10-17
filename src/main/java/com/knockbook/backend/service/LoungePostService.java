@@ -1,11 +1,10 @@
 package com.knockbook.backend.service;
 
 import com.knockbook.backend.domain.*;
-import com.knockbook.backend.dto.LoungePostCommentDTO;
+import com.knockbook.backend.exception.CommentNotFoundException;
 import com.knockbook.backend.exception.PostNotFoundException;
 import com.knockbook.backend.repository.LoungePostCommentRepository;
 import com.knockbook.backend.repository.LoungePostRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -79,9 +78,6 @@ public class LoungePostService {
                 .build();
     }
 
-    /**
-     * 댓글 작성
-     */
     @Transactional
     public LoungePostComment createComment(Long postId, Long userId, String content) {
         final var newComment = LoungePostComment.builder()
@@ -94,32 +90,20 @@ public class LoungePostService {
         return postCommentRepo.save(newComment);
     }
 
-    /**
-     * 댓글 단건 조회
-     */
     public LoungePostComment getComment(Long id) {
         return postCommentRepo.findByIdAndNotDeleted(id)
-                .orElseThrow(() -> new EntityNotFoundException("댓글이 존재하지 않습니다."));
+                .orElseThrow(() -> new CommentNotFoundException("댓글이 존재하지 않습니다."));
     }
 
-    /**
-     * 특정 게시글의 모든 댓글 조회 (페이지네이션)
-     */
     public List<LoungePostComment> getCommentsByPostId(Long postId, Pageable pageable) {
         return postCommentRepo.findAllByPostIdAndNotDeleted(postId, pageable);
     }
 
-    /**
-     * 댓글 수정
-     */
     @Transactional
     public LoungePostComment updateComment(Long id, Long userId, String newContent) {
         return postCommentRepo.updateContentById(id, userId, newContent);
     }
 
-    /**
-     * 댓글 삭제 (Soft Delete)
-     */
     @Transactional
     public LoungePostComment deleteComment(Long id, Long userId) {
         return postCommentRepo.softDeleteById(id, userId);

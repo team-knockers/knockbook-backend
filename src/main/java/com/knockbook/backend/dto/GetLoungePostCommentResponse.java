@@ -6,7 +6,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class LoungePostCommentDTO {
+public class GetLoungePostCommentResponse {
     private Long id;
     private Long postId;
     private Long userId;

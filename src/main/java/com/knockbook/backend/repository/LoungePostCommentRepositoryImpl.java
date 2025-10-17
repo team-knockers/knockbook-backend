@@ -3,9 +3,9 @@ package com.knockbook.backend.repository;
 import com.knockbook.backend.domain.LoungePostComment;
 import com.knockbook.backend.entity.LoungePostCommentEntity;
 import com.knockbook.backend.entity.QLoungePostCommentEntity;
+import com.knockbook.backend.exception.CommentNotFoundException;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -71,8 +71,12 @@ public class LoungePostCommentRepositoryImpl implements LoungePostCommentReposit
                         .and(c.deletedAt.isNull()))
                 .fetchOne();
 
-        if (comment == null) throw new EntityNotFoundException("댓글이 없습니다");
-        if (!comment.getUserId().equals(userId)) throw new AccessDeniedException("권한 없음");
+        if (comment == null) {
+            throw new CommentNotFoundException("댓글이 존재하지 않습니다");
+        }
+        if (!comment.getUserId().equals(userId)) {
+            throw new AccessDeniedException("권한이 없습니다.");
+        }
 
         final var detached = comment.toBuilder()
                 .content(content)
@@ -92,8 +96,12 @@ public class LoungePostCommentRepositoryImpl implements LoungePostCommentReposit
                 .where(c.id.eq(id).and(c.deletedAt.isNull()))
                 .fetchOne();
 
-        if (comment == null) throw new EntityNotFoundException("댓글이 없습니다");
-        if (!comment.getUserId().equals(userId)) throw new AccessDeniedException("권한 없음");
+        if (comment == null) {
+            throw new CommentNotFoundException("댓글이 존재하지 않습니다");
+        }
+        if (!comment.getUserId().equals(userId)) {
+            throw new AccessDeniedException("권한이 없습니다.");
+        }
 
         final var detached = comment.toBuilder()
                 .deletedAt(Instant.now())

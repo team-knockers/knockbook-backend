@@ -55,6 +55,13 @@ public class LoungeControllerExceptionHandler {
                 ex.getMessage(), "POST_NOT_FOUND", "about:blank#post");
     }
 
+    @ExceptionHandler(CommentNotFoundException.class)
+    public ProblemDetail commentNotFound(CommentNotFoundException ex) {
+        return ProblemDetailFactory.of(
+                HttpStatus.NOT_FOUND, "Comment not found",
+                ex.getMessage(), "COMMENT_NOT_FOUND", "about:blank#comment");
+    }
+
     @ExceptionHandler(DataAccessException.class)
     public ProblemDetail dbUnavailable(DataAccessException ex) {
         return ProblemDetailFactory.of(
