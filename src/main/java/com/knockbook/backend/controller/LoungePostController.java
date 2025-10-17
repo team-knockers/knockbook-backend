@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -108,7 +109,7 @@ public class LoungePostController {
             @PathVariable("userId") String userId,
             @PathVariable("postId") String postId,
             @RequestBody String content,
-            Pageable pageable
+            @PageableDefault(page = 0, size = 20, sort = "createdAt") Pageable pageable
     ) {
         // 1) Convert input ID (String -> Long)
         final var longPostId = Long.valueOf(postId);
@@ -118,34 +119,40 @@ public class LoungePostController {
         final var comment = loungePostService.createComment(longPostId, longUserId, content);
 
         // 3) 생성후 바로 갱신할 단위 댓글 조회
-        List<LoungePostComment> comments = loungePostService.getCommentsByPostId(longPostId, pageable);
+        final List<LoungePostComment> comments = loungePostService.getCommentsByPostId(longPostId, pageable);
 
         // 4) 결과값 return
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(toDTOList(comments));
     }
 
-    // API-LOUNGE-04 댓글 단건 조회 (수정 작업 전 글자 띄우는 용도)
+    // API-LOUNGE-04 댓글 여러 건 조회 (페이지네이션)
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}/{postId}/comments")
     public ResponseEntity<List<LoungePostCommentDTO>> getCommentsByPost(
+            @PathVariable("userId") String userId,
             @PathVariable("postId") String postId,
-            Pageable pageable
+            @RequestParam(defaultValue = "1") @Min(1) int page,  // 1-based 입력
+            @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size
     ) {
+        final var zeroBasedPage = page - 1;
+        final var pageable = PageRequest.of(zeroBasedPage, size, Sort.by("createdAt").descending());
+
         final var longPostId = Long.valueOf(postId);
-        List<LoungePostComment> comments = loungePostService.getCommentsByPostId(longPostId, pageable);
+        final var comments = loungePostService.getCommentsByPostId(longPostId, pageable);
 
         return ResponseEntity.ok(toDTOList(comments));
     }
 
-    // API-LOUNGE-05 댓글 단건 조회
+    // API-LOUNGE-05 댓글 단건 조회 (수정 작업 전 글자 띄우는 용도)
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}/comments/{commentId}")
     public ResponseEntity<LoungePostCommentDTO> getCommentById(
+            @PathVariable("userId") String userId,
             @PathVariable("commentId") String commentId
     ) {
-        final Long longCommentId = Long.valueOf(commentId);
-        LoungePostComment comment = loungePostService.getComment(longCommentId);
+        final var longCommentId = Long.valueOf(commentId);
+        final var comment = loungePostService.getComment(longCommentId);
 
         return ResponseEntity.ok(toDTO(comment));
     }
@@ -157,15 +164,15 @@ public class LoungePostController {
             @PathVariable("userId") String userId,
             @PathVariable("commentId") String commentId,
             @RequestBody String content,
-            Pageable pageable
+            @PageableDefault(page = 0, size = 20, sort = "createdAt") Pageable pageable
     ) {
-        final Long longCommentId = Long.valueOf(commentId);
-        final Long longUserId = Long.valueOf(userId);
+        final var longCommentId = Long.valueOf(commentId);
+        final var longUserId = Long.valueOf(userId);
 
-        LoungePostComment updated = loungePostService.updateComment(longCommentId, longUserId, content);
+        final var updated = loungePostService.updateComment(longCommentId, longUserId, content);
 
         // 업데이트 후 같은 게시글의 페이지 단위 댓글 반환
-        List<LoungePostComment> comments = loungePostService.getCommentsByPostId(updated.getPostId(), pageable);
+        final var comments = loungePostService.getCommentsByPostId(updated.getPostId(), pageable);
 
         return ResponseEntity.ok(toDTOList(comments));
     }
@@ -176,18 +183,17 @@ public class LoungePostController {
     public ResponseEntity<List<LoungePostCommentDTO>> deleteComment(
             @PathVariable("userId") String userId,
             @PathVariable("commentId") String commentId,
-            Pageable pageable
+            @PageableDefault(page = 0, size = 20, sort = "createdAt") Pageable pageable
     ) {
-        final Long longCommentId = Long.valueOf(commentId);
-        final Long longUserId = Long.valueOf(userId);
+        final var longCommentId = Long.valueOf(commentId);
+        final var longUserId = Long.valueOf(userId);
 
-        LoungePostComment deleted = loungePostService.deleteComment(longCommentId, longUserId);
+        final var deleted = loungePostService.deleteComment(longCommentId, longUserId);
 
-        List<LoungePostComment> comments = loungePostService.getCommentsByPostId(deleted.getPostId(), pageable);
+        final var comments = loungePostService.getCommentsByPostId(deleted.getPostId(), pageable);
 
         return ResponseEntity.ok(toDTOList(comments));
     }
-
 
     // Helper: Change Instant to LocalDate
     private static LocalDate toLocalDate(Instant instant) {

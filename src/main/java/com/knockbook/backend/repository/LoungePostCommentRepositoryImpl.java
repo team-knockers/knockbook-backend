@@ -28,7 +28,7 @@ public class LoungePostCommentRepositoryImpl implements LoungePostCommentReposit
     public LoungePostComment save(LoungePostComment domain) {
         LoungePostCommentEntity entity = domainToEntity(domain);
         if (domain.getId() == null) {
-            em.persist(domain);
+            em.persist(entity);
         } else {
             entity = em.merge(entity);
         }
