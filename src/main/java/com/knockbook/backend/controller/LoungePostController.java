@@ -220,11 +220,16 @@ public class LoungePostController {
 
     /** Domain -> DTO */
     private GetLoungePostCommentResponse toDTO(LoungePostComment comment) {
+
+        String content = comment.getStatus() == LoungePostComment.Status.VISIBLE
+                ? comment.getContent()
+                : "신고 처리되어 볼 수 없는 글입니다.";
+
         return GetLoungePostCommentResponse.builder()
                 .id(comment.getId())
                 .postId(comment.getPostId())
                 .userId(comment.getUserId())
-                .content(comment.getContent())
+                .content(content)
                 .createdAt(toLocalDate(comment.getCreatedAt()))
                 .editStatus(isModified(comment.getCreatedAt(), comment.getUpdatedAt()))
                 .build();
