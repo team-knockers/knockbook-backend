@@ -261,4 +261,28 @@ public class FeedController {
 
         return ResponseEntity.created(location).body(dto);
     }
+
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/comment/{commentId}/{userId}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Long commentId,
+            @PathVariable String userId
+    ) {
+        final var uid = Long.parseLong(userId);
+        feedService.deleteComment(commentId, uid);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/post/{postId}/{userId}")
+    public ResponseEntity<Void> deletePost(
+        @PathVariable Long postId,
+        @PathVariable String userId
+    ) {
+        final var uid = Long.parseLong(userId);
+        feedService.deletePost(postId, uid);
+
+        return ResponseEntity.noContent().build();
+    }
 }
