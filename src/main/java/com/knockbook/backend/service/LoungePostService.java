@@ -1,7 +1,6 @@
 package com.knockbook.backend.service;
 
 import com.knockbook.backend.domain.*;
-import com.knockbook.backend.dto.BookReviewsLikeResponse;
 import com.knockbook.backend.exception.CommentNotFoundException;
 import com.knockbook.backend.exception.PostNotFoundException;
 import com.knockbook.backend.repository.LoungePostCommentRepository;
