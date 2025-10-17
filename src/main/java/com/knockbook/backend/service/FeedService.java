@@ -1,9 +1,6 @@
 package com.knockbook.backend.service;
 
-import com.knockbook.backend.domain.FeedCommentsResult;
-import com.knockbook.backend.domain.FeedPostsResult;
-import com.knockbook.backend.domain.FeedProfileResult;
-import com.knockbook.backend.domain.FeedResult;
+import com.knockbook.backend.domain.*;
 import com.knockbook.backend.dto.CreateFeedCommentRequest;
 import com.knockbook.backend.repository.FeedLikeRepository;
 import com.knockbook.backend.repository.FeedReadRepository;
@@ -91,15 +88,15 @@ public class FeedService {
     }
 
     @Transactional
-    public Long createComment (
+    public FeedComment createComment (
             Long postId,
             Long userId,
             CreateFeedCommentRequest req
     ) {
         final var commentBody = req.getCommentBody().trim();
-        final var commentId = feedWriteRepository.insertComment(postId, userId, commentBody);
+        final var feedComment = feedWriteRepository.insertComment(postId, userId, commentBody);
         feedWriteRepository.incrementPostCommentsCount(postId);
 
-        return commentId;
+        return feedComment;
     }
 }
