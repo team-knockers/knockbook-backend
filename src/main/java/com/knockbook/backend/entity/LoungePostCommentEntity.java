@@ -29,6 +29,8 @@ public class LoungePostCommentEntity {
     @Column
     private String content;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Status status;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
