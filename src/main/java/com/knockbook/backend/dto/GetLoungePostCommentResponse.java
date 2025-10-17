@@ -2,6 +2,8 @@ package com.knockbook.backend.dto;
 
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -11,6 +13,6 @@ public class GetLoungePostCommentResponse {
     private Long postId;
     private Long userId;
     private String content;
-    private String createdAt;
-    private String updatedAt; // 수정여부를 표기
+    private LocalDate createdAt;
+    private String editStatus; // Display edit status(null or '수정됨')
 }

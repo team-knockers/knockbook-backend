@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -209,6 +210,14 @@ public class LoungePostController {
         return instant == null ? null : LocalDate.ofInstant(instant, ZoneId.of("Asia/Seoul"));
     }
 
+    // Helper: Returns whether the resource was modified (updatedAt > createdAt)
+    public static String isModified(Instant createdAt, Instant updatedAt) {
+        if(!createdAt.equals(updatedAt)) {
+            return "수정됨";
+        }
+        return null;
+    }
+
     /** Domain -> DTO */
     private GetLoungePostCommentResponse toDTO(LoungePostComment comment) {
         return GetLoungePostCommentResponse.builder()
@@ -216,8 +225,8 @@ public class LoungePostController {
                 .postId(comment.getPostId())
                 .userId(comment.getUserId())
                 .content(comment.getContent())
-                .createdAt(comment.getCreatedAt().toString())
-                .updatedAt(comment.getUpdatedAt().toString())
+                .createdAt(toLocalDate(comment.getCreatedAt()))
+                .editStatus(isModified(comment.getCreatedAt(), comment.getUpdatedAt()))
                 .build();
     }
 
