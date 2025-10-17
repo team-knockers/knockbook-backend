@@ -212,17 +212,28 @@ public class FeedController {
 
     @PreAuthorize("#userId == authentication.name")
     @PostMapping("/comment/{postId}/{userId}")
-    public ResponseEntity<Void> createComment(
+    public ResponseEntity<FeedCommentDTO> createComment(
             @PathVariable("postId") Long postId,
             @PathVariable("userId") String userId,
             @RequestBody @Valid CreateFeedCommentRequest req
             ) {
         final var uid = Long.parseLong(userId);
-        final var commentId = feedService.createComment(postId, uid, req);
+        final var feedComment = feedService.createComment(postId, uid, req);
+        final var comment = FeedCommentDTO.builder()
+                .commentId(feedComment.getCommentId())
+                .userId(feedComment.getUserId())
+                .displayName(feedComment.getDisplayName())
+                .avatarUrl(feedComment.getAvatarUrl())
+                .body(feedComment.getBody())
+                .createdAt(feedComment.getCreatedAt().toString())
+                .likedByMe(feedComment.getLikedByMe())
+                .likesCount(feedComment.getLikesCount())
+                .build();
+
         final var location = URI.create(
-                "/feeds/comment/%d".formatted(commentId)
+                "/feeds/comment/%s".formatted(comment.getCommentId())
         );
 
-        return ResponseEntity.created(location).build();
+        return ResponseEntity.created(location).body(comment);
     }
 }

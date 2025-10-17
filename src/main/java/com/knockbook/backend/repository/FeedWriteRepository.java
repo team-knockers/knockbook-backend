@@ -1,7 +1,9 @@
 package com.knockbook.backend.repository;
 
+import com.knockbook.backend.domain.FeedComment;
+
 public interface FeedWriteRepository {
-    Long insertComment (
+    FeedComment insertComment (
             Long postId,
             Long userId,
             String commentBody
