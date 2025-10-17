@@ -1,15 +1,14 @@
 package com.knockbook.backend.repository;
 
 import com.knockbook.backend.domain.FeedComment;
-import com.knockbook.backend.entity.FeedCommentEntity;
-import com.knockbook.backend.entity.QFeedCommentEntity;
-import com.knockbook.backend.entity.QFeedPostEntity;
-import com.knockbook.backend.entity.QUserEntity;
+import com.knockbook.backend.domain.FeedProfileThumbnail;
+import com.knockbook.backend.entity.*;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -19,7 +18,6 @@ public class FeedWriteRepositoryImpl implements FeedWriteRepository{
     private final EntityManager em;
 
     private static final QFeedPostEntity P = QFeedPostEntity.feedPostEntity;
-    private static final QFeedCommentEntity C = QFeedCommentEntity.feedCommentEntity;
     private static final QUserEntity U = QUserEntity.userEntity;
 
     @Override
@@ -65,5 +63,43 @@ public class FeedWriteRepositoryImpl implements FeedWriteRepository{
                 .set(P.commentsCount, P.commentsCount.add(1))
                 .where(P.postId.eq(postId))
                 .execute();
+    }
+
+    @Override
+    public FeedProfileThumbnail insertPost (
+            Long userId,
+            String content,
+            List<String> imageUrls
+    ) {
+        final var post = FeedPostEntity.builder()
+                .userId(userId)
+                .content(content)
+                .build();
+
+        em.persist(post);
+        em.flush();
+
+        final var postId = post.getPostId();
+
+        int order = 1;
+        for (String url : imageUrls) {
+            if (url == null || url.isBlank()) continue;
+
+            final var img = FeedPostImageEntity.builder()
+                    .postId(postId)
+                    .imageUrl(url)
+                    .sortOrder(order++)
+                    .build();
+
+            em.persist(img);
+        }
+        em.flush();
+
+        final String thumbUrl = imageUrls.get(0);
+
+        return FeedProfileThumbnail.builder()
+                .postId(String.valueOf(postId))
+                .thumbnailUrl(thumbUrl)
+                .build();
     }
 }
