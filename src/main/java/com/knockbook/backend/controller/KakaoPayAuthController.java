@@ -2,12 +2,10 @@ package com.knockbook.backend.controller;
 
 import com.knockbook.backend.service.KakaoPayService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
