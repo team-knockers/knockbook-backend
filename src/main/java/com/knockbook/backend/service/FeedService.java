@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.security.access.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -143,5 +144,33 @@ public class FeedService {
         }
 
         return feedWriteRepository.insertPost(userId, content, imageUrls);
+    }
+
+    @Transactional
+    public void deleteComment (
+            Long commentId,
+            Long userId
+    ) {
+        final var postId = feedWriteRepository
+                .findPostIdByCommentIdAndUserId(commentId, userId)
+                .orElseThrow(() -> new AccessDeniedException("Not owner or not found"));
+
+        final var affected = feedWriteRepository.deleteCommentByIdAndUserId(commentId, userId);
+
+        if (affected > 0) {
+            feedWriteRepository.decrementPostCommentsCount(postId);
+        }
+    }
+
+    @Transactional
+    public void deletePost(
+        Long postId,
+        Long userId
+    ) {
+        final var affected = feedWriteRepository.deletePostByIdAndUserId(postId, userId);
+
+        if (affected == 0) {
+            throw new AccessDeniedException("Not owner or not found");
+        }
     }
 }
