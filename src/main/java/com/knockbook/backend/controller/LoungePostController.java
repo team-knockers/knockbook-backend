@@ -1,12 +1,15 @@
 package com.knockbook.backend.controller;
 
+import com.knockbook.backend.domain.LoungePostComment;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.LoungePostService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -15,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(path = "/lounge")
@@ -26,7 +31,7 @@ public class LoungePostController {
 
     // API-LOUNGE-01
     @PreAuthorize("#userId == authentication.name")
-    @GetMapping(path = "/{userId}")
+    @GetMapping("/{userId}")
     public ResponseEntity<GetLoungePostSummaryResponse> getLoungePostsSummary(
             @PathVariable("userId") String userId,
             @RequestParam("page") @Min(value = 1) int page,
@@ -68,7 +73,7 @@ public class LoungePostController {
 
     // API-LOUNGE-02
     @PreAuthorize("#userId == authentication.name")
-    @GetMapping(path = "/{userId}/{postId}")
+    @GetMapping("/{userId}/{postId}")
     public ResponseEntity<GetLoungePostDetailsResponse> getLoungePostDetails(
             @PathVariable("userId") String userId,
             @PathVariable("postId") String postId
@@ -96,8 +101,112 @@ public class LoungePostController {
         return ResponseEntity.ok(response);
     }
 
+    // API-LOUNGE-03 댓글 작성 (완료 후 반영된 페이지 반환)
+    @PreAuthorize("#userId == authentication.name")
+    @PostMapping("/{userId}/{postId}/comments")
+    public ResponseEntity<List<LoungePostCommentDTO>> createComment(
+            @PathVariable("userId") String userId,
+            @PathVariable("postId") String postId,
+            @RequestBody String content,
+            Pageable pageable
+    ) {
+        // 1) Convert input ID (String -> Long)
+        final var longPostId = Long.valueOf(postId);
+        final var longUserId = Long.valueOf(userId);
+
+        // 2) Retrieve paged LoungePostSummary from domain
+        final var comment = loungePostService.createComment(longPostId, longUserId, content);
+
+        // 3) 생성후 바로 갱신할 단위 댓글 조회
+        List<LoungePostComment> comments = loungePostService.getCommentsByPostId(longPostId, pageable);
+
+        // 4) 결과값 return
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(toDTOList(comments));
+    }
+
+    // API-LOUNGE-04 댓글 단건 조회 (수정 작업 전 글자 띄우는 용도)
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/{postId}/comments")
+    public ResponseEntity<List<LoungePostCommentDTO>> getCommentsByPost(
+            @PathVariable("postId") String postId,
+            Pageable pageable
+    ) {
+        final var longPostId = Long.valueOf(postId);
+        List<LoungePostComment> comments = loungePostService.getCommentsByPostId(longPostId, pageable);
+
+        return ResponseEntity.ok(toDTOList(comments));
+    }
+
+    // API-LOUNGE-05 댓글 단건 조회
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/comments/{commentId}")
+    public ResponseEntity<LoungePostCommentDTO> getCommentById(
+            @PathVariable("commentId") String commentId
+    ) {
+        final Long longCommentId = Long.valueOf(commentId);
+        LoungePostComment comment = loungePostService.getComment(longCommentId);
+
+        return ResponseEntity.ok(toDTO(comment));
+    }
+
+    // API-LOUNGE-06 댓글 수정 (완료 후 반영된 페이지 반환)
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/{userId}/comments/{commentId}")
+    public ResponseEntity<List<LoungePostCommentDTO>> updateComment(
+            @PathVariable("userId") String userId,
+            @PathVariable("commentId") String commentId,
+            @RequestBody String content,
+            Pageable pageable
+    ) {
+        final Long longCommentId = Long.valueOf(commentId);
+        final Long longUserId = Long.valueOf(userId);
+
+        LoungePostComment updated = loungePostService.updateComment(longCommentId, longUserId, content);
+
+        // 업데이트 후 같은 게시글의 페이지 단위 댓글 반환
+        List<LoungePostComment> comments = loungePostService.getCommentsByPostId(updated.getPostId(), pageable);
+
+        return ResponseEntity.ok(toDTOList(comments));
+    }
+
+    // API-LOUNGE-07 댓글 삭제 (완료 후 반영된 페이지 반환)
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/{userId}/comments/{commentId}")
+    public ResponseEntity<List<LoungePostCommentDTO>> deleteComment(
+            @PathVariable("userId") String userId,
+            @PathVariable("commentId") String commentId,
+            Pageable pageable
+    ) {
+        final Long longCommentId = Long.valueOf(commentId);
+        final Long longUserId = Long.valueOf(userId);
+
+        LoungePostComment deleted = loungePostService.deleteComment(longCommentId, longUserId);
+
+        List<LoungePostComment> comments = loungePostService.getCommentsByPostId(deleted.getPostId(), pageable);
+
+        return ResponseEntity.ok(toDTOList(comments));
+    }
+
+
     // Helper: Change Instant to LocalDate
     private static LocalDate toLocalDate(Instant instant) {
         return instant == null ? null : LocalDate.ofInstant(instant, ZoneId.of("Asia/Seoul"));
+    }
+
+    /** Domain -> DTO 변환 */
+    private LoungePostCommentDTO toDTO(LoungePostComment comment) {
+        return LoungePostCommentDTO.builder()
+                .id(comment.getId())
+                .postId(comment.getPostId())
+                .userId(comment.getUserId())
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt().toString())
+                .updatedAt(comment.getUpdatedAt().toString())
+                .build();
+    }
+
+    private List<LoungePostCommentDTO> toDTOList(List<LoungePostComment> comments) {
+        return comments.stream().map(this::toDTO).collect(Collectors.toList());
     }
 }
