@@ -5,13 +5,16 @@ import com.knockbook.backend.service.FeedService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @RestController
 @RequestMapping("/feeds")
@@ -235,5 +238,27 @@ public class FeedController {
         );
 
         return ResponseEntity.created(location).body(comment);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PostMapping(
+            path = "/post/{userId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<FeedProfileThumbnailDTO> createPost(
+            @PathVariable("userId") String userId,
+            @RequestParam(name = "content") String content,
+            @RequestParam(name = "files") List<MultipartFile> files
+    ) {
+        final var uid = Long.parseLong(userId);
+        final var thumbnail = feedService.createPost(uid, content, files);
+
+        final var location = URI.create("/feeds/post/%s".formatted(thumbnail.getPostId()));
+        final var dto = FeedProfileThumbnailDTO.builder()
+                .postId(thumbnail.getPostId())
+                .thumbnailUrl(thumbnail.getThumbnailUrl())
+                .build();
+
+        return ResponseEntity.created(location).body(dto);
     }
 }
