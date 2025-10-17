@@ -1,5 +1,6 @@
 package com.knockbook.backend.entity;
 
+import com.knockbook.backend.domain.LoungePostComment;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,8 +11,10 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
+@Builder(toBuilder = true)
 public class LoungePostCommentEntity {
+
+    public enum Status { VISIBLE, HIDDEN }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -26,6 +29,8 @@ public class LoungePostCommentEntity {
     @Column
     private String content;
 
+    private Status status;
+
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
 
@@ -35,4 +40,3 @@ public class LoungePostCommentEntity {
     @Column(name = "deleted_at", insertable = false, updatable = true)
     private Instant deletedAt;
 }
-
