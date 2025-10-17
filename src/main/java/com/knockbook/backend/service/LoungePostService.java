@@ -1,9 +1,11 @@
 package com.knockbook.backend.service;
 
 import com.knockbook.backend.domain.*;
+import com.knockbook.backend.dto.BookReviewsLikeResponse;
 import com.knockbook.backend.exception.CommentNotFoundException;
 import com.knockbook.backend.exception.PostNotFoundException;
 import com.knockbook.backend.repository.LoungePostCommentRepository;
+import com.knockbook.backend.repository.LoungePostLikeRepository;
 import com.knockbook.backend.repository.LoungePostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -25,6 +27,9 @@ public class LoungePostService {
 
     @Autowired
     private LoungePostCommentRepository postCommentRepo;
+
+    @Autowired
+    private LoungePostLikeRepository postLikeRepo;
 
     @Autowired
     private UserService userService;
@@ -107,5 +112,21 @@ public class LoungePostService {
     @Transactional
     public LoungePostComment deleteComment(Long id, Long userId) {
         return postCommentRepo.softDeleteById(id, userId);
+    }
+
+    @Transactional
+    public void likePost(Long userId, Long postId) {
+        final var changed = postLikeRepo.savePostLike(userId, postId);
+        if (changed) {
+            postLikeRepo.incrementLikeCount(postId);
+        }
+    }
+
+    @Transactional
+    public void unlikePost(Long userId, Long postId) {
+        final var deleted = postLikeRepo.deletePostLikeIfExists(userId, postId);
+        if (deleted) {
+            postLikeRepo.decrementLikeCount(postId);
+        }
     }
 }
