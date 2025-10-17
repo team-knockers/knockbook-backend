@@ -8,10 +8,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @RestController
@@ -45,9 +46,12 @@ public class KakaoPayPublicController {
                 .maxAge(TokenService.refreshTokenValidPeriod)
                 .build();
 
+        final var next = "/order/" + orderId + "/complete";
+        final var redirect = frontendBaseUrl + "/auth/callback?next=" + URLEncoder.encode(next, StandardCharsets.UTF_8);
+
         return ResponseEntity.status(302)
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .location(URI.create(frontendBaseUrl + "/order/" + orderId + "/complete"))
+                .location(URI.create(redirect))
                 .build();
     }
 
