@@ -20,7 +20,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -203,6 +202,28 @@ public class LoungePostController {
         final var comments = loungePostService.getCommentsByPostId(deleted.getPostId(), pageable);
 
         return ResponseEntity.ok(toDTOList(comments));
+    }
+
+    // API-LOUNGE-08: Like post
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/{userId}/{postId}/likes")
+    public ResponseEntity<Void> likePost(
+            @PathVariable String userId,
+            @PathVariable String postId
+    ) {
+        loungePostService.likePost(Long.valueOf(userId), Long.valueOf(postId));
+        return ResponseEntity.noContent().build();
+    }
+
+    // API-LOUNGE-09: Unike post
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/{userId}/{postId}/likes")
+    public ResponseEntity<Void> unlikePost(
+            @PathVariable String userId,
+            @PathVariable String postId
+    ) {
+        loungePostService.unlikePost(Long.valueOf(userId), Long.valueOf(postId));
+        return ResponseEntity.noContent().build();
     }
 
     // Helper: Change Instant to LocalDate
