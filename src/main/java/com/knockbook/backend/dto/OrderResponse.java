@@ -26,6 +26,11 @@ public class OrderResponse {
     private Integer rentalAmount;
     private Integer totalAmount;
 
+    private String placedAt;
+    private String paidAt;
+    private String cancelledAt;
+    private String completedAt;
+
     private String appliedCouponIssuanceId;
     private Integer pointsSpent;
     private Integer pointsEarned;
@@ -46,6 +51,10 @@ public class OrderResponse {
                 .shippingAmount(agg.getShippingAmount())
                 .rentalAmount(agg.getRentalAmount())
                 .totalAmount(agg.getTotalAmount())
+                .placedAt(agg.getPlacedAt().toString())
+                .paidAt(agg.getPaidAt().toString())
+                .cancelledAt(agg.getCancelledAt().toString())
+                .completedAt(agg.getCompletedAt().toString())
                 .appliedCouponIssuanceId(safeConvert(agg.getAppliedCouponIssuanceId()))
                 .couponDiscountAmount(agg.getCouponDiscountAmount())
                 .pointsSpent(agg.getPointsSpent())

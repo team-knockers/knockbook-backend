@@ -112,6 +112,7 @@ public class OrderEntity {
                 .pointsSpent(nz(agg.getPointsSpent()))
                 .pointsEarned(nz(agg.getPointsEarned()))
                 .placedAt(toLocalDateTimeOrNow(agg.getPlacedAt()))
+                .paidAt(toLocalDateTime(agg.getPaidAt()))
                 .cancelledAt(toLocalDateTime(agg.getCancelledAt()))
                 .completedAt(toLocalDateTime(agg.getCompletedAt()))
                 .build();
@@ -138,6 +139,7 @@ public class OrderEntity {
                 .pointsSpent(this.pointsSpent)
                 .pointsEarned(this.pointsEarned)
                 .placedAt(toInstant(this.placedAt))
+                .paidAt(toInstant(this.paidAt))
                 .cancelledAt(toInstant(this.cancelledAt))
                 .completedAt(toInstant(this.completedAt))
                 .items(items)
