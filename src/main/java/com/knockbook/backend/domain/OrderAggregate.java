@@ -18,6 +18,7 @@ public class OrderAggregate {
 
     private Long id;
     private Long userId;
+    private String orderNo;
     private Long cartId;
     private Status status;
     private PaymentStatus paymentStatus;

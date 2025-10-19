@@ -1,7 +1,6 @@
 package com.knockbook.backend.service;
 
 import com.knockbook.backend.domain.*;
-import com.knockbook.backend.dto.ApprovePaymentRequest;
 import com.knockbook.backend.exception.CouponExpiredException;
 import com.knockbook.backend.exception.CouponIssuanceNotFoundException;
 import com.knockbook.backend.exception.CouponNotAvailableException;
@@ -17,7 +16,7 @@ import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
-public class PaymentApprovalService {
+public class OrderPaymentService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final OrderRepository orderRepository;
@@ -123,7 +122,8 @@ public class PaymentApprovalService {
         }
 
         // 4) Save payment record with APPROVED status
-        final var payment = orderPaymentRepository.save(OrderPayment.builder()
+        final var payment = orderPaymentRepository.save(
+                OrderPayment.builder()
                 .orderId(order.getId())
                 .method(OrderPayment.Method.valueOf(method.name()))
                 .provider(provider)

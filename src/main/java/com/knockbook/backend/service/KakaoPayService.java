@@ -26,7 +26,7 @@ public class KakaoPayService {
     private final OrderRepository orderRepository;
     private final OrderPaymentRepository orderPaymentRepository;
     private final OrderPaymentQueryRepository orderPaymentQueryRepository;
-    private final PaymentApprovalService paymentApprovalService;
+    private final OrderPaymentService paymentApprovalService;
 
     // Prepare payment: call Kakao ready API and pre-save with READY status
     @Transactional

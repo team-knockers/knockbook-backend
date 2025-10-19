@@ -25,6 +25,9 @@ public class OrderEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "order_no", insertable = false, updatable = false, unique = true)
+    private String orderNo;
+
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
@@ -92,6 +95,7 @@ public class OrderEntity {
         return OrderEntity.builder()
                 .id(agg.getId())
                 .userId(agg.getUserId())
+                .orderNo(agg.getOrderNo())
                 .cartId(agg.getCartId())
                 .status(agg.getStatus() == null ? OrderStatus.PENDING
                         : OrderStatus.valueOf(agg.getStatus().name()))
@@ -117,6 +121,7 @@ public class OrderEntity {
         return OrderAggregate.builder()
                 .id(this.id)
                 .userId(this.userId)
+                .orderNo(this.orderNo)
                 .cartId(this.cartId)
                 .status(this.status == null ? null
                         : OrderAggregate.Status.valueOf(this.status.name()))
