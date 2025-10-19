@@ -3,6 +3,7 @@ package com.knockbook.backend.dto;
 import com.knockbook.backend.domain.OrderAggregate;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,10 +52,10 @@ public class OrderResponse {
                 .shippingAmount(agg.getShippingAmount())
                 .rentalAmount(agg.getRentalAmount())
                 .totalAmount(agg.getTotalAmount())
-                .placedAt(agg.getPlacedAt().toString())
-                .paidAt(agg.getPaidAt().toString())
-                .cancelledAt(agg.getCancelledAt().toString())
-                .completedAt(agg.getCompletedAt().toString())
+                .placedAt(safeInstant(agg.getPlacedAt()))
+                .paidAt(safeInstant(agg.getPaidAt()))
+                .cancelledAt(safeInstant(agg.getCancelledAt()))
+                .completedAt(safeInstant(agg.getCompletedAt()))
                 .appliedCouponIssuanceId(safeConvert(agg.getAppliedCouponIssuanceId()))
                 .couponDiscountAmount(agg.getCouponDiscountAmount())
                 .pointsSpent(agg.getPointsSpent())
@@ -67,5 +68,8 @@ public class OrderResponse {
 
     private static String safeConvert(final Long value) {
         return value == null ? null : String.valueOf(value);
+    }
+    private static String safeInstant(final Instant instant) {
+        return instant == null ? null : instant.toString();
     }
 }
