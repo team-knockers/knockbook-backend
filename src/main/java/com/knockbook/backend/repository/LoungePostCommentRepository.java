@@ -1,6 +1,7 @@
 package com.knockbook.backend.repository;
 
 import com.knockbook.backend.domain.LoungePostComment;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
@@ -13,7 +14,7 @@ public interface LoungePostCommentRepository {
 
     // Read
     Optional<LoungePostComment> findByIdAndNotDeleted(Long id);
-    List<LoungePostComment> findAllByPostIdAndNotDeleted(Long postId, Pageable pageable);
+    Page<LoungePostComment> findAllByPostIdAndNotDeleted(Long postId, Pageable pageable);
 
     // Update
     LoungePostComment updateContentById(Long id, Long userId, String content);
