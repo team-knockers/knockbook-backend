@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -99,8 +98,43 @@ public class LoungePostService {
                 .orElseThrow(() -> new CommentNotFoundException("댓글이 존재하지 않습니다."));
     }
 
-    public List<LoungePostComment> getCommentsByPostId(Long postId, Pageable pageable) {
-        return postCommentRepo.findAllByPostIdAndNotDeleted(postId, pageable);
+    public Page<LoungePostComment> getCommentsByPostId(Long postId, Pageable pageable) {
+        // 1) Retrieve paginated comments
+        final var page = postCommentRepo.findAllByPostIdAndNotDeleted(postId, pageable);
+
+        // 2) Extract user IDs from comments
+        final var userIds = page.getContent().stream()
+                .map(LoungePostComment::getUserId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        // 3) Map userId to displayName and avatarUrl
+        final var userMap = new HashMap<Long, User>();
+        for (final var userId : userIds) {
+            try {
+                final var user = userService.getUser(userId);
+                userMap.put(userId, user);
+            } catch (final Exception e) {
+                userMap.put(userId, User.builder()
+                        .displayName("Unknown")
+                        .avatarUrl(null)
+                        .build());
+            }
+        }
+
+        // 4) Inject displayName and avatarUrl into each comment
+        final var updatedComments = page.getContent().stream()
+                .map(comment -> {
+                    final var user = userMap.get(comment.getUserId());
+                    return comment.toBuilder()
+                            .displayName(user.getDisplayName())
+                            .avatarUrl(user.getAvatarUrl())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        // 5) Return as Page object
+        return new PageImpl<>(updatedComments, pageable, page.getTotalElements());
     }
 
     @Transactional
