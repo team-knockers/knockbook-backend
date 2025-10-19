@@ -26,7 +26,7 @@ public class LoungePostCommentEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column
+    @Column(length = 500)
     private String content;
 
     @Enumerated(EnumType.STRING)
