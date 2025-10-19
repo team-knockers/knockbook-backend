@@ -234,6 +234,29 @@ public class LoungePostController {
         return ResponseEntity.noContent().build();
     }
 
+    // API-LOUNGE-10: Check if a user has liked a post
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/{postId}/likes")
+    public ResponseEntity<LoungePostLikeStatusResponse> isPostLiked(
+            @PathVariable String userId,
+            @PathVariable String postId
+    ) {
+        // 1) Convert postId to Long
+        final var longUserId = Long.valueOf(userId);
+        final var longPostId = Long.valueOf(postId);
+
+        // 2) Check if the user has liked the post via service
+        final var isLiked = loungePostService.isPostLikedByUser(longUserId, longPostId);
+
+        // 3) Wrap the result into response DTO
+        final var response = LoungePostLikeStatusResponse.builder()
+                .isLiked(isLiked)
+                .build();
+
+        // 4) Return response
+        return ResponseEntity.ok(response);
+    }
+
     // Helper: Change Instant to LocalDate
     private static LocalDate toLocalDate(Instant instant) {
         return instant == null ? null : LocalDate.ofInstant(instant, ZoneId.of("Asia/Seoul"));
