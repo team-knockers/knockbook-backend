@@ -1,9 +1,6 @@
 package com.knockbook.backend.controller;
 
-import com.knockbook.backend.dto.ApplyCouponRequest;
-import com.knockbook.backend.dto.ApplyPointsRequest;
-import com.knockbook.backend.dto.CreateOrderFromCartRequest;
-import com.knockbook.backend.dto.OrderResponse;
+import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -87,6 +84,22 @@ public class OrderController {
             @PathVariable final String orderId) {
 
         final var domain = orderService.removePoints(Long.valueOf(userId), Long.valueOf(orderId));
+        final var dto = OrderResponse.toResponse(domain);
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/{orderId}/address")
+    @PreAuthorize("#userId == authentication.name")
+    public ResponseEntity<OrderResponse> applyAddress(
+            @PathVariable final String userId,
+            @PathVariable final String orderId,
+            @RequestBody final ApplyAddressRequest req) {
+
+        final var domain = orderService.applyAddress(
+                Long.valueOf(userId),
+                Long.valueOf(orderId),
+                Long.valueOf(req.getAddressId())
+        );
         final var dto = OrderResponse.toResponse(domain);
         return ResponseEntity.ok(dto);
     }

@@ -3,11 +3,12 @@ package com.knockbook.backend.service;
 import com.knockbook.backend.domain.CouponIssuance;
 import com.knockbook.backend.domain.OrderAggregate;
 import com.knockbook.backend.domain.OrderItem;
-import com.knockbook.backend.exception.CouponIssuanceNotFoundException;
 import com.knockbook.backend.exception.InvalidCartItemsException;
 import com.knockbook.backend.exception.OrderNotFoundException;
+import com.knockbook.backend.exception.UserAddressNotFoundException;
 import com.knockbook.backend.repository.CartRepository;
 import com.knockbook.backend.repository.OrderRepository;
+import com.knockbook.backend.repository.UserAddressRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final CouponService couponService;
     private final PointsService pointsService;
+    private final UserAddressRepository userAddressRepository;
 
     @Transactional
     public OrderAggregate createDraftFromCart(final Long userId,
@@ -121,6 +123,43 @@ public class OrderService {
 
         final var repriced = reprice(draft, appliedCoupon, 0);
         return orderRepository.updateDraftAmountsAndCoupon(repriced);
+    }
+
+    @Transactional
+    public OrderAggregate applyAddress(final Long userId, final Long orderId, final Long addressId) {
+
+        final var orderOpt = orderRepository.findByIdAndUserIdForUpdate(userId, orderId);
+        final var order = orderOpt.orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
+
+         final var address = userAddressRepository.findById(addressId)
+                 .orElseThrow(() -> new UserAddressNotFoundException(addressId));
+
+        final var updated = OrderAggregate.builder()
+                .id(order.getId())
+                .userId(order.getUserId())
+                .cartId(order.getCartId())
+                .status(order.getStatus())
+                .paymentStatus(order.getPaymentStatus())
+                .itemCount(order.getItemCount())
+                .subtotalAmount(order.getSubtotalAmount())
+                .discountAmount(order.getDiscountAmount())
+                .couponDiscountAmount(order.getCouponDiscountAmount())
+                .shippingAmount(order.getShippingAmount())
+                .rentalAmount(order.getRentalAmount())
+                .totalAmount(order.getTotalAmount())
+                .pointsSpent(order.getPointsSpent())
+                .pointsEarned(order.getPointsEarned())
+                .appliedCouponIssuanceId(order.getAppliedCouponIssuanceId())
+                .placedAt(order.getPlacedAt())
+                .paidAt(order.getPaidAt())
+                .cancelledAt(order.getCancelledAt())
+                .completedAt(order.getCompletedAt())
+                .orderNo(order.getOrderNo())
+                .shippingAddressId(addressId)
+                .items(order.getItems())
+                .build();
+
+        return orderRepository.saveAggregate(updated);
     }
 
     private CouponIssuance resolveIssuance(final Long userId,

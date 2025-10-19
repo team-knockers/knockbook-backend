@@ -16,6 +16,7 @@ public class OrderResponse {
     private String userId;
     private String orderNo;
     private String cartId;
+    private String shippingAddressId;
     private String status;
     private String paymentStatus;
 
@@ -44,6 +45,7 @@ public class OrderResponse {
                 .orderNo(agg.getOrderNo())
                 .userId(String.valueOf(agg.getUserId()))
                 .cartId(String.valueOf(agg.getCartId()))
+                .shippingAddressId(String.valueOf(agg.getShippingAddressId()))
                 .status(agg.getStatus().name())
                 .paymentStatus(agg.getPaymentStatus().name())
                 .itemCount(agg.getItemCount())

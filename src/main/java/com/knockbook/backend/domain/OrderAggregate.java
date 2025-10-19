@@ -22,6 +22,7 @@ public class OrderAggregate {
     private Long cartId;
     private Status status;
     private PaymentStatus paymentStatus;
+    private Long shippingAddressId;
 
     private Integer itemCount;
     private Integer subtotalAmount;
@@ -78,6 +79,7 @@ public class OrderAggregate {
                 .orderNo(orderNo)
                 .userId(userId)
                 .cartId(cartId)
+                .shippingAddressId(shippingAddressId)
                 .status(newStatus != null ? newStatus : status)
                 .paymentStatus(newPaymentStatus != null ? newPaymentStatus : paymentStatus)
                 .itemCount(itemCount)

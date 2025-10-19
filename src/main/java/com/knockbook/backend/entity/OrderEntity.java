@@ -34,6 +34,9 @@ public class OrderEntity {
     @Column(name = "cart_id")
     private Long cartId;
 
+    @Column(name = "shipping_address_id")
+    private Long shippingAddressId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private OrderStatus status;
@@ -97,6 +100,7 @@ public class OrderEntity {
                 .userId(agg.getUserId())
                 .orderNo(agg.getOrderNo())
                 .cartId(agg.getCartId())
+                .shippingAddressId(agg.getShippingAddressId())
                 .status(agg.getStatus() == null ? OrderStatus.PENDING
                         : OrderStatus.valueOf(agg.getStatus().name()))
                 .paymentStatus(agg.getPaymentStatus() == null ? PaymentStatus.READY
@@ -124,6 +128,7 @@ public class OrderEntity {
                 .userId(this.userId)
                 .orderNo(this.orderNo)
                 .cartId(this.cartId)
+                .shippingAddressId(this.shippingAddressId)
                 .status(this.status == null ? null
                         : OrderAggregate.Status.valueOf(this.status.name()))
                 .paymentStatus(this.paymentStatus == null ? null
