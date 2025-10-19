@@ -43,7 +43,7 @@ public class KakaoPayService {
         body.put("cid", props.getCid());
         body.put("partner_order_id", String.valueOf(orderId));
         body.put("partner_user_id", String.valueOf(userId));
-        body.put("item_name", "Knockbook Order #" + orderId);
+        body.put("item_name", "문앞의 책방");
         body.put("quantity", 1);
         body.put("total_amount", amount);
         body.put("tax_free_amount", 0);
@@ -59,14 +59,16 @@ public class KakaoPayService {
         final var app = (String) res.get("next_redirect_app_url");
 
         // READY pre-save (idempotency / traceability)
-        orderPaymentRepository.save(OrderPayment.builder()
+        final var payment = OrderPayment.builder()
                 .orderId(orderId)
                 .method(OrderPayment.Method.KAKAOPAY)
                 .provider("kakao")
                 .txId(tid)
                 .amount(amount)
                 .status(OrderPayment.TxStatus.READY)
-                .build());
+                .build();
+
+        orderPaymentRepository.save(payment);
 
         return KakaoReadyInfo.builder()
                 .tid(tid)
