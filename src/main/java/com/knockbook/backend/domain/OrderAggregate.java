@@ -91,7 +91,7 @@ public class OrderAggregate {
                 .pointsSpent(pointsSpent)
                 .pointsEarned(pointsEarned)
                 .placedAt(placedAt)
-                .paidAt(paidAt)
+                .paidAt(newCompletedAt)
                 .cancelledAt(cancelledAt)
                 .completedAt(newCompletedAt != null ? newCompletedAt : completedAt)
                 .items(items)
