@@ -3,10 +3,7 @@ package com.knockbook.backend.repository;
 import com.knockbook.backend.domain.CartItem;
 import com.knockbook.backend.domain.OrderAggregate;
 import com.knockbook.backend.domain.OrderItem;
-import com.knockbook.backend.entity.OrderEntity;
-import com.knockbook.backend.entity.OrderItemEntity;
-import com.knockbook.backend.entity.QOrderEntity;
-import com.knockbook.backend.entity.QOrderItemEntity;
+import com.knockbook.backend.entity.*;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
@@ -28,11 +25,24 @@ public class OrderRepositoryImpl implements OrderRepository {
     private static final DateTimeFormatter YMD = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final QOrderEntity qOrder = QOrderEntity.orderEntity;
     private static final QOrderItemEntity qOrderItem = QOrderItemEntity.orderItemEntity;
+    private static final QUserAddressEntity qAddress = QUserAddressEntity.userAddressEntity;
 
     @Override
     @Transactional
     public OrderAggregate saveDraftFromCart(OrderAggregate aggregate, List<CartItem> items) {
         final var order = OrderEntity.fromModel(aggregate);
+
+        final var defaultAddressId = qf
+                .select(qAddress.id)
+                .from(qAddress)
+                .where(
+                        qAddress.userId.eq(aggregate.getUserId()),
+                        qAddress.isDefault.isTrue()
+                )
+                .orderBy(qAddress.id.desc())
+                .fetchFirst();
+
+        order.setShippingAddressId(defaultAddressId);
         em.persist(order);
         em.flush();
         final var orderId = order.getId();
