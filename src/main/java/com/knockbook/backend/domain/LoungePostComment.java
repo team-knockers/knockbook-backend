@@ -17,6 +17,8 @@ public class LoungePostComment {
     private final Long id;
     private final Long postId;
     private final Long userId;
+    private final String displayName;
+    private final String avatarUrl;
     private final String content;
     private final Status status;
     private final Instant createdAt;
