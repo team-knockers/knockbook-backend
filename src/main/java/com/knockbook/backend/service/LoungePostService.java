@@ -77,7 +77,7 @@ public class LoungePostService {
                 .displayName(user.getDisplayName())
                 .avatarUrl(user.getAvatarUrl())
 //                .bio(user.getBio())
-                .bio("테스트용 bio입니다.")
+                .bio("테스트용 인사말입니다.")
                 .build();
     }
 
