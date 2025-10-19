@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 @RestController
 @RequestMapping(path = "/checkout/kakao")

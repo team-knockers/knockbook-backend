@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 public class OrderResponse {
     private String id;
     private String userId;
+    private String orderNo;
     private String cartId;
     private String status;
     private String paymentStatus;
@@ -34,6 +35,7 @@ public class OrderResponse {
     public static OrderResponse toResponse(final OrderAggregate agg) {
         return OrderResponse.builder()
                 .id(String.valueOf(agg.getId()))
+                .orderNo(agg.getOrderNo())
                 .userId(String.valueOf(agg.getUserId()))
                 .cartId(String.valueOf(agg.getCartId()))
                 .status(agg.getStatus().name())
