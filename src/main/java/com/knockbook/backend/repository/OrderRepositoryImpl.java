@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Repository
@@ -24,6 +25,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     private final EntityManager em;
     private final JPAQueryFactory qf;
 
+    private static final DateTimeFormatter YMD = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final QOrderEntity qOrder = QOrderEntity.orderEntity;
     private static final QOrderItemEntity qOrderItem = QOrderItemEntity.orderItemEntity;
 
@@ -32,7 +34,18 @@ public class OrderRepositoryImpl implements OrderRepository {
     public OrderAggregate saveDraftFromCart(OrderAggregate aggregate, List<CartItem> items) {
         final var order = OrderEntity.fromModel(aggregate);
         em.persist(order);
+        em.flush();
         final var orderId = order.getId();
+
+        em.refresh(order);
+        final var createdAt = order.getCreatedAt();
+        final var orderNo = "O" + createdAt.format(YMD) + String.format("%06d", order.getId());
+
+        qf.update(qOrder)
+                .set(qOrder.orderNo, orderNo)
+                .where(qOrder.id.eq(order.getId()))
+                .execute();
+        em.refresh(order);
 
         final var savedDomainItems = new ArrayList<OrderItem>();
         int subtotal = 0, discount = 0, rental = 0, total = 0, points = 0, count = 0;
