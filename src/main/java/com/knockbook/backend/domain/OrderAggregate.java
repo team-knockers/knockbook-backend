@@ -36,6 +36,7 @@ public class OrderAggregate {
     private Integer pointsEarned;
 
     private Instant placedAt;
+    private Instant paidAt;
     private Instant cancelledAt;
     private Instant completedAt;
 
@@ -44,15 +45,26 @@ public class OrderAggregate {
     // return a new object with coupons, points, and discounts reset
     public OrderAggregate withDiscountsReset() {
         return OrderAggregate.builder()
-                .id(id).userId(userId).cartId(cartId)
-                .status(status).paymentStatus(paymentStatus)
-                .itemCount(itemCount).subtotalAmount(subtotalAmount)
-                .discountAmount(0).couponDiscountAmount(0)
-                .shippingAmount(shippingAmount).rentalAmount(rentalAmount)
+                .id(id)
+                .orderNo(orderNo)
+                .userId(userId)
+                .cartId(cartId)
+                .status(status)
+                .paymentStatus(paymentStatus)
+                .itemCount(itemCount)
+                .subtotalAmount(subtotalAmount)
+                .discountAmount(0)
+                .couponDiscountAmount(0)
+                .shippingAmount(shippingAmount)
+                .rentalAmount(rentalAmount)
                 .totalAmount(totalAmount)
                 .appliedCouponIssuanceId(null)
-                .pointsSpent(0).pointsEarned(0)
-                .placedAt(placedAt).cancelledAt(cancelledAt).completedAt(completedAt)
+                .pointsSpent(0)
+                .pointsEarned(0)
+                .placedAt(placedAt)
+                .paidAt(paidAt)
+                .cancelledAt(cancelledAt)
+                .completedAt(completedAt)
                 .items(items)
                 .build();
     }
@@ -62,16 +74,25 @@ public class OrderAggregate {
                                        final PaymentStatus newPaymentStatus,
                                        final Instant newCompletedAt) {
         return OrderAggregate.builder()
-                .id(id).userId(userId).cartId(cartId)
+                .id(id)
+                .orderNo(orderNo)
+                .userId(userId)
+                .cartId(cartId)
                 .status(newStatus != null ? newStatus : status)
                 .paymentStatus(newPaymentStatus != null ? newPaymentStatus : paymentStatus)
-                .itemCount(itemCount).subtotalAmount(subtotalAmount)
-                .discountAmount(discountAmount).couponDiscountAmount(couponDiscountAmount)
-                .shippingAmount(shippingAmount).rentalAmount(rentalAmount)
+                .itemCount(itemCount)
+                .subtotalAmount(subtotalAmount)
+                .discountAmount(discountAmount)
+                .couponDiscountAmount(couponDiscountAmount)
+                .shippingAmount(shippingAmount)
+                .rentalAmount(rentalAmount)
                 .totalAmount(totalAmount)
                 .appliedCouponIssuanceId(appliedCouponIssuanceId)
-                .pointsSpent(pointsSpent).pointsEarned(pointsEarned)
-                .placedAt(placedAt).cancelledAt(cancelledAt)
+                .pointsSpent(pointsSpent)
+                .pointsEarned(pointsEarned)
+                .placedAt(placedAt)
+                .paidAt(paidAt)
+                .cancelledAt(cancelledAt)
                 .completedAt(newCompletedAt != null ? newCompletedAt : completedAt)
                 .items(items)
                 .build();
