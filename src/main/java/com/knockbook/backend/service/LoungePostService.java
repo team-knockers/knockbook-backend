@@ -77,12 +77,12 @@ public class LoungePostService {
                 .displayName(user.getDisplayName())
                 .avatarUrl(user.getAvatarUrl())
 //                .bio(user.getBio())
-                .bio("임시 테스트 bio입니다.")
+                .bio("테스트용 bio입니다.")
                 .build();
     }
 
     @Transactional
-    public LoungePostComment createComment(Long postId, Long userId, String content) {
+    public void createComment(Long postId, Long userId, String content) {
         final var newComment = LoungePostComment.builder()
                 .postId(postId)
                 .userId(userId)
@@ -90,7 +90,7 @@ public class LoungePostService {
                 .status(LoungePostComment.Status.VISIBLE)
                 .build();
 
-        return postCommentRepo.save(newComment);
+        postCommentRepo.save(newComment);
     }
 
     public LoungePostComment getComment(Long id) {
