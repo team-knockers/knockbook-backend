@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Repository;
 
@@ -55,10 +56,22 @@ public class LoungePostCommentRepositoryImpl implements LoungePostCommentReposit
         final var q = query.selectFrom(c)
                 .where(c.postId.eq(postId)
                         .and(c.deletedAt.isNull()))
-                .orderBy(c.createdAt.asc(), c.id.asc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize());
 
+        Sort sort = pageable.getSort();
+        if (sort.isSorted()) {
+            // look for direction for createdAt specifically
+            Sort.Order order = sort.getOrderFor("createdAt");
+            if (order != null && order.isDescending()) {
+                q.orderBy(c.createdAt.desc(), c.id.desc());
+            } else {
+                q.orderBy(c.createdAt.asc(), c.id.asc());
+            }
+        } else {
+            // default behavior (keep existing ASC to be safe)
+            q.orderBy(c.createdAt.asc(), c.id.asc());
+        }
 
         final var content = q.fetch().stream()
                 .map(this::entityToDomain)
@@ -101,7 +114,7 @@ public class LoungePostCommentRepositoryImpl implements LoungePostCommentReposit
     }
 
     @Override
-    public LoungePostComment softDeleteById(Long id, Long userId) {
+    public void softDeleteById(Long id, Long userId) {
         final var comment = query.selectFrom(c)
                 .where(c.id.eq(id).and(c.deletedAt.isNull()))
                 .fetchOne();
@@ -117,12 +130,8 @@ public class LoungePostCommentRepositoryImpl implements LoungePostCommentReposit
                 .deletedAt(Instant.now())
                 .build();
 
-        final var managed = em.merge(detached);
-
+        em.merge(detached);
         em.flush();
-        em.refresh(managed);
-
-        return entityToDomain(managed);
     }
 
     @Override

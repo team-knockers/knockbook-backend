@@ -4,7 +4,6 @@ import com.knockbook.backend.domain.LoungePostComment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface LoungePostCommentRepository {
@@ -20,7 +19,7 @@ public interface LoungePostCommentRepository {
     LoungePostComment updateContentById(Long id, Long userId, String content);
 
     // Soft Delete
-    LoungePostComment softDeleteById(Long id, Long userId);
+    void softDeleteById(Long id, Long userId);
 
     // Existence / permission check
     boolean existsByIdAndUserIdAndNotDeleted(Long id, Long userId);

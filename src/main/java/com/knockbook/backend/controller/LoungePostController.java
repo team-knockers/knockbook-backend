@@ -8,9 +8,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -106,35 +104,23 @@ public class LoungePostController {
         return ResponseEntity.ok(response);
     }
 
-    // API-LOUNGE-03: Create a comment and return the updated page of comments
+    // API-LOUNGE-03: Create a comment and return comment DTO
     @PreAuthorize("#userId == authentication.name")
     @PostMapping("/{userId}/{postId}/comments")
-    public ResponseEntity<GetLoungePostCommentsPageResponse> createComment(
+    public ResponseEntity<LoungePostCommentDto> createComment(
             @PathVariable("userId") String userId,
             @PathVariable("postId") String postId,
-            @RequestBody CreateLoungePostCommentRequest request,
-            @PageableDefault(page = 0, size = 20, sort = "createdAt") Pageable pageable
+            @RequestBody CreateLoungePostCommentRequest request
     ) {
         // 1) Convert IDs to Long
         final var longPostId = Long.valueOf(postId);
         final var longUserId = Long.valueOf(userId);
 
         // 2) Create comment via service
-        loungePostService.createComment(longPostId, longUserId, request.getContent());
+        final var comment = loungePostService.createComment(longPostId, longUserId, request.getContent());
 
-        // 3) Retrieve updated page of comments
-        final var commentPage = loungePostService.getCommentsByPostId(longPostId, pageable);
-
-        // 4) Convert domain entities to DTO and build page DTO
-        final var response = GetLoungePostCommentsPageResponse.builder()
-                .comments(commentPage.stream()
-                        .map(this::toDTO)
-                        .collect(Collectors.toList()))
-                .page(commentPage.getNumber() + 1)
-                .size(commentPage.getSize())
-                .totalItems((int) commentPage.getTotalElements())
-                .totalPages(commentPage.getTotalPages())
-                .build();
+        // 4) Map domain object to DTO
+        final var response = toDTO(comment);
 
         // 5) Return response
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -189,11 +175,10 @@ public class LoungePostController {
     // API-LOUNGE-06: Update a comment and return the updated page
     @PreAuthorize("#userId == authentication.name")
     @PutMapping("/{userId}/comments/{commentId}")
-    public ResponseEntity<GetLoungePostCommentsPageResponse> updateComment(
+    public ResponseEntity<LoungePostCommentDto> updateComment(
             @PathVariable("userId") String userId,
             @PathVariable("commentId") String commentId,
-            @RequestBody UpdateLoungePostCommentRequest request,
-            @PageableDefault(page = 0, size = 20, sort = "createdAt") Pageable pageable
+            @RequestBody UpdateLoungePostCommentRequest request
     ) {
         // 1) Convert postId to Long
         final var longCommentId = Long.valueOf(commentId);
@@ -202,52 +187,29 @@ public class LoungePostController {
         // 2) Update comment via service
         final var updated = loungePostService.updateComment(longCommentId, longUserId, request.getContent());
 
-        // 3) Retrieve updated page of comment
-        final var commentPage = loungePostService.getCommentsByPostId(updated.getPostId(), pageable);
+        // 3) Map domain object to DTO
+        final var response = toDTO(updated);
 
-
-        // 4) Convert domain entities to DTO and build page DTO
-        final var response = GetLoungePostCommentsPageResponse.builder()
-                .comments(commentPage.stream().map(this::toDTO).toList())
-                .page(commentPage.getNumber() + 1)          // 0-based -> 1-based
-                .size(commentPage.getSize())
-                .totalItems((int) commentPage.getTotalElements())
-                .totalPages(commentPage.getTotalPages())
-                .build();
-
-        // 5) Return response
+        // 4) Return response
         return ResponseEntity.ok(response);
     }
 
     // API-LOUNGE-07: Delete a comment and return the updated page
     @PreAuthorize("#userId == authentication.name")
     @DeleteMapping("/{userId}/comments/{commentId}")
-    public ResponseEntity<GetLoungePostCommentsPageResponse> deleteComment(
+    public ResponseEntity<Void> deleteComment(
             @PathVariable("userId") String userId,
-            @PathVariable("commentId") String commentId,
-            @PageableDefault(page = 0, size = 20, sort = "createdAt") Pageable pageable
+            @PathVariable("commentId") String commentId
     ) {
         // 1) Convert postId to Long
         final var longCommentId = Long.valueOf(commentId);
         final var longUserId = Long.valueOf(userId);
 
         // 2) Delete comment via service
-        final var deleted = loungePostService.deleteComment(longCommentId, longUserId);
+        loungePostService.deleteComment(longCommentId, longUserId);
 
-        // 3) Retrieve updated page of comment
-        final var commentPage = loungePostService.getCommentsByPostId(deleted.getPostId(), pageable);
-
-        // 4) Convert domain entities to DTO and build page DTO
-        final var response = GetLoungePostCommentsPageResponse.builder()
-                .comments(commentPage.stream().map(this::toDTO).toList())
-                .page(commentPage.getNumber() + 1)          // 0-based -> 1-based
-                .size(commentPage.getSize())
-                .totalItems((int) commentPage.getTotalElements())
-                .totalPages(commentPage.getTotalPages())
-                .build();
-
-        // 5) Return response
-        return ResponseEntity.ok(response);
+        // 3) Return response
+        return ResponseEntity.noContent().build();
     }
 
     // API-LOUNGE-08: Like post

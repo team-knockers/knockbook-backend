@@ -82,7 +82,9 @@ public class LoungePostService {
     }
 
     @Transactional
-    public void createComment(Long postId, Long userId, String content) {
+    public LoungePostComment createComment(Long postId, Long userId, String content) {
+        final var user = userService.getUser(userId);
+
         final var newComment = LoungePostComment.builder()
                 .postId(postId)
                 .userId(userId)
@@ -90,7 +92,12 @@ public class LoungePostService {
                 .status(LoungePostComment.Status.VISIBLE)
                 .build();
 
-        postCommentRepo.save(newComment);
+        final var saved = postCommentRepo.save(newComment);
+
+        return saved.toBuilder()
+                .displayName(user.getDisplayName())
+                .avatarUrl(user.getAvatarUrl())
+                .build();
     }
 
     public LoungePostComment getComment(Long id) {
@@ -139,12 +146,19 @@ public class LoungePostService {
 
     @Transactional
     public LoungePostComment updateComment(Long id, Long userId, String newContent) {
-        return postCommentRepo.updateContentById(id, userId, newContent);
+        final var user = userService.getUser(userId);
+
+        final var updated = postCommentRepo.updateContentById(id, userId, newContent);
+
+        return updated.toBuilder()
+                .displayName(user.getDisplayName())
+                .avatarUrl(user.getAvatarUrl())
+                .build();
     }
 
     @Transactional
-    public LoungePostComment deleteComment(Long id, Long userId) {
-        return postCommentRepo.softDeleteById(id, userId);
+    public void deleteComment(Long id, Long userId) {
+        postCommentRepo.softDeleteById(id, userId);
     }
 
     @Transactional
