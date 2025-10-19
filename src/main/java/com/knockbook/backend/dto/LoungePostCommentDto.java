@@ -8,11 +8,13 @@ import java.time.LocalDate;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class GetLoungePostCommentResponse {
-    private Long id;
-    private Long postId;
-    private Long userId;
+public class LoungePostCommentDto {
+    private String id;
+    private String postId;
+    private String userId;
+    private String displayName;
+    private String avatarUrl;
     private String content;
     private LocalDate createdAt;
-    private String editStatus; // Display edit status(null or '수정됨')
+    private String editStatus; // null 또는 "수정됨"
 }

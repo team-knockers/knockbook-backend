@@ -3,13 +3,12 @@ package com.knockbook.backend.controller;
 import com.knockbook.backend.domain.LoungePostComment;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.LoungePostService;
+import com.knockbook.backend.service.UserService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,6 +28,9 @@ public class LoungePostController {
 
     @Autowired
     private LoungePostService loungePostService;
+
+    @Autowired
+    private UserService userService;
 
     // API-LOUNGE-01: Get a summary of lounge posts
     @PreAuthorize("#userId == authentication.name")
@@ -102,34 +104,33 @@ public class LoungePostController {
         return ResponseEntity.ok(response);
     }
 
-    // API-LOUNGE-03: Create a comment and return the updated page of comments
+    // API-LOUNGE-03: Create a comment and return comment DTO
     @PreAuthorize("#userId == authentication.name")
     @PostMapping("/{userId}/{postId}/comments")
-    public ResponseEntity<List<GetLoungePostCommentResponse>> createComment(
+    public ResponseEntity<LoungePostCommentDto> createComment(
             @PathVariable("userId") String userId,
             @PathVariable("postId") String postId,
-            @RequestBody String content,
-            @PageableDefault(page = 0, size = 20, sort = "createdAt") Pageable pageable
+            @RequestBody CreateLoungePostCommentRequest request
     ) {
         // 1) Convert IDs to Long
         final var longPostId = Long.valueOf(postId);
         final var longUserId = Long.valueOf(userId);
 
         // 2) Create comment via service
-        final var comment = loungePostService.createComment(longPostId, longUserId, content);
+        final var comment = loungePostService.createComment(longPostId, longUserId, request.getContent());
 
-        // 3) Retrieve updated page of comments
-        final List<LoungePostComment> comments = loungePostService.getCommentsByPostId(longPostId, pageable);
+        // 4) Map domain object to DTO
+        final var response = toDTO(comment);
 
-        // 4) Return response
+        // 5) Return response
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(toDTOList(comments));
+                .body(response);
     }
 
     // API-LOUNGE-04: Get multiple comments with pagination (1-based page)
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}/{postId}/comments")
-    public ResponseEntity<List<GetLoungePostCommentResponse>> getCommentsByPost(
+    public ResponseEntity<GetLoungePostCommentsPageResponse> getCommentsByPost(
             @PathVariable("userId") String userId,
             @PathVariable("postId") String postId,
             @RequestParam(defaultValue = "1") @Min(1) int page,  // 1-based 입력
@@ -143,15 +144,25 @@ public class LoungePostController {
         final var longPostId = Long.valueOf(postId);
 
         // 3) Retrieve comments from service
-        final var comments = loungePostService.getCommentsByPostId(longPostId, pageable);
+        final var commentPage = loungePostService.getCommentsByPostId(longPostId, pageable);
 
-        return ResponseEntity.ok(toDTOList(comments));
+        // 4) Convert domain entities to DTO and build page DTO
+        final var response = GetLoungePostCommentsPageResponse.builder()
+                .comments(commentPage.stream().map(this::toDTO).toList())
+                .page(commentPage.getNumber() + 1)          // 0-based -> 1-based
+                .size(commentPage.getSize())
+                .totalItems((int) commentPage.getTotalElements())
+                .totalPages(commentPage.getTotalPages())
+                .build();
+
+        // 5) Return response
+        return ResponseEntity.ok(response);
     }
 
     // API-LOUNGE-05: Get a single comment (for edit preview)
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}/comments/{commentId}")
-    public ResponseEntity<GetLoungePostCommentResponse> getCommentById(
+    public ResponseEntity<LoungePostCommentDto> getCommentById(
             @PathVariable("userId") String userId,
             @PathVariable("commentId") String commentId
     ) {
@@ -164,44 +175,41 @@ public class LoungePostController {
     // API-LOUNGE-06: Update a comment and return the updated page
     @PreAuthorize("#userId == authentication.name")
     @PutMapping("/{userId}/comments/{commentId}")
-    public ResponseEntity<List<GetLoungePostCommentResponse>> updateComment(
+    public ResponseEntity<LoungePostCommentDto> updateComment(
             @PathVariable("userId") String userId,
             @PathVariable("commentId") String commentId,
-            @RequestBody String content,
-            @PageableDefault(page = 0, size = 20, sort = "createdAt") Pageable pageable
+            @RequestBody UpdateLoungePostCommentRequest request
     ) {
         // 1) Convert postId to Long
         final var longCommentId = Long.valueOf(commentId);
         final var longUserId = Long.valueOf(userId);
 
         // 2) Update comment via service
-        final var updated = loungePostService.updateComment(longCommentId, longUserId, content);
+        final var updated = loungePostService.updateComment(longCommentId, longUserId, request.getContent());
 
-        // 3) Retrieve updated page of comment
-        final var comments = loungePostService.getCommentsByPostId(updated.getPostId(), pageable);
+        // 3) Map domain object to DTO
+        final var response = toDTO(updated);
 
-        return ResponseEntity.ok(toDTOList(comments));
+        // 4) Return response
+        return ResponseEntity.ok(response);
     }
 
     // API-LOUNGE-07: Delete a comment and return the updated page
     @PreAuthorize("#userId == authentication.name")
     @DeleteMapping("/{userId}/comments/{commentId}")
-    public ResponseEntity<List<GetLoungePostCommentResponse>> deleteComment(
+    public ResponseEntity<Void> deleteComment(
             @PathVariable("userId") String userId,
-            @PathVariable("commentId") String commentId,
-            @PageableDefault(page = 0, size = 20, sort = "createdAt") Pageable pageable
+            @PathVariable("commentId") String commentId
     ) {
         // 1) Convert postId to Long
         final var longCommentId = Long.valueOf(commentId);
         final var longUserId = Long.valueOf(userId);
 
         // 2) Delete comment via service
-        final var deleted = loungePostService.deleteComment(longCommentId, longUserId);
+        loungePostService.deleteComment(longCommentId, longUserId);
 
-        // 3) Retrieve updated page of comment
-        final var comments = loungePostService.getCommentsByPostId(deleted.getPostId(), pageable);
-
-        return ResponseEntity.ok(toDTOList(comments));
+        // 3) Return response
+        return ResponseEntity.noContent().build();
     }
 
     // API-LOUNGE-08: Like post
@@ -240,23 +248,25 @@ public class LoungePostController {
     }
 
     /** Domain -> DTO */
-    private GetLoungePostCommentResponse toDTO(LoungePostComment comment) {
+    private LoungePostCommentDto toDTO(LoungePostComment comment) {
 
         String content = comment.getStatus() == LoungePostComment.Status.VISIBLE
                 ? comment.getContent()
                 : "신고 처리되어 볼 수 없는 글입니다.";
 
-        return GetLoungePostCommentResponse.builder()
-                .id(comment.getId())
-                .postId(comment.getPostId())
-                .userId(comment.getUserId())
+        return LoungePostCommentDto.builder()
+                .id(String.valueOf(comment.getId()))
+                .postId(String.valueOf(comment.getPostId()))
+                .userId(String.valueOf(comment.getUserId()))
+                .displayName(comment.getDisplayName())
+                .avatarUrl(comment.getAvatarUrl())
                 .content(content)
                 .createdAt(toLocalDate(comment.getCreatedAt()))
                 .editStatus(isModified(comment.getCreatedAt(), comment.getUpdatedAt()))
                 .build();
     }
 
-    private List<GetLoungePostCommentResponse> toDTOList(List<LoungePostComment> comments) {
+    private List<LoungePostCommentDto> toDTOList(List<LoungePostComment> comments) {
         return comments.stream().map(this::toDTO).collect(Collectors.toList());
     }
 }
