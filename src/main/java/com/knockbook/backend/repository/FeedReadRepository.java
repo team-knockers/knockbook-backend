@@ -9,7 +9,8 @@ public interface FeedReadRepository {
             Long userId,
             String searchKeyword,
             Long after,
-            int size
+            int size,
+            String mbti
     );
 
     FeedProfileResult findFeedProfile(

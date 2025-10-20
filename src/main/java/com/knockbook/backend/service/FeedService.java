@@ -30,9 +30,10 @@ public class FeedService {
             Long userId,
             String searchKeyword,
             Long after,
-            int size
+            int size,
+            String mbti
     ) {
-        return feedReadRepository.findFeedPosts(userId, searchKeyword, after, size);
+        return feedReadRepository.findFeedPosts(userId, searchKeyword, after, size, mbti);
     }
 
     public FeedProfileResult getFeedProfile(

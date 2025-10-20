@@ -33,7 +33,8 @@ public class FeedReadRepositoryImpl implements FeedReadRepository {
             Long userId,
             String searchKeyword,
             Long after,
-            int size
+            int size,
+            String mbti
     ) {
         // 1) Base filter (alive posts)
         final var predicate = new BooleanBuilder().and(P.deletedAt.isNull());
@@ -42,6 +43,10 @@ public class FeedReadRepositoryImpl implements FeedReadRepository {
         if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
             final var kw = "%" + searchKeyword.trim() + "%";
             predicate.and(P.content.like(kw));
+        }
+
+        if (mbti != null && !mbti.isBlank()) {
+            predicate.and(U.mbti.eq(mbti));
         }
 
         // 3) Resolve cursor createdAt (if after exists)
