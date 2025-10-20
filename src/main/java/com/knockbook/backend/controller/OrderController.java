@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users/{userId}/orders")
@@ -35,6 +37,19 @@ public class OrderController {
         final var domain = orderService.getById(Long.valueOf(userId), Long.valueOf(orderId));
         final var dto = OrderResponse.toResponse(domain);
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/paid")
+    @PreAuthorize("#userId == authentication.name")
+    public ResponseEntity<List<OrderResponse>> listPaidOrders(
+            @PathVariable final String userId) {
+
+        final var domains = orderService.listPaidByUser(Long.valueOf(userId));
+        final var dtoList = domains.stream()
+                .map(OrderResponse::toResponse)
+                .toList();
+
+        return ResponseEntity.ok(dtoList);
     }
 
     @PostMapping("/{orderId}/coupon")

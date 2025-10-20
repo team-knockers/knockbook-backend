@@ -176,6 +176,25 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
+    public List<OrderAggregate> findPaidByUser(Long userId) {
+        final var entities = qf
+                .selectFrom(qOrder)
+                .where(
+                        qOrder.userId.eq(userId),
+                        qOrder.paymentStatus.eq(com.knockbook.backend.entity.OrderEntity.PaymentStatus.PAID)
+                )
+                .orderBy(qOrder.id.desc())
+                .fetch();
+
+        final var results = new ArrayList<OrderAggregate>(entities.size());
+        for (final var e : entities) {
+            final var items = loadItems(e.getId());
+            results.add(e.toDomain(items));
+        }
+        return results;
+    }
+
+    @Override
     @Transactional
     public OrderAggregate replaceDraftFromCart(OrderAggregate existing, List<CartItem> items, boolean resetDiscounts) {
         final var order = em.find(OrderEntity.class, existing.getId());
