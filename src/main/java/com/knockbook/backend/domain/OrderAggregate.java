@@ -72,7 +72,8 @@ public class OrderAggregate {
 
     // Optionally update status, payment status, and completion time
     public OrderAggregate withStatuses(final Status newStatus,
-                                       final PaymentStatus newPaymentStatus) {
+                                       final PaymentStatus newPaymentStatus,
+                                       final Instant paidAt) {
         return OrderAggregate.builder()
                 .id(id)
                 .orderNo(orderNo)
@@ -102,6 +103,6 @@ public class OrderAggregate {
     // Transition before payment completion (PAID).
     // If completeNow is true, set status to COMPLETED and assign completedAt immediately
     public OrderAggregate paid(final Instant paidAt) {
-        return this.withStatuses(null, PaymentStatus.PAID);
+        return this.withStatuses(null, PaymentStatus.PAID, paidAt);
     }
 }
