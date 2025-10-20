@@ -38,12 +38,20 @@ public class FeedService {
         return feedReadRepository.findFeedPosts(userId, searchKeyword, after, size, mbti);
     }
 
-    public FeedProfileResult getFeedProfile(
+    public FeedProfileResult getProfilePostThumbnails(
             Long userId,
             Long after,
             int size
     ) {
-        return feedReadRepository.findFeedProfile(userId, after, size);
+        return feedReadRepository.findProfilePostThumbnails(userId, after, size);
+    }
+
+    public FeedProfileResult getProfileSavedThumbnails(
+            Long userId,
+            Long after,
+            int size
+    ) {
+        return feedReadRepository.findProfileSavedThumbnails(userId, after, size);
     }
 
     public FeedCommentsResult getFeedPostComments(
