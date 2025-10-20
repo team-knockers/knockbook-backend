@@ -63,20 +63,41 @@ public class FeedController {
     }
 
     @PreAuthorize("#userId == authentication.name")
-    @GetMapping("/profile/{userId}")
-    public ResponseEntity<GetFeedProfileResponse> getFeedProfile(
+    @GetMapping("/profile/post/{userId}")
+    public ResponseEntity<GetFeedProfileResponse> getProfilePostThumbnails(
             @PathVariable("userId") String userId,
             @RequestParam(required = false) String after, // last postId
             @RequestParam @Min(1) int size
     ) {
         final var uid = Long.parseLong(userId);
         final var afterId = (after == null || after.isBlank()) ? null : Long.parseLong(after);
-        final var result = feedService.getFeedProfile(uid, afterId, size);
+        final var result = feedService.getProfilePostThumbnails(uid, afterId, size);
         final var body = GetFeedProfileResponse.builder()
-                .userId(result.getUserId())
-                .displayName(result.getDisplayName())
-                .avatarUrl(result.getAvatarUrl())
-                .bio(result.getBio())
+                .postsCount(result.getPostsCount())
+                .profileThumbnails(
+                        result.getProfileThumbnails().stream()
+                                .map(t -> FeedProfileThumbnailDTO.builder()
+                                        .postId(t.getPostId())
+                                        .thumbnailUrl(t.getThumbnailUrl())
+                                        .build())
+                                .toList())
+                .nextAfter(result.getNextAfter())
+                .build();
+
+        return ResponseEntity.ok(body);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/profile/saved/{userId}")
+    public ResponseEntity<GetFeedProfileResponse> getProfileSavedThumbnails(
+            @PathVariable("userId") String userId,
+            @RequestParam(required = false) String after, // last postId
+            @RequestParam @Min(1) int size
+    ) {
+        final var uid = Long.parseLong(userId);
+        final var afterId = (after == null || after.isBlank()) ? null : Long.parseLong(after);
+        final var result = feedService.getProfileSavedThumbnails(uid, afterId, size);
+        final var body = GetFeedProfileResponse.builder()
                 .postsCount(result.getPostsCount())
                 .profileThumbnails(
                         result.getProfileThumbnails().stream()
