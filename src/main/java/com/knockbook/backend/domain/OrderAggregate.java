@@ -15,12 +15,14 @@ public class OrderAggregate {
 
     public enum Status { PENDING, FULFILLING, COMPLETED, CANCELLED }
     public enum PaymentStatus { READY, PAID, PARTIAL_REFUNDED, REFUNDED, FAILED, CANCELLED }
+    public enum RentalStatus { PREPARING, SHIPPING, DELIVERED, RETURN_REQUESTED, RETURNING, RETURNED, CANCELLED }
 
     private Long id;
     private Long userId;
     private String orderNo;
     private Long cartId;
     private Status status;
+    private RentalStatus rentalStatus;
     private PaymentStatus paymentStatus;
     private Long shippingAddressId;
 
@@ -51,6 +53,7 @@ public class OrderAggregate {
                 .userId(userId)
                 .cartId(cartId)
                 .status(status)
+                .rentalStatus(rentalStatus)
                 .paymentStatus(paymentStatus)
                 .itemCount(itemCount)
                 .subtotalAmount(subtotalAmount)
@@ -73,7 +76,8 @@ public class OrderAggregate {
     // Optionally update status, payment status, and completion time
     public OrderAggregate withStatuses(final Status newStatus,
                                        final PaymentStatus newPaymentStatus,
-                                       final Instant paidAt) {
+                                       final Instant paidAt,
+                                       final RentalStatus newRentalStatus) {
         return OrderAggregate.builder()
                 .id(id)
                 .orderNo(orderNo)
@@ -82,6 +86,7 @@ public class OrderAggregate {
                 .shippingAddressId(shippingAddressId)
                 .status(newStatus != null ? newStatus : status)
                 .paymentStatus(newPaymentStatus != null ? newPaymentStatus : paymentStatus)
+                .rentalStatus(newRentalStatus != null ? newRentalStatus : rentalStatus)
                 .itemCount(itemCount)
                 .subtotalAmount(subtotalAmount)
                 .discountAmount(discountAmount)
@@ -100,9 +105,13 @@ public class OrderAggregate {
                 .build();
     }
 
-    // Transition before payment completion (PAID).
-    // If completeNow is true, set status to COMPLETED and assign completedAt immediately
     public OrderAggregate paid(final Instant paidAt) {
-        return this.withStatuses(null, PaymentStatus.PAID, paidAt);
+        final var hasRental =
+                (rentalAmount != null && rentalAmount > 0)
+                        || (items != null && items.stream()
+                        .anyMatch(i -> i.getRefType() == OrderItem.RefType.BOOK_RENTAL));
+
+        final var nextRental = hasRental ? RentalStatus.PREPARING : null;
+        return this.withStatuses(Status.PENDING, PaymentStatus.PAID, paidAt, nextRental);
     }
 }
