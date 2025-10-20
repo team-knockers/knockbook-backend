@@ -72,8 +72,7 @@ public class OrderAggregate {
 
     // Optionally update status, payment status, and completion time
     public OrderAggregate withStatuses(final Status newStatus,
-                                       final PaymentStatus newPaymentStatus,
-                                       final Instant newCompletedAt) {
+                                       final PaymentStatus newPaymentStatus) {
         return OrderAggregate.builder()
                 .id(id)
                 .orderNo(orderNo)
@@ -93,21 +92,16 @@ public class OrderAggregate {
                 .pointsSpent(pointsSpent)
                 .pointsEarned(pointsEarned)
                 .placedAt(placedAt)
-                .paidAt(newCompletedAt)
+                .paidAt(paidAt)
                 .cancelledAt(cancelledAt)
-                .completedAt(newCompletedAt != null ? newCompletedAt : completedAt)
+                .completedAt(completedAt)
                 .items(items)
                 .build();
     }
 
     // Transition before payment completion (PAID).
     // If completeNow is true, set status to COMPLETED and assign completedAt immediately
-    public OrderAggregate paid(final Instant paidAt,
-                               final boolean completeNow) {
-        var next = this.withStatuses(null, PaymentStatus.PAID, completeNow ? paidAt : completedAt);
-        if (completeNow) {
-            next = next.withStatuses(Status.COMPLETED, null, paidAt);
-        }
-        return next;
+    public OrderAggregate paid(final Instant paidAt) {
+        return this.withStatuses(null, PaymentStatus.PAID);
     }
 }

@@ -133,9 +133,8 @@ public class OrderPaymentService {
                 .approvedAt(nowInstant)
                 .build());
 
-        // 5) Update order status and timeline (COMPLETED immediately if virtual/instant, set completeNow=false for shippable orders)
-        final var completeNow = true;
-        final var orderUpdated = order.paid(nowInstant, completeNow);
+        // 5) Update order status and timeline
+        final var orderUpdated = order.paid(nowInstant);
         final var orderSaved = orderRepository.saveAggregate(orderUpdated);
 
         final var refs = orderSaved.getItems().stream().map(i ->

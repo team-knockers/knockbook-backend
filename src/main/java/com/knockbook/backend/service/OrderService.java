@@ -66,6 +66,11 @@ public class OrderService {
     }
 
     @Transactional
+    public List<OrderAggregate> listPaidByUser(final Long userId) {
+        return orderRepository.findPaidByUser(userId);
+    }
+
+    @Transactional
     public OrderAggregate applyCoupon(final Long userId,
                                       final Long orderId,
                                       final String issuanceIdRaw) {
