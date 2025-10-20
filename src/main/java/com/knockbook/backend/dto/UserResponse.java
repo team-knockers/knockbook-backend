@@ -19,5 +19,6 @@ public class UserResponse {
     private String displayName;
     private String avartarUrl;
     private String mbti;
+    private String bio;
     private List<String> favoriteBookCategories;
 }

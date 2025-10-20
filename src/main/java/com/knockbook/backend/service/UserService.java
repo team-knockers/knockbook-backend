@@ -23,7 +23,6 @@ public class UserService {
     final private CredentialRepository credentialRepository;
     final private CouponService couponService;
 
-
     @Transactional
     public User registerUser(final String email,
                              final String password,
