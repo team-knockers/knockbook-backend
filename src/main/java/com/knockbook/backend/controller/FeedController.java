@@ -30,12 +30,13 @@ public class FeedController {
             @PathVariable("userId") String userId,
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(required = false) String after, // last postId
-            @RequestParam @Min(1) int size
+            @RequestParam @Min(1) int size,
+            @RequestParam(required=false) String mbti
     ){
         final var uid = Long.parseLong(userId);
         final var afterId = (after == null || after.isBlank()) ? null : Long.parseLong(after);
 
-        final var result = feedService.getFeedPosts(uid, searchKeyword, afterId, size);
+        final var result = feedService.getFeedPosts(uid, searchKeyword, afterId, size, mbti);
 
         final var feedPosts = result.getFeedPosts().stream()
                 .map(p -> FeedPostDTO.builder()
