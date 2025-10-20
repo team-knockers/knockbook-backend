@@ -1,12 +1,7 @@
 package com.knockbook.backend.repository;
 
 import com.knockbook.backend.domain.*;
-import com.knockbook.backend.entity.QFeedPostEntity;
-import com.knockbook.backend.entity.QFeedPostImageEntity;
-import com.knockbook.backend.entity.QFeedPostLikeEntity;
-import com.knockbook.backend.entity.QFeedCommentEntity;
-import com.knockbook.backend.entity.QFeedCommentLikeEntity;
-import com.knockbook.backend.entity.QUserEntity;
+import com.knockbook.backend.entity.*;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -24,6 +19,7 @@ public class FeedReadRepositoryImpl implements FeedReadRepository {
     private static final QFeedPostEntity P = QFeedPostEntity.feedPostEntity;
     private static final QFeedPostImageEntity I = QFeedPostImageEntity.feedPostImageEntity;
     private static final QFeedPostLikeEntity L = QFeedPostLikeEntity.feedPostLikeEntity;
+    private static final QFeedPostSaveEntity S = QFeedPostSaveEntity.feedPostSaveEntity;
     private static final QUserEntity U = QUserEntity.userEntity;
     private static final QFeedCommentEntity C = QFeedCommentEntity.feedCommentEntity;
     private static final QFeedCommentLikeEntity CL = QFeedCommentLikeEntity.feedCommentLikeEntity;
@@ -70,12 +66,18 @@ public class FeedReadRepositoryImpl implements FeedReadRepository {
                 .where(L.postId.eq(P.postId).and(L.userId.eq(userId)))
                 .exists();
 
+        final var savedByMeExpr = JPAExpressions
+                .selectOne()
+                .from(S)
+                .where(S.postId.eq(P.postId).and(S.userId.eq(userId)))
+                .exists();
+
         // 6) Page rows (size+1 to detect hasMore)
         final var rows = query
                 .select(
                         P.postId, P.userId, P.content, P.likesCount, P.commentsCount, P.createdAt,
                         U.displayName, U.avatarUrl,
-                        likedByMeExpr
+                        likedByMeExpr, savedByMeExpr
                 )
                 .from(P)
                 .leftJoin(U).on(U.id.eq(P.userId))
@@ -121,6 +123,7 @@ public class FeedReadRepositoryImpl implements FeedReadRepository {
                         .likesCount(t.get(P.likesCount))
                         .commentsCount(t.get(P.commentsCount))
                         .likedByMe(Boolean.TRUE.equals(t.get(likedByMeExpr)))
+                        .savedByMe(Boolean.TRUE.equals(t.get(savedByMeExpr)))
                         .createdAt(t.get(P.createdAt))
                         .build()
         ).toList();
