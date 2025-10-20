@@ -31,6 +31,7 @@ public class UserController {
                         .displayName(user.getDisplayName())
                         .avartarUrl(user.getAvatarUrl())
                         .mbti(user.getMbti())
+                        .bio(user.getBio())
                         .favoriteBookCategories(user.getFavoriteBookCategories())
                         .build());
     }
@@ -42,12 +43,15 @@ public class UserController {
             @RequestParam(required = false) String displayName,
             @RequestParam(required = false) String avatarUrl,
             @RequestParam(required = false) String mbti,
+            @RequestParam(required = false) String bio,
             @RequestParam(required = false) List<String> favoriteBookCategories) {
+
         final var patch = User.builder()
                 .id(Long.valueOf(userId))
                 .displayName(displayName)
                 .avatarUrl(avatarUrl)
                 .mbti(mbti)
+                .bio(bio)
                 .favoriteBookCategories(favoriteBookCategories)
                 .build();
         userService.updateProfile(patch);

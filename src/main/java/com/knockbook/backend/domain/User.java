@@ -19,6 +19,7 @@ public class User {
     private String displayName;
     private String avatarUrl;
     private String mbti;
+    private String bio;
     private List<String> favoriteBookCategories;
     private Status status;
 }

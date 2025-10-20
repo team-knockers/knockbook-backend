@@ -59,6 +59,7 @@ public class UserRepositoryImpl implements UserRepository {
                 .displayName(userEntity.getDisplayName())
                 .avatarUrl(userEntity.getAvatarUrl())
                 .mbti(userEntity.getMbti())
+                .bio(userEntity.getBio())
                 .favoriteBookCategories(favoriteCodes)
                 .status(User.Status.valueOf(userEntity.getStatus().name()))
                 .build();
@@ -86,6 +87,10 @@ public class UserRepositoryImpl implements UserRepository {
         }
         if (patch.getMbti() != null) {
             updateClause.set(qUser.mbti, patch.getMbti());
+            scalarChanged = true;
+        }
+        if (patch.getBio() != null) {
+            updateClause.set(qUser.bio, patch.getBio());
             scalarChanged = true;
         }
 
