@@ -9,4 +9,6 @@ public interface LoungePostLikeRepository {
     void incrementLikeCount(Long reviewId);
 
     void decrementLikeCount(Long reviewId);
+
+    boolean existsByUserIdAndPostIdAndIsLikedTrue(Long userId, Long postId);
 }

@@ -176,4 +176,8 @@ public class LoungePostService {
             postLikeRepo.decrementLikeCount(postId);
         }
     }
+
+    public boolean isPostLikedByUser(Long userId, Long postId) {
+        return postLikeRepo.existsByUserIdAndPostIdAndIsLikedTrue(userId, postId);
+    }
 }

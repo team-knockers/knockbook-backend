@@ -96,4 +96,15 @@ public class LoungePostLikeRepositoryImpl implements LoungePostLikeRepository {
                 .set(P.likeCount, P.likeCount.subtract(1))
                 .execute();
     }
+
+    @Override
+    public boolean existsByUserIdAndPostIdAndIsLikedTrue(Long userId, Long postId) {
+        final var exists = query.selectOne()
+                .from(L)
+                .where(L.postId.eq(postId)
+                        .and(L.userId.eq(userId))
+                        .and(L.isLiked.eq(true)))
+                .fetchFirst();
+        return exists != null;
+    }
 }
