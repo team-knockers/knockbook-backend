@@ -6,6 +6,7 @@ import com.knockbook.backend.dto.CreateFeedCommentRequest;
 import com.knockbook.backend.exception.AttachmentLimitExceededException;
 import com.knockbook.backend.repository.FeedLikeRepository;
 import com.knockbook.backend.repository.FeedReadRepository;
+import com.knockbook.backend.repository.FeedSaveRepository;
 import com.knockbook.backend.repository.FeedWriteRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.util.List;
 public class FeedService {
     private final FeedReadRepository feedReadRepository;
     private final FeedLikeRepository feedLikeRepository;
+    private final FeedSaveRepository feedSaveRepository;
     private final FeedWriteRepository feedWriteRepository;
 
     private static final int MAX_NUM_FILES = 3;
@@ -56,6 +58,22 @@ public class FeedService {
             Long postId
     ) {
         return feedReadRepository.findFeedPostWithComments(userId, postId);
+    }
+
+    @Transactional
+    public void savePost(
+            Long postId,
+            Long userId
+    ) {
+        feedSaveRepository.insertPostSaveIfAbsent(postId, userId);
+    }
+
+    @Transactional
+    public void unsavePost(
+            Long postId,
+            Long userId
+    ) {
+        feedSaveRepository.deletePostSaveIfPresent(postId, userId);
     }
 
     @Transactional
