@@ -187,6 +187,24 @@ public class BookRepositoryImpl implements BookRepository {
         return exists != null;
     }
 
+    @Override
+    public List<BookSummary> findAllWishlistedBookIdsByUserId(Long userId) {
+        List<BookEntity> entities = queryFactory
+                .select(book)
+                .from(book)
+                .innerJoin(wishlist).on(
+                        wishlist.bookId.eq(book.id)
+                                .and(wishlist.userId.eq(userId))
+                                .and(wishlist.isWished.eq(true))
+                )
+                .fetch();
+
+        // Entity → BookSummary mapping
+        return entities.stream()
+                .map(BookEntityMapper::toSummaryDomain)
+                .toList();
+    }
+
     /**
      * Converts Spring Data Sort to QueryDSL OrderSpecifiers
      */

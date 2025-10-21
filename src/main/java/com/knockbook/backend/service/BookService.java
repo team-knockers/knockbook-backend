@@ -127,4 +127,8 @@ public class BookService {
     public boolean hasBookInWishlist(Long userId, Long bookId) {
         return bookRepository.existsBookWishlist(userId, bookId);
     }
+
+    public List<BookSummary> getUserWishlist(Long userId) {
+        return bookRepository.findAllWishlistedBookIdsByUserId(userId);
+    }
 }

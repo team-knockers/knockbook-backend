@@ -5,6 +5,7 @@ import com.knockbook.backend.domain.BookSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface BookRepository {
@@ -34,4 +35,6 @@ public interface BookRepository {
     boolean deactivateBookWishlist(Long userId, Long bookId);
 
     boolean existsBookWishlist(Long userId, Long bookId);
+
+    List<BookSummary> findAllWishlistedBookIdsByUserId(Long userId);
 }

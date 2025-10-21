@@ -2,6 +2,7 @@ package com.knockbook.backend.controller;
 
 import com.knockbook.backend.domain.BookReview;
 import com.knockbook.backend.domain.BookReviewImage;
+import com.knockbook.backend.domain.BookSummary;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.BookService;
 import jakarta.validation.constraints.Max;
@@ -306,6 +307,22 @@ public class BookController {
                 .wished(wished)
                 .build();
 
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/wishlist")
+    public ResponseEntity<List<BookSummaryDto>> getUserWishlist(
+            @PathVariable String userId
+    ) {
+        final var bookSummaries = bookService.getUserWishlist(Long.valueOf(userId));
+
+        // BookSummary -> BookSummaryDto
+        final var response = bookSummaries.stream()
+                .map(BookDtoMapper::toSummaryDto)
+                .toList();
+
+        // 3) ResponseEntity로 반환
         return ResponseEntity.ok(response);
     }
 }
