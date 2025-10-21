@@ -6,6 +6,7 @@ import com.knockbook.backend.exception.PostNotFoundException;
 import com.knockbook.backend.repository.LoungePostCommentRepository;
 import com.knockbook.backend.repository.LoungePostLikeRepository;
 import com.knockbook.backend.repository.LoungePostRepository;
+import jakarta.persistence.PersistenceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -31,6 +32,37 @@ public class LoungePostService {
 
     @Autowired
     private UserService userService;
+
+    @Transactional
+    public LoungePost createPost(LoungePost post) {
+        if (post == null)
+            throw new IllegalArgumentException("Post must not be null");
+
+        final var trimmedTitle = post.getTitle() == null ? null : post.getTitle().trim();
+        final var trimmedSubtitle = post.getSubtitle() == null ? null : post.getSubtitle().trim();
+        final var trimmedContent = post.getContent() == null ? null : post.getContent().trim();
+        final var trimmedPreviewImageUrl = post.getPreviewImageUrl() == null ? null : post.getPreviewImageUrl().trim();
+
+        if (trimmedTitle == null || trimmedTitle.isEmpty()) {
+            throw new IllegalArgumentException("Title must not be empty");
+        }
+        if (trimmedContent == null || trimmedContent.isEmpty()) {
+            throw new IllegalArgumentException("Content must not be empty");
+        }
+
+        final var postToSave = post.toBuilder()
+                .title(trimmedTitle)
+                .subtitle(trimmedSubtitle)
+                .content(trimmedContent)
+                .previewImageUrl(trimmedPreviewImageUrl)
+                .build();
+
+        try {
+            return postRepo.save(postToSave);
+        } catch (PersistenceException e) {
+            throw new RuntimeException("Failed to save LoungePost", e);
+        }
+    }
 
     public Page<LoungePostSummary> getPostsSummary(Pageable pageable) {
 
