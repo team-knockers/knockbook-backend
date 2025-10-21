@@ -1,9 +1,11 @@
 package com.knockbook.backend.controller;
 
+import com.knockbook.backend.domain.LoungePost;
 import com.knockbook.backend.domain.LoungePostComment;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.LoungePostService;
 import com.knockbook.backend.service.UserService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -257,9 +260,48 @@ public class LoungePostController {
         return ResponseEntity.ok(response);
     }
 
+    // API-LOUNGE-11: Create a lounge post
+    @PreAuthorize("#userId == authentication.name")
+    @PostMapping("/{userId}/posts")
+    public ResponseEntity<LoungePostCreateResponse> createLoungePost(
+            @PathVariable String userId,
+            @RequestBody @Valid LoungePostCreateRequest request
+    ) {
+        // 1) Request DTO → Domain
+        final var post = LoungePost.builder()
+                .userId(Long.valueOf(userId))
+                .title(request.getTitle())
+                .subtitle(request.getSubtitle())
+                .content(request.getContent())
+                .previewImageUrl(request.getPreviewImageUrl())
+                .status(LoungePost.Status.VISIBLE)
+                .likeCount(0)
+                .build();
+
+        // 2) Call service to save the post
+        final var saved = loungePostService.createPost(post);
+
+        // 3) Instant → LocalDateTime
+        final var createdAt = toLocalDateTime(saved.getCreatedAt());
+
+        // 4) Create Response DTO
+        final var response = LoungePostCreateResponse.builder()
+                .id(String.valueOf(saved.getId()))
+                .createdAt(createdAt)
+                .build();
+
+        // 5) Return response
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
     // Helper: Change Instant to LocalDate
     private static LocalDate toLocalDate(Instant instant) {
         return instant == null ? null : LocalDate.ofInstant(instant, ZoneId.of("Asia/Seoul"));
+    }
+
+    // Helper: Change Instant to LocalDateTime (Asia/Seoul)
+    private static LocalDateTime toLocalDateTime(Instant instant) {
+        return instant == null ? null : LocalDateTime.ofInstant(instant, ZoneId.of("Asia/Seoul"));
     }
 
     // Helper: Returns whether the resource was modified (updatedAt > createdAt)
