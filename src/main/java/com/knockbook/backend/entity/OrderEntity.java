@@ -19,6 +19,7 @@ public class OrderEntity {
     private static final ZoneId ZONE_SEOUL = ZoneId.of("Asia/Seoul");
 
     public enum OrderStatus { PENDING, FULFILLING, COMPLETED, CANCELLED }
+    public enum RentalStatus { PREPARING, SHIPPING, DELIVERED, RETURN_REQUESTED, RETURNING, RETURNED, CANCELLED }
     public enum PaymentStatus { READY, PAID, PARTIAL_REFUNDED, REFUNDED, FAILED, CANCELLED }
 
     @Id
@@ -40,6 +41,10 @@ public class OrderEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private OrderStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rental_status")
+    private RentalStatus rentalStatus;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false)
@@ -103,6 +108,8 @@ public class OrderEntity {
                 .shippingAddressId(agg.getShippingAddressId())
                 .status(agg.getStatus() == null ? OrderStatus.PENDING
                         : OrderStatus.valueOf(agg.getStatus().name()))
+                .rentalStatus(agg.getRentalStatus() == null ? null
+                        : RentalStatus.valueOf(agg.getRentalStatus().name()))
                 .paymentStatus(agg.getPaymentStatus() == null ? PaymentStatus.READY
                         : PaymentStatus.valueOf(agg.getPaymentStatus().name()))
                 .itemCount(nz(agg.getItemCount()))
@@ -131,6 +138,8 @@ public class OrderEntity {
                 .shippingAddressId(this.shippingAddressId)
                 .status(this.status == null ? null
                         : OrderAggregate.Status.valueOf(this.status.name()))
+                .rentalStatus(this.rentalStatus == null ? null
+                        : OrderAggregate.RentalStatus.valueOf(this.rentalStatus.name()))
                 .paymentStatus(this.paymentStatus == null ? null
                         : OrderAggregate.PaymentStatus.valueOf(this.paymentStatus.name()))
                 .itemCount(this.itemCount)

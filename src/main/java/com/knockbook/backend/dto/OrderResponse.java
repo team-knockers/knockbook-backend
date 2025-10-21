@@ -18,6 +18,7 @@ public class OrderResponse {
     private String cartId;
     private String shippingAddressId;
     private String status;
+    private String rentalStatus;
     private String paymentStatus;
 
     private Integer itemCount;
@@ -48,6 +49,7 @@ public class OrderResponse {
                 .shippingAddressId(String.valueOf(agg.getShippingAddressId()))
                 .status(agg.getStatus().name())
                 .paymentStatus(agg.getPaymentStatus().name())
+                .rentalStatus(agg.getRentalStatus() != null ? agg.getRentalStatus().name() : null)
                 .itemCount(agg.getItemCount())
                 .subtotalAmount(agg.getSubtotalAmount())
                 .discountAmount(agg.getDiscountAmount())
