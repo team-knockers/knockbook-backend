@@ -13,7 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -257,6 +259,38 @@ public class BookController {
                         .subcategoryDisplayName(s.getDisplayName())
                         .build())
                 .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/{userId}/{bookId}/wish")
+    public ResponseEntity<BookWishlistActionResponse> addToWishlist(
+            @PathVariable String userId,
+            @PathVariable String bookId
+    ) {
+        final var changed = bookService.addWishlist(Long.valueOf(userId), Long.valueOf(bookId));
+        final var response = BookWishlistActionResponse.builder()
+                .message(changed ? "찜이 추가되었습니다" : "이미 찜되어 있습니다")
+                .bookId(bookId)
+                .wishlisted(true)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/{userId}/{bookId}/wish")
+    public ResponseEntity<BookWishlistActionResponse> removeFromWishlist(
+            @PathVariable String userId,
+            @PathVariable String bookId
+    ) {
+        final var changed = bookService.removeWishlist(Long.valueOf(userId), Long.valueOf(bookId));
+        final var response = BookWishlistActionResponse.builder()
+                .message(changed ? "찜이 취소되었습니다" : "찜이 존재하지 않습니다")
+                .bookId(bookId)
+                .wishlisted(false)
+                .build();
 
         return ResponseEntity.ok(response);
     }
