@@ -260,4 +260,31 @@ public class ProductController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/wishes/{userId}")
+    public ResponseEntity<GetProductWishlist> getProductWishlist(
+            @PathVariable("userId") String userId
+    ) {
+        final var userIdLong = Long.parseLong(userId);
+        final var result = productService.getProductWishlist(userIdLong);
+
+        final var products = result.getProducts().stream().map(s -> ProductSummaryDTO.builder()
+                .productId(String.valueOf(s.getId()))
+                 .name(s.getName())
+                .unitPriceAmount(s.getUnitPriceAmount())
+                .salePriceAmount(s.getSalePriceAmount())
+                .averageRating(s.getAverageRating())
+                .reviewCount(s.getReviewCount())
+                .thumbnailUrl(s.getThumbnailUrl())
+                .availability(s.getAvailability() == null ? null : s.getAvailability().name())
+                .build()
+        ).toList();
+
+        final var body = GetProductWishlist.builder()
+                .products(products)
+                .build();
+
+        return ResponseEntity.ok(body);
+    }
 }
