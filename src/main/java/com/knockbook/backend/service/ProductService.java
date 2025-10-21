@@ -1,9 +1,6 @@
 package com.knockbook.backend.service;
 
-import com.knockbook.backend.domain.ProductInquiry;
-import com.knockbook.backend.domain.ProductResult;
-import com.knockbook.backend.domain.ProductReviewsResult;
-import com.knockbook.backend.domain.ProductSummary;
+import com.knockbook.backend.domain.*;
 import com.knockbook.backend.dto.CreateProductInquiryRequest;
 import com.knockbook.backend.exception.ProductNotFoundException;
 import com.knockbook.backend.repository.ProductInquiryRepository;
@@ -15,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -96,5 +95,11 @@ public class ProductService {
             Long userId
     ) {
         productWishRepository.deleteWishlist(productId, userId);
+    }
+
+    public ProductWishlist getProductWishlist(
+            Long userId
+    ) {
+        return productWishRepository.findWishlist(userId);
     }
 }
