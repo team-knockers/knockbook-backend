@@ -10,6 +10,11 @@ import java.util.Optional;
 public interface LoungePostRepository {
 
     /**
+     * Save a lounge post entity.
+     */
+    public LoungePost save(LoungePost post);
+
+    /**
      * Find a post by its ID.
      */
     Optional<LoungePost> findById(final Long id);
