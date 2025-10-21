@@ -13,7 +13,13 @@ public interface FeedReadRepository {
             String mbti
     );
 
-    FeedProfileResult findFeedProfile(
+    FeedProfileResult findProfilePostThumbnails(
+            Long userId,
+            Long after,
+            int size
+    );
+
+    FeedProfileResult findProfileSavedThumbnails(
             Long userId,
             Long after,
             int size

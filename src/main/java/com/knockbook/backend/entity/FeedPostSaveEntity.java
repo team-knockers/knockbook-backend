@@ -6,20 +6,19 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "products_wishlist")
+@Table(name = "feeds_post_saves")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class ProductWishlistEntity {
-
+public class FeedPostSaveEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "wishlist_id", nullable = false)
-    private Long wishlistId;
+    @Column(name = "post_save_id", nullable = false)
+    private Long postSaveId;
 
-    @Column(name = "product_id", nullable = false)
-    private Long productId;
+    @Column(name = "post_id", nullable = false)
+    private Long postId;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
@@ -27,4 +26,3 @@ public class ProductWishlistEntity {
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
 }
-
