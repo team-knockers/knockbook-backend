@@ -2,7 +2,6 @@ package com.knockbook.backend.controller;
 
 import com.knockbook.backend.domain.BookReview;
 import com.knockbook.backend.domain.BookReviewImage;
-import com.knockbook.backend.domain.BookSummary;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.BookService;
 import jakarta.validation.constraints.Max;
@@ -14,9 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
 import java.util.List;
 
 @RestController
