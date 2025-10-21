@@ -32,6 +32,7 @@ public class BookRepositoryImpl implements BookRepository {
     private static final QBookEntity book = QBookEntity.bookEntity;
     private static final QBookCategoryEntity category = QBookCategoryEntity.bookCategoryEntity;
     private static final QBookSubcategoryEntity subcategory = QBookSubcategoryEntity.bookSubcategoryEntity;
+    private static final QBookWishlistEntity wishlist = QBookWishlistEntity.bookWishlistEntity;
 
     @Override
     public Optional<Book> findById(Long id) {
@@ -110,6 +111,69 @@ public class BookRepositoryImpl implements BookRepository {
 
         // 6) Return paginated result
         return new PageImpl<>(content, pageable, totalItems);
+    }
+
+    @Override
+    public boolean saveBookWishlist(Long userId, Long bookId) {
+        // Check if the wishlist already exists
+        final var exists = queryFactory.selectOne()
+                .from(wishlist)
+                .where(wishlist.bookId.eq(bookId)
+                        .and(wishlist.userId.eq(userId))
+                        .and(wishlist.isWished.eq(true)))
+                .fetchFirst();
+
+        if (exists != null) {
+            return false;
+        }
+
+        // Restore the wishlist if it was previously canceled (isWished=false)
+        final var restored = queryFactory.update(wishlist)
+                .where(wishlist.bookId.eq(bookId)
+                        .and(wishlist.userId.eq(userId))
+                        .and(wishlist.isWished.eq(false)))
+                .set(wishlist.isWished, true)
+                .execute();
+
+        if (restored > 0) {
+            return true;
+        }
+
+        // Insert a new wishlist record if it doesn't exist
+        final var like = BookWishlistEntity.builder()
+                .bookId(bookId)
+                .userId(userId)
+                .isWished(true)
+                .build();
+        em.persist(like);
+        em.flush();
+        return true;
+    }
+
+    @Override
+    public boolean deleteBookWishlist(Long userId, Long bookId) {
+        // If the wishlist is already canceled, ignore the request
+        final var existsFalse = queryFactory.selectOne()
+                .from(wishlist)
+                .where(wishlist.bookId.eq(bookId)
+                        .and(wishlist.userId.eq(userId))
+                        .and(wishlist.isWished.eq(false)))
+                .fetchFirst();
+
+        if (existsFalse != null) {
+            return false;
+        }
+
+        // Only cancel the wishlist if it currently exists
+        final var updated = queryFactory.update(wishlist)
+                .where(wishlist.bookId.eq(bookId)
+                        .and(wishlist.userId.eq(userId))
+                        .and(wishlist.isWished.eq(true)))
+                .set(wishlist.isWished, false)
+                .execute();
+
+        // If no row was affected (wishlist record doesn't exist), silently ignore
+        return updated != 0;
     }
 
     /**
