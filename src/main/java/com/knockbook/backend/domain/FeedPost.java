@@ -21,5 +21,6 @@ public class FeedPost {
     private Integer likesCount;
     private Integer commentsCount;
     private Boolean likedByMe;
+    private Boolean savedByMe;
     private Instant createdAt;
 }

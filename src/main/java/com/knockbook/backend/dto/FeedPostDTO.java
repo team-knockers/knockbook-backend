@@ -22,5 +22,6 @@ public class FeedPostDTO {
     private Integer likesCount;
     private Integer commentsCount;
     private Boolean likedByMe;
-    private String createdAt; // "3시간 전"
+    private Boolean savedByMe;
+    private String createdAt;
 }

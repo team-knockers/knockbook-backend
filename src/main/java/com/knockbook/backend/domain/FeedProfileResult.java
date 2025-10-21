@@ -11,11 +11,6 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class FeedProfileResult {
-    private String userId;
-    private String displayName;
-    private String avatarUrl;
-    private String bio;
-
     private Long postsCount;
     private String nextAfter;
 

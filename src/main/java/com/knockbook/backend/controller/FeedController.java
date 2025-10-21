@@ -49,6 +49,7 @@ public class FeedController {
                         .likesCount(p.getLikesCount())
                         .commentsCount(p.getCommentsCount())
                         .likedByMe(p.getLikedByMe())
+                        .savedByMe(p.getSavedByMe())
                         .createdAt(DateTimeFormatter.ISO_INSTANT.format(p.getCreatedAt()))
                         .build())
                 .toList();
@@ -62,20 +63,41 @@ public class FeedController {
     }
 
     @PreAuthorize("#userId == authentication.name")
-    @GetMapping("/profile/{userId}")
-    public ResponseEntity<GetFeedProfileResponse> getFeedProfile(
+    @GetMapping("/profile/post/{userId}")
+    public ResponseEntity<GetFeedProfileResponse> getProfilePostThumbnails(
             @PathVariable("userId") String userId,
             @RequestParam(required = false) String after, // last postId
             @RequestParam @Min(1) int size
     ) {
         final var uid = Long.parseLong(userId);
         final var afterId = (after == null || after.isBlank()) ? null : Long.parseLong(after);
-        final var result = feedService.getFeedProfile(uid, afterId, size);
+        final var result = feedService.getProfilePostThumbnails(uid, afterId, size);
         final var body = GetFeedProfileResponse.builder()
-                .userId(result.getUserId())
-                .displayName(result.getDisplayName())
-                .avatarUrl(result.getAvatarUrl())
-                .bio(result.getBio())
+                .postsCount(result.getPostsCount())
+                .profileThumbnails(
+                        result.getProfileThumbnails().stream()
+                                .map(t -> FeedProfileThumbnailDTO.builder()
+                                        .postId(t.getPostId())
+                                        .thumbnailUrl(t.getThumbnailUrl())
+                                        .build())
+                                .toList())
+                .nextAfter(result.getNextAfter())
+                .build();
+
+        return ResponseEntity.ok(body);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/profile/saved/{userId}")
+    public ResponseEntity<GetFeedProfileResponse> getProfileSavedThumbnails(
+            @PathVariable("userId") String userId,
+            @RequestParam(required = false) String after, // last postId
+            @RequestParam @Min(1) int size
+    ) {
+        final var uid = Long.parseLong(userId);
+        final var afterId = (after == null || after.isBlank()) ? null : Long.parseLong(after);
+        final var result = feedService.getProfileSavedThumbnails(uid, afterId, size);
+        final var body = GetFeedProfileResponse.builder()
                 .postsCount(result.getPostsCount())
                 .profileThumbnails(
                         result.getProfileThumbnails().stream()
@@ -97,7 +119,6 @@ public class FeedController {
             @PathVariable("postId") Long postId
     ) {
         final var uid = Long.parseLong(userId);
-        // 서비스 레포지토리 구현 이후 작성 예정
         final var result = feedService.getFeedPostComments(uid, postId);
 
         final var feedComments = result.getFeedComments().stream()
@@ -165,6 +186,31 @@ public class FeedController {
         return ResponseEntity.ok(body);
     }
 
+    // Save
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/post/{postId}/saves/{userId}")
+    public ResponseEntity<Void> savePost(
+            @PathVariable("postId") Long postId,
+            @PathVariable("userId") String userId
+    ) {
+        final var uid = Long.parseLong(userId);
+        feedService.savePost(postId, uid);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/post/{postId}/saves/{userId}")
+    public ResponseEntity<Void> unsavePost(
+            @PathVariable("postId") Long postId,
+            @PathVariable("userId") String userId
+    ) {
+        final var uid = Long.parseLong(userId);
+        feedService.unsavePost(postId, uid);
+
+        return ResponseEntity.noContent().build();
+    }
+
     // Like
     @PreAuthorize("#userId == authentication.name")
     @PutMapping("/post/{postId}/likes/{userId}")
@@ -213,6 +259,8 @@ public class FeedController {
 
         return ResponseEntity.noContent().build();
     }
+
+    // Write
 
     @PreAuthorize("#userId == authentication.name")
     @PostMapping("/comment/{postId}/{userId}")
