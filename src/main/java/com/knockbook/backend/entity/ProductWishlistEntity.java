@@ -3,6 +3,8 @@ package com.knockbook.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
+
 @Entity
 @Table(name = "products_wishlist")
 @Getter
@@ -22,8 +24,7 @@ public class ProductWishlistEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Builder.Default
-    @Column(name = "is_wished", nullable = false)
-    private Boolean isWished = true; 
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    private Instant createdAt;
 }
 
