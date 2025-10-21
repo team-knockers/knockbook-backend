@@ -20,6 +20,7 @@ public class PointTransaction {
     private Integer amountSigned;
     private Instant expiresAt;
     private Long orderId;
+    private String orderNo;
     private String memo;
     private Instant createdAt;
 }

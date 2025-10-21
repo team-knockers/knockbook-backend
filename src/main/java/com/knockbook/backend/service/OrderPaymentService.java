@@ -69,7 +69,7 @@ public class OrderPaymentService {
                 throw new CouponNotAvailableException(issuanceId);
             }
 
-            if (issuance.getExpiresAt() != null && issuance.getExpiresAt().isBefore(Instant.from(nowLdt))) {
+            if (issuance.getExpiresAt() != null && issuance.getExpiresAt().isBefore(nowInstant)) {
                 throw new CouponExpiredException(issuanceId);
             }
 
@@ -124,25 +124,49 @@ public class OrderPaymentService {
         // 4) Save payment record with APPROVED status
         final var payment = orderPaymentRepository.save(
                 OrderPayment.builder()
-                .orderId(order.getId())
-                .method(OrderPayment.Method.valueOf(method.name()))
-                .provider(provider)
-                .txId(txId)
-                .amount(amount)
-                .status(OrderPayment.TxStatus.APPROVED)
-                .approvedAt(nowInstant)
-                .build());
+                        .orderId(order.getId())
+                        .method(OrderPayment.Method.valueOf(method.name()))
+                        .provider(provider)
+                        .txId(txId)
+                        .amount(amount)
+                        .status(OrderPayment.TxStatus.APPROVED)
+                        .approvedAt(nowInstant)
+                        .build());
 
         // 5) Update order status and timeline
         final var orderUpdated = order.paid(nowInstant);
         final var orderSaved = orderRepository.saveAggregate(orderUpdated);
 
+        // 5.1) Earn and record points (based on the finalized orderSaved)
+        final var earn = orderSaved.getPointsEarned() == null ? 0 : orderSaved.getPointsEarned();
+        if (earn > 0) {
+            final var balAfterPay = pointBalanceRepository.findByUserIdForUpdate(userId)
+                    .orElse(PointBalance.builder().userId(userId).balance(0).build());
+
+            final var updatedBalanceAfterPay = PointBalance.builder()
+                    .userId(userId)
+                    .balance(balAfterPay.getBalance() + earn)
+                    .updatedAt(balAfterPay.getUpdatedAt())
+                    .build();
+
+            pointBalanceRepository.save(updatedBalanceAfterPay);
+
+            pointTransactionRepository.save(PointTransaction.builder()
+                    .userId(userId)
+                    .kind(PointTransaction.Kind.EARN)
+                    .amountSigned(earn)
+                    .orderId(orderSaved.getId())
+                    .memo("Order payment earning")
+                    .build());
+        }
+
+        // 6) Cleanup cart items consumed by this order
         final var refs = orderSaved.getItems().stream().map(i ->
-                CartRef.builder()
-                        .refId(i.getRefId())
-                        .refType(i.getRefType().name())
-                        .rentalDays(i.getRefType() == OrderItem.RefType.BOOK_RENTAL ? i.getRentalDays() : 0)
-                        .build())
+                        CartRef.builder()
+                                .refId(i.getRefId())
+                                .refType(i.getRefType().name())
+                                .rentalDays(i.getRefType() == OrderItem.RefType.BOOK_RENTAL ? i.getRentalDays() : 0)
+                                .build())
                 .distinct().toList();
 
         cartRepository.deleteByUserIdAndRefs(userId, refs);
