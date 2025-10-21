@@ -269,9 +269,9 @@ public class BookController {
     ) {
         final var changed = bookService.addToWishlist(Long.valueOf(userId), Long.valueOf(bookId));
         final var response = BookWishlistActionResponse.builder()
-                .message(changed ? "찜이 추가되었습니다" : "이미 찜되어 있습니다")
                 .bookId(bookId)
                 .wishlisted(true)
+                .action(changed ? "added" : "already_exists")
                 .build();
 
         return ResponseEntity.ok(response);
@@ -285,9 +285,9 @@ public class BookController {
     ) {
         final var changed = bookService.removeFromWishlist(Long.valueOf(userId), Long.valueOf(bookId));
         final var response = BookWishlistActionResponse.builder()
-                .message(changed ? "찜이 취소되었습니다" : "찜이 존재하지 않습니다")
                 .bookId(bookId)
                 .wishlisted(false)
+                .action(changed ? "removed" : "not_found")
                 .build();
 
         return ResponseEntity.ok(response);

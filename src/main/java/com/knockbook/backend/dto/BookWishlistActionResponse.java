@@ -7,7 +7,7 @@ import lombok.*;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class BookWishlistActionResponse {
-    private String message;
     private String bookId;
     private boolean wishlisted;
+    private String action;
 }
