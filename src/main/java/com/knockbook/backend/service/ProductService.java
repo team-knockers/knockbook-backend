@@ -9,6 +9,7 @@ import com.knockbook.backend.exception.ProductNotFoundException;
 import com.knockbook.backend.repository.ProductInquiryRepository;
 import com.knockbook.backend.repository.ProductRepository;
 import com.knockbook.backend.repository.ProductReviewRepository;
+import com.knockbook.backend.repository.ProductWishRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductReviewRepository productReviewRepository;
     private final ProductInquiryRepository productInquiryRepository;
+    private final ProductWishRepository productWishRepository;
 
     public Page<ProductSummary> getProductList(
             String category,
@@ -78,5 +80,21 @@ public class ProductService {
         final var questionBody = req.getQuestionBody().trim();
 
         return productInquiryRepository.createInquiry(productId, userId, title, questionBody);
+    }
+
+    @Transactional
+    public void addToWishlist(
+            Long productId,
+            Long userId
+    ) {
+        productWishRepository.insertWishlist(productId, userId);
+    }
+
+    @Transactional
+    public void removeFromWishlist(
+            Long productId,
+            Long userId
+    ) {
+        productWishRepository.deleteWishlist(productId, userId);
     }
 }
