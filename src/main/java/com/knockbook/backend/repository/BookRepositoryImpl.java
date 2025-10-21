@@ -29,6 +29,10 @@ public class BookRepositoryImpl implements BookRepository {
     private final JPAQueryFactory queryFactory;
     private final EntityManager em;
 
+    private static final QBookEntity book = QBookEntity.bookEntity;
+    private static final QBookCategoryEntity category = QBookCategoryEntity.bookCategoryEntity;
+    private static final QBookSubcategoryEntity subcategory = QBookSubcategoryEntity.bookSubcategoryEntity;
+
     @Override
     public Optional<Book> findById(Long id) {
         return Optional.ofNullable(em.find(BookEntity.class, id))
@@ -40,16 +44,11 @@ public class BookRepositoryImpl implements BookRepository {
             String categoryCodeName, String subcategoryCodeName, Pageable pageable, String searchBy,
             String searchKeyword, Integer minPrice, Integer maxPrice) {
 
-        // 1) Define query entities
-        final var book = QBookEntity.bookEntity;
-        final var category = QBookCategoryEntity.bookCategoryEntity;
-        final var subcategory = QBookSubcategoryEntity.bookSubcategoryEntity;
-
-        // 2) Define join conditions
+        // 1) Define join conditions
         BooleanExpression onCategoryJoin = book.bookCategoryId.eq(category.id);
         BooleanExpression onSubcategoryJoin = book.bookSubcategoryId.eq(subcategory.id);
 
-        // 3) Build filtering conditions (WHERE clause)
+        // 2) Build filtering conditions (WHERE clause)
         BooleanExpression predicate = book.status.eq(BookEntity.Status.VISIBLE)
                 .and(book.deletedAt.isNull()); // Basic condition: only visible and not deleted books
 
@@ -79,7 +78,7 @@ public class BookRepositoryImpl implements BookRepository {
             predicate = predicate.and(book.discountedPurchaseAmount.loe(maxPrice));
         }
 
-        // 4) Execute paged query and fetch results
+        // 3) Execute paged query and fetch results
         List<BookEntity> entities = queryFactory
                 .select(book)
                 .from(book)
@@ -91,7 +90,7 @@ public class BookRepositoryImpl implements BookRepository {
                 .orderBy(toOrderSpecifiers(pageable.getSort()))
                 .fetch();
 
-        // 5) Execute count query
+        // 4) Execute count query
         Long totalItems = queryFactory
                 .select(book.count())
                 .from(book)
@@ -104,12 +103,12 @@ public class BookRepositoryImpl implements BookRepository {
             return new PageImpl<>(List.of(), pageable, 0);
         }
 
-        // 6) Map entity to domain object
+        // 5) Map entity to domain object
         List<BookSummary> content = entities.stream()
                 .map(BookEntityMapper::toSummaryDomain)
                 .toList();
 
-        // 7) Return paginated result
+        // 6) Return paginated result
         return new PageImpl<>(content, pageable, totalItems);
     }
 
@@ -117,7 +116,6 @@ public class BookRepositoryImpl implements BookRepository {
      * Converts Spring Data Sort to QueryDSL OrderSpecifiers
      */
     private OrderSpecifier<?>[] toOrderSpecifiers(Sort sort) {
-        QBookEntity book = QBookEntity.bookEntity;
         PathBuilder<BookEntity> builder = new PathBuilder<>(BookEntity.class, book.getMetadata());
 
         return sort.stream()
@@ -158,7 +156,6 @@ public class BookRepositoryImpl implements BookRepository {
      * Builds a LIKE predicate for the given searchBy and keyword
      */
     private BooleanExpression buildSearchPredicate(String searchBy, String searchKeyword) {
-        QBookEntity book = QBookEntity.bookEntity;
         String pattern = "%" + searchKeyword + "%";
 
         return switch (searchBy) {
