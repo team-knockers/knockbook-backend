@@ -28,4 +28,8 @@ public interface BookRepository {
             final Integer maxPrice,
             final Integer minPrice
     );
+
+    boolean saveBookWishlist(Long userId, Long bookId);
+
+    boolean deleteBookWishlist(Long userId, Long bookId);
 }
