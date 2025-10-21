@@ -1,19 +1,19 @@
 package com.knockbook.backend.service;
 
-import com.knockbook.backend.domain.ProductInquiry;
-import com.knockbook.backend.domain.ProductResult;
-import com.knockbook.backend.domain.ProductReviewsResult;
-import com.knockbook.backend.domain.ProductSummary;
+import com.knockbook.backend.domain.*;
 import com.knockbook.backend.dto.CreateProductInquiryRequest;
 import com.knockbook.backend.exception.ProductNotFoundException;
 import com.knockbook.backend.repository.ProductInquiryRepository;
 import com.knockbook.backend.repository.ProductRepository;
 import com.knockbook.backend.repository.ProductReviewRepository;
+import com.knockbook.backend.repository.ProductWishRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +22,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductReviewRepository productReviewRepository;
     private final ProductInquiryRepository productInquiryRepository;
+    private final ProductWishRepository productWishRepository;
 
     public Page<ProductSummary> getProductList(
             String category,
@@ -78,5 +79,27 @@ public class ProductService {
         final var questionBody = req.getQuestionBody().trim();
 
         return productInquiryRepository.createInquiry(productId, userId, title, questionBody);
+    }
+
+    @Transactional
+    public void addToWishlist(
+            Long productId,
+            Long userId
+    ) {
+        productWishRepository.insertWishlist(productId, userId);
+    }
+
+    @Transactional
+    public void removeFromWishlist(
+            Long productId,
+            Long userId
+    ) {
+        productWishRepository.deleteWishlist(productId, userId);
+    }
+
+    public ProductWishlist getProductWishlist(
+            Long userId
+    ) {
+        return productWishRepository.findWishlist(userId);
     }
 }
