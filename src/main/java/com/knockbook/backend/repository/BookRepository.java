@@ -29,7 +29,7 @@ public interface BookRepository {
             final Integer minPrice
     );
 
-    boolean saveBookWishlist(Long userId, Long bookId);
+    boolean activateBookWishlist(Long userId, Long bookId);
 
-    boolean deleteBookWishlist(Long userId, Long bookId);
+    boolean deactivateBookWishlist(Long userId, Long bookId);
 }

@@ -269,7 +269,7 @@ public class BookController {
             @PathVariable String userId,
             @PathVariable String bookId
     ) {
-        final var changed = bookService.addWishlist(Long.valueOf(userId), Long.valueOf(bookId));
+        final var changed = bookService.addToWishlist(Long.valueOf(userId), Long.valueOf(bookId));
         final var response = BookWishlistActionResponse.builder()
                 .message(changed ? "찜이 추가되었습니다" : "이미 찜되어 있습니다")
                 .bookId(bookId)
@@ -285,7 +285,7 @@ public class BookController {
             @PathVariable String userId,
             @PathVariable String bookId
     ) {
-        final var changed = bookService.removeWishlist(Long.valueOf(userId), Long.valueOf(bookId));
+        final var changed = bookService.removeFromWishlist(Long.valueOf(userId), Long.valueOf(bookId));
         final var response = BookWishlistActionResponse.builder()
                 .message(changed ? "찜이 취소되었습니다" : "찜이 존재하지 않습니다")
                 .bookId(bookId)

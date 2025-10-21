@@ -113,14 +113,14 @@ public class BookService {
     }
 
     @Transactional
-    public boolean addWishlist(Long userId, Long bookId) {
+    public boolean addToWishlist(Long userId, Long bookId) {
 
-        return bookRepository.saveBookWishlist(userId, bookId);
+        return bookRepository.activateBookWishlist(userId, bookId);
     }
 
     @Transactional
-    public boolean removeWishlist(Long userId, Long bookId) {
+    public boolean removeFromWishlist(Long userId, Long bookId) {
 
-        return bookRepository.deleteBookWishlist(userId, bookId);
+        return bookRepository.deactivateBookWishlist(userId, bookId);
     }
 }

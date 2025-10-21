@@ -114,7 +114,7 @@ public class BookRepositoryImpl implements BookRepository {
     }
 
     @Override
-    public boolean saveBookWishlist(Long userId, Long bookId) {
+    public boolean activateBookWishlist(Long userId, Long bookId) {
         // Check if the wishlist already exists
         final var exists = queryFactory.selectOne()
                 .from(wishlist)
@@ -151,7 +151,7 @@ public class BookRepositoryImpl implements BookRepository {
     }
 
     @Override
-    public boolean deleteBookWishlist(Long userId, Long bookId) {
+    public boolean deactivateBookWishlist(Long userId, Long bookId) {
         // If the wishlist is already canceled, ignore the request
         final var existsFalse = queryFactory.selectOne()
                 .from(wishlist)
