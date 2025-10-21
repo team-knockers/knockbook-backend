@@ -56,7 +56,7 @@ public class PointTransactionEntity {
                 .build();
     }
 
-    public PointTransaction toDomain() {
+    public PointTransaction toDomain(String orderNo) {
         return PointTransaction.builder()
                 .id(id)
                 .userId(userId)
@@ -64,6 +64,7 @@ public class PointTransactionEntity {
                 .amountSigned(amountSigned)
                 .expiresAt(expiresAt)
                 .orderId(orderId)
+                .orderNo(orderNo)
                 .memo(memo)
                 .createdAt(createdAt)
                 .build();
