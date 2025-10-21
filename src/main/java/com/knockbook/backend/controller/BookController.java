@@ -260,4 +260,66 @@ public class BookController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/{userId}/{bookId}/wish")
+    public ResponseEntity<BookWishlistActionResponse> addToWishlist(
+            @PathVariable String userId,
+            @PathVariable String bookId
+    ) {
+        final var changed = bookService.addToWishlist(Long.valueOf(userId), Long.valueOf(bookId));
+        final var response = BookWishlistActionResponse.builder()
+                .bookId(bookId)
+                .wishlisted(true)
+                .action(changed ? "added" : "already_exists")
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/{userId}/{bookId}/wish")
+    public ResponseEntity<BookWishlistActionResponse> removeFromWishlist(
+            @PathVariable String userId,
+            @PathVariable String bookId
+    ) {
+        final var changed = bookService.removeFromWishlist(Long.valueOf(userId), Long.valueOf(bookId));
+        final var response = BookWishlistActionResponse.builder()
+                .bookId(bookId)
+                .wishlisted(false)
+                .action(changed ? "removed" : "not_found")
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/{bookId}/wish")
+    public ResponseEntity<BookWishStatusResponse> hasBookInWishlist(
+            @PathVariable String userId,
+            @PathVariable String bookId
+    ) {
+        final var wished = bookService.hasBookInWishlist(Long.valueOf(userId), Long.valueOf(bookId));
+        final var response = BookWishStatusResponse.builder()
+                .wished(wished)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/wishlist")
+    public ResponseEntity<List<BookSummaryDto>> getUserWishlist(
+            @PathVariable String userId
+    ) {
+        final var bookSummaries = bookService.getUserWishlist(Long.valueOf(userId));
+
+        // BookSummary -> BookSummaryDto
+        final var response = bookSummaries.stream()
+                .map(BookDtoMapper::toSummaryDto)
+                .toList();
+
+        // 3) ResponseEntity로 반환
+        return ResponseEntity.ok(response);
+    }
 }

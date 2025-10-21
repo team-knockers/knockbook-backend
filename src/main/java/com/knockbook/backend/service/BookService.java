@@ -11,8 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -110,5 +110,25 @@ public class BookService {
         }
 
         return bookCategoryRepository.findSubcategoriesByCategoryCodeName(categoryCodeName);
+    }
+
+    @Transactional
+    public boolean addToWishlist(Long userId, Long bookId) {
+
+        return bookRepository.activateBookWishlist(userId, bookId);
+    }
+
+    @Transactional
+    public boolean removeFromWishlist(Long userId, Long bookId) {
+
+        return bookRepository.deactivateBookWishlist(userId, bookId);
+    }
+
+    public boolean hasBookInWishlist(Long userId, Long bookId) {
+        return bookRepository.existsBookWishlist(userId, bookId);
+    }
+
+    public List<BookSummary> getUserWishlist(Long userId) {
+        return bookRepository.findAllWishlistedBookIdsByUserId(userId);
     }
 }
