@@ -236,4 +236,28 @@ public class ProductController {
 
         return ResponseEntity.created(location).build();
     }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/wishes/{productId}/{userId}")
+    public ResponseEntity<Void> addToWishlist(
+            @PathVariable("productId") Long productId,
+            @PathVariable("userId") String userId
+    ) {
+        final var userIdLong = Long.parseLong(userId);
+        productService.addToWishlist(productId, userIdLong);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/wishes/{productId}/{userId}")
+    public ResponseEntity<Void> removeFromWishlist(
+            @PathVariable("productId") Long productId,
+            @PathVariable("userId") String userId
+    ) {
+        final var userIdLong = Long.parseLong(userId);
+        productService.removeFromWishlist(productId, userIdLong);
+
+        return ResponseEntity.noContent().build();
+    }
 }
