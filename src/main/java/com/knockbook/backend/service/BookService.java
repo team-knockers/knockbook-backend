@@ -123,4 +123,8 @@ public class BookService {
 
         return bookRepository.deactivateBookWishlist(userId, bookId);
     }
+
+    public boolean hasBookInWishlist(Long userId, Long bookId) {
+        return bookRepository.existsBookWishlist(userId, bookId);
+    }
 }

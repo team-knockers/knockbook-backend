@@ -294,4 +294,18 @@ public class BookController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/{bookId}/wish")
+    public ResponseEntity<BookWishStatusResponse> hasBookInWishlist(
+            @PathVariable String userId,
+            @PathVariable String bookId
+    ) {
+        final var wished = bookService.hasBookInWishlist(Long.valueOf(userId), Long.valueOf(bookId));
+        final var response = BookWishStatusResponse.builder()
+                .wished(wished)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 }

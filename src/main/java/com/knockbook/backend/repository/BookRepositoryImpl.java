@@ -176,6 +176,17 @@ public class BookRepositoryImpl implements BookRepository {
         return updated != 0;
     }
 
+    @Override
+    public boolean existsBookWishlist(Long userId, Long bookId) {
+        final var exists = queryFactory.selectOne()
+                .from(wishlist)
+                .where(wishlist.bookId.eq(bookId)
+                        .and(wishlist.userId.eq(userId))
+                        .and(wishlist.isWished.eq(true)))
+                .fetchFirst();
+        return exists != null;
+    }
+
     /**
      * Converts Spring Data Sort to QueryDSL OrderSpecifiers
      */

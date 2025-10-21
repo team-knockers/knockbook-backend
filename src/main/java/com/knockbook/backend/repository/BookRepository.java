@@ -32,4 +32,6 @@ public interface BookRepository {
     boolean activateBookWishlist(Long userId, Long bookId);
 
     boolean deactivateBookWishlist(Long userId, Long bookId);
+
+    boolean existsBookWishlist(Long userId, Long bookId);
 }
