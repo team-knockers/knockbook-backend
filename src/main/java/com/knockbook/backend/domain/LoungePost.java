@@ -22,6 +22,7 @@ public class LoungePost {
     private final String title;
     private final String subtitle; // nullable
     private final String content;
+    private final String previewImageUrl;
     private final Status status;
     private final Integer likeCount;
     private final Instant createdAt;
