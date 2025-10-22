@@ -10,11 +10,14 @@ import java.util.Map;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class BookPreferCategoryStatDTO {
-    private Map<String, Double> bookCategoryDisplayNameAndReadRatePair;
+    private String bookCategoryDisplayName;
+    private double categoryReadRatio;
 
-    public static BookPreferCategoryStatDTO fromDomain(BookPreferCategoryStat d) {
+    public static BookPreferCategoryStatDTO of(String name, double ratio) {
         return BookPreferCategoryStatDTO.builder()
-                .bookCategoryDisplayNameAndReadRatePair(d.getBookCategoryDisplayNameAndReadRatePair())
+                .bookCategoryDisplayName(name)
+                .categoryReadRatio(ratio)
                 .build();
     }
 }
+
