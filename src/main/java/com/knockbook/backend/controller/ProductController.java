@@ -163,6 +163,44 @@ public class ProductController {
     }
 
     @PreAuthorize("#userId == authentication.name")
+    @PostMapping("/{productId}/reviews/{userId}")
+    public ResponseEntity<ProductReviewDTO> createReview(
+            @PathVariable("productId") Long productId,
+            @PathVariable("userId") String userId,
+            @RequestBody @Valid CreateProductReviewRequest req
+    ) {
+        final long userIdLong = Long.parseLong(userId);
+        final var productReview = productService.createReview(productId, userIdLong, req);
+        final var body = ProductReviewDTO.builder()
+                .reviewId(String.valueOf(productReview.getReviewId()))
+                .displayName(productReview.getDisplayName())
+                .body(productReview.getBody())
+                .rating(productReview.getRating())
+                .createdAt(productReview.getCreatedAt().toString())
+                .likesCount(productReview.getLikesCount())
+                .build();
+
+        final var location = URI.create(
+                "/products/reviews/%s".formatted(body.getReviewId())
+        );
+
+        return ResponseEntity.created(location).body(body);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/{productId}/reviews/{reviewId}/{userId}")
+    public ResponseEntity<Void> deleteReview(
+            @PathVariable("productId") Long productId,
+            @PathVariable("reviewId") Long reviewId,
+            @PathVariable("userId") String userId
+    ) {
+        final long userIdLong = Long.parseLong(userId);
+        productService.deleteReview(productId, reviewId, userIdLong);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{productId}/inquiries/{userId}")
     public ResponseEntity<GetProductInquiriesResponse> getProductInquiries(
             @PathVariable("productId") Long productId,
