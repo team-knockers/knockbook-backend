@@ -64,11 +64,13 @@ public class HistoryController {
 
     @GetMapping("/stat/category-preference")
     @PreAuthorize("#userId == authentication.name")
-    public ResponseEntity<BookPreferCategoryStatDTO> getCategoryPreferenceAll(
+    public ResponseEntity<List<BookPreferCategoryStatDTO>> getCategoryPreferenceAll(
             @PathVariable final String userId) {
 
         final var stat = historyService.getMyCategoryPreferenceAll(Long.valueOf(userId));
-        final var dto = BookPreferCategoryStatDTO.fromDomain(stat);
-        return ResponseEntity.ok(dto);
+        final var list = stat.getBookCategoryDisplayNameAndReadRatePair().entrySet().stream()
+                .map(e -> BookPreferCategoryStatDTO.of(e.getKey(), e.getValue()))
+                .toList();
+        return ResponseEntity.ok(list);
     }
 }
