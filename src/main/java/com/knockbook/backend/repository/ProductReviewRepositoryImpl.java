@@ -5,6 +5,7 @@ import com.knockbook.backend.domain.ProductReviewStats;
 import com.knockbook.backend.domain.ProductReviewsResult;
 import com.knockbook.backend.entity.*;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.querydsl.jpa.JPAExpressions;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +32,7 @@ public class ProductReviewRepositoryImpl implements ProductReviewRepository{
     private static final QProductReviewEntity PR = QProductReviewEntity.productReviewEntity;
     private static final QUserEntity U = QUserEntity.userEntity;
     private static final QProductReviewLikeEntity PRL = QProductReviewLikeEntity.productReviewLikeEntity;
+    private static final QProductEntity       P  = QProductEntity.productEntity;
 
     @Override
     public ProductReviewsResult findProductReviews (
@@ -131,6 +134,74 @@ public class ProductReviewRepositoryImpl implements ProductReviewRepository{
                 .build();
 
         return result;
+    }
+
+    @Override
+    public ProductReview insertReview(final Long productId, final Long userId, final String body, final int rating) {
+        final var e = ProductReviewEntity.builder()
+                .productId(productId)
+                .userId(userId)
+                .body(body)
+                .rating(rating)
+                .status(ProductReviewEntity.Status.VISIBLE)
+                .build();
+        em.persist(e);
+        em.flush();
+        em.refresh(e);
+
+        final String displayName = query
+                .select(U.displayName)
+                .from(U)
+                .where(U.id.eq(userId))
+                .fetchOne();
+
+        recalcProductStats(productId);
+
+        return ProductReview.builder()
+                .reviewId(e.getReviewId())
+                .displayName(displayName)
+                .body(e.getBody())
+                .rating(e.getRating())
+                .createdAt(e.getCreatedAt())
+                .likesCount(0)
+                .likedByMe(false)
+                .build();
+    }
+
+    @Override
+    public boolean deleteReview(final Long productId, final Long reviewId, final Long userId) {
+        final long affected = query.update(PR)
+                .set(PR.status, ProductReviewEntity.Status.HIDDEN)
+                .set(PR.deletedAt, Instant.now())
+                .where(PR.reviewId.eq(reviewId)
+                        .and(PR.userId.eq(userId))
+                        .and(PR.deletedAt.isNull()))
+                .execute();
+        if (affected == 1) { recalcProductStats(productId); }
+        return affected == 1;
+    }
+
+    private void recalcProductStats(final Long productId) {
+        final var cntExpr = PR.reviewId.count();
+        final var avgExpr = PR.rating.avg();
+
+        final Tuple stats = query
+                .select(cntExpr, avgExpr)
+                .from(PR)
+                .where(PR.productId.eq(productId)
+                        .and(PR.status.eq(ProductReviewEntity.Status.VISIBLE))
+                        .and(PR.deletedAt.isNull()))
+                .fetchOne();
+
+        final long cnt = stats == null || stats.get(cntExpr) == null ? 0L : stats.get(cntExpr);
+        final double avg = stats == null || stats.get(avgExpr) == null ? 0.0 : stats.get(avgExpr);
+        final double avg1 = Math.round(avg * 10.0) / 10.0;
+
+        query.update(P)
+                .set(P.reviewCount, (int) cnt)
+                .set(P.averageRating, BigDecimal.valueOf(avg1))
+                .where(P.productId.eq(productId))
+                .execute();
     }
 
     @Override
