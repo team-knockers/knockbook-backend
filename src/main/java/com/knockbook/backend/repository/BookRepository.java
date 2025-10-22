@@ -2,7 +2,6 @@ package com.knockbook.backend.repository;
 
 import com.knockbook.backend.domain.Book;
 import com.knockbook.backend.domain.BookSummary;
-import com.knockbook.backend.entity.BookEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -19,8 +18,7 @@ public interface BookRepository {
      */
     Optional<Book> findById(final Long id);
 
-    Map<Long, BookEntity> findByIdsAsMap(final List<Long> ids);
-
+    Map<Long, Book> findByIdsAsMap(final List<Long> ids);
     /**
      * Find books by category and subcategory with pagination.
      */
@@ -33,4 +31,12 @@ public interface BookRepository {
             final Integer maxPrice,
             final Integer minPrice
     );
+
+    boolean activateBookWishlist(Long userId, Long bookId);
+
+    boolean deactivateBookWishlist(Long userId, Long bookId);
+
+    boolean existsBookWishlist(Long userId, Long bookId);
+
+    List<BookSummary> findAllWishlistedBookIdsByUserId(Long userId);
 }
