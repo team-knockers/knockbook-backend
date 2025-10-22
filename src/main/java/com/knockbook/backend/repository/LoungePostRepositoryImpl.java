@@ -6,6 +6,7 @@ import com.knockbook.backend.entity.LoungePostEntity;
 import com.knockbook.backend.entity.QLoungePostEntity;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -21,8 +22,37 @@ import java.util.Optional;
 public class LoungePostRepositoryImpl implements LoungePostRepository{
 
     private final JPAQueryFactory query;
+    private final EntityManager em;
 
     private final QLoungePostEntity qPost = QLoungePostEntity.loungePostEntity;
+
+    @Override
+    public LoungePost save(LoungePost post) {
+        final var entity = LoungePostEntity.builder()
+                .userId(post.getUserId())
+                .title(post.getTitle())
+                .subtitle(post.getSubtitle())
+                .content(post.getContent())
+                .previewImageUrl(post.getPreviewImageUrl())
+                .status(LoungePostEntity.Status.VISIBLE)
+                .likeCount(0)
+                .build();
+
+        em.persist(entity);
+        em.flush();
+        em.refresh(entity);
+
+        return LoungePost.builder()
+                .id(entity.getId())
+                .userId(entity.getUserId())
+                .title(entity.getTitle())
+                .subtitle(entity.getSubtitle())
+                .content(entity.getContent())
+                .status(LoungePost.Status.VISIBLE)
+                .likeCount(0)
+                .createdAt(entity.getCreatedAt())
+                .build();
+    }
 
     @Override
     public Optional<LoungePost> findById(Long id) {
