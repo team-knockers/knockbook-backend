@@ -12,7 +12,7 @@ public interface LoungePostRepository {
     /**
      * Save a lounge post entity.
      */
-    public LoungePost save(LoungePost post);
+    LoungePost save(LoungePost post);
 
     /**
      * Find a post by its ID.
