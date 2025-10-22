@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface BookRepository {
@@ -17,6 +18,7 @@ public interface BookRepository {
      */
     Optional<Book> findById(final Long id);
 
+    Map<Long, Book> findByIdsAsMap(final List<Long> ids);
     /**
      * Find books by category and subcategory with pagination.
      */

@@ -68,8 +68,8 @@ public class CartService {
                 .refId(bookId)
                 .titleSnapshot(book.getTitle())
                 .thumbnailUrl(book.getCoverThumbnailUrl())
-                .listPriceSnapshot(null)
-                .salePriceSnapshot(null)
+                .listPriceSnapshot(book.getPurchaseAmount())
+                .salePriceSnapshot(book.getDiscountedPurchaseAmount())
                 .rentalDays(days)
                 .rentalPriceSnapshot(book.getRentalAmount())
                 .quantity(Math.max(1, qty)) // += qty
