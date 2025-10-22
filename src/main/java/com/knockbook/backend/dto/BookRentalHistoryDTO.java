@@ -1,7 +1,7 @@
 package com.knockbook.backend.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.knockbook.backend.domain.BookRentalHistory;
+import com.knockbook.backend.domain.BookRentalHistoryDetails;
 import lombok.*;
 
 import java.time.Instant;
@@ -26,17 +26,18 @@ public class BookRentalHistoryDTO {
 
     private Integer lastRentalDays;
 
-    public static BookRentalHistoryDTO fromDomain(BookRentalHistory d) {
+    public static BookRentalHistoryDTO fromDomain(final BookRentalHistoryDetails d) {
+        final var history = d.getHistory();
         return BookRentalHistoryDTO.builder()
-                .id(d.getId().toString())
-                .bookId(d.getBookId().toString())
+                .id(history.getId().toString())
+                .bookId(history.getBookId().toString())
                 .bookTitle(d.getBookTitle())
                 .bookAuthor(d.getBookAuthor())
                 .bookImageUrl(d.getBookImageUrl())
-                .rentalCount(d.getRentalCount())
-                .lastRentalStartAt(d.getLastRentalStartAt())
-                .lastRentalEndAt(d.getLastRentalEndAt())
-                .lastRentalDays(d.getLastRentalDays())
+                .rentalCount(history.getRentalCount())
+                .lastRentalStartAt(history.getLastRentalStartAt())
+                .lastRentalEndAt(history.getLastRentalEndAt())
+                .lastRentalDays(history.getLastRentalDays())
                 .build();
     }
 }

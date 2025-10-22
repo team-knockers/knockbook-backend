@@ -14,9 +14,6 @@ public class BookRentalHistory {
     private Long id;
     private Long userId;
     private Long bookId;
-    private String bookTitle;
-    private String bookAuthor;
-    private String bookImageUrl;
     private Integer rentalCount;
     private Instant lastRentalStartAt;
     private Instant lastRentalEndAt;

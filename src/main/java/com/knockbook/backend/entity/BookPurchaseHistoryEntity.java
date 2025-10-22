@@ -29,15 +29,6 @@ public class BookPurchaseHistoryEntity {
     @Column(name="book_id", nullable=false)
     private Long bookId;
 
-    @Column(name="book_title", nullable=false)
-    private String bookTitle;
-
-    @Column(name="book_author", nullable=false)
-    private String bookAuthor;
-
-    @Column(name="book_image_url")
-    private String bookImageUrl;
-
     @Column(name="purchase_count", nullable=false)
     private Integer purchaseCount;
 
@@ -63,9 +54,6 @@ public class BookPurchaseHistoryEntity {
                 .id(id)
                 .userId(userId)
                 .bookId(bookId)
-                .bookTitle(bookTitle)
-                .bookAuthor(bookAuthor)
-                .bookImageUrl(bookImageUrl)
                 .purchaseCount(purchaseCount)
                 .firstPurchasedAt(firstPurchasedAt.toInstant())
                 .lastPurchasedAt(lastPurchasedAt.toInstant())
@@ -78,9 +66,6 @@ public class BookPurchaseHistoryEntity {
                 .id(d.getId())
                 .userId(d.getUserId())
                 .bookId(d.getBookId())
-                .bookTitle(d.getBookTitle())
-                .bookAuthor(d.getBookAuthor())
-                .bookImageUrl(d.getBookImageUrl())
                 .purchaseCount(d.getPurchaseCount() == null ? 1 : d.getPurchaseCount())
                 .firstPurchasedAt(Date.from(nz(d.getFirstPurchasedAt())))
                 .lastPurchasedAt(Date.from(nz(d.getLastPurchasedAt())))

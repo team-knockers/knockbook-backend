@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -17,6 +18,32 @@ import java.util.List;
 public class BookCategoryRepositoryImpl implements BookCategoryRepository {
 
     private final JPAQueryFactory queryFactory;
+
+    @Override
+    public Optional<BookCategory> findBy(Long id) {
+        if (id == null) {
+            return Optional.empty();
+        }
+
+        final var qc = QBookCategoryEntity.bookCategoryEntity;
+
+        final var entity = queryFactory
+                .selectFrom(qc)
+                .where(qc.id.eq(id))
+                .fetchOne();
+
+        if (entity == null) {
+            return Optional.empty();
+        }
+
+        final var res = BookCategory.builder()
+                .id(entity.getId())
+                .codeName(BookCategory.Category.valueOf(entity.getCategoryCodeName()))
+                .displayName(entity.getCategoryDisplayName())
+                .build();
+
+        return Optional.of(res);
+    }
 
     @Override
     public List<BookCategory> findAllCategories() {

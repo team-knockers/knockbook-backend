@@ -1,7 +1,7 @@
 package com.knockbook.backend.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.knockbook.backend.domain.BookPurchaseHistory;
+import com.knockbook.backend.domain.BookPurchaseHistoryDetails;
 import lombok.*;
 
 import java.time.Instant;
@@ -24,16 +24,17 @@ public class BookPurchaseHistoryDTO {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "Asia/Seoul")
     private Instant lastPurchasedAt;
 
-    public static BookPurchaseHistoryDTO fromDomain(BookPurchaseHistory d) {
+    public static BookPurchaseHistoryDTO fromDomain(final BookPurchaseHistoryDetails d) {
+        final var history = d.getHistory();
         return BookPurchaseHistoryDTO.builder()
-                .id(d.getId().toString())
-                .bookId(d.getBookId().toString())
+                .id(history.getId().toString())
+                .bookId(history.getBookId().toString())
                 .bookTitle(d.getBookTitle())
                 .bookAuthor(d.getBookAuthor())
                 .bookImageUrl(d.getBookImageUrl())
-                .purchaseCount(d.getPurchaseCount())
-                .firstPurchasedAt(d.getFirstPurchasedAt())
-                .lastPurchasedAt(d.getLastPurchasedAt())
+                .purchaseCount(history.getPurchaseCount())
+                .firstPurchasedAt(history.getFirstPurchasedAt())
+                .lastPurchasedAt(history.getLastPurchasedAt())
                 .build();
     }
 }

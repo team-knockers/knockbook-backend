@@ -207,12 +207,10 @@ public class OrderService {
         if (status == OrderAggregate.Status.COMPLETED) {
             items.stream().filter(i -> i.getRefType() == OrderItem.RefType.BOOK_PURCHASE)
                     .forEach(i -> {
-                        final var b = bookMap.get(i.getRefId());
-                        if (b != null) {
+                        final var book = bookMap.get(i.getRefId());
+                        if (book != null) {
                             purchaseHistoryRepository.upsertPurchase(
-                                    userId, orderId,
-                                    b.getId(), b.getTitle(), b.getAuthor(),
-                                    b.getCoverThumbnailUrl(), now);
+                                    userId, orderId, book.getId(), now);
                         }
                     });
         }
@@ -225,9 +223,7 @@ public class OrderService {
                             final var days  = i.getRentalDays();
                             final var end = now.plus(days, java.time.temporal.ChronoUnit.DAYS);
                             rentalHistoryRepository.upsertRental(
-                                    userId, orderId,
-                                    book.getId(), book.getTitle(), book.getAuthor(),
-                                    book.getCoverThumbnailUrl(), now, end, days);
+                                    userId, orderId, book.getId(), now, end, days);
                         }
                     });
         }
