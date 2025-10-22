@@ -22,6 +22,11 @@ public interface BookReviewRepository {
     BookReviewImage saveImageAndReturnDomain(Long reviewId, String imageUrl, int sortOrder);
 
     /**
+     * Soft delete a review entity.
+     */
+    void softDeleteById(Long reviewId, Long userId);
+
+    /**
      * Returns paginated book reviews with optional filters, including images and likes count
      */
     Page<BookReview> findAllBy(Long bookId, Pageable pageable,

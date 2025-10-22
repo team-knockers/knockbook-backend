@@ -4,6 +4,7 @@ import com.knockbook.backend.domain.BookReview;
 import com.knockbook.backend.domain.BookReviewImage;
 import com.knockbook.backend.domain.BookReviewStatistic;
 import com.knockbook.backend.entity.*;
+import com.knockbook.backend.exception.CommentNotFoundException;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,6 +82,27 @@ public class BookReviewRepositoryImpl implements BookReviewRepository  {
                 .imageUrl(entity.getImageUrl())
                 .sortOrder(entity.getSortOrder())
                 .build();
+    }
+
+    @Override
+    public void softDeleteById(Long reviewId, Long userId) {
+        final var review = queryFactory.selectFrom(R)
+                .where(R.id.eq(reviewId).and(R.deletedAt.isNull()))
+                .fetchOne();
+
+        if (review == null) {
+            throw new CommentNotFoundException("댓글이 존재하지 않습니다");
+        }
+        if (!review.getUserId().equals(userId)) {
+            throw new AccessDeniedException("권한이 없습니다.");
+        }
+
+        final var deletedReview = review.toBuilder()
+                .deletedAt(Instant.now())
+                .build();
+
+        em.merge(deletedReview);
+        em.flush();
     }
 
     @Override

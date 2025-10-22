@@ -366,4 +366,14 @@ public class BookController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/{userId}/reviews/{reviewId}")
+    public ResponseEntity<Void> deleteReview(
+            @PathVariable("userId") String userId,
+            @PathVariable String reviewId
+    ) {
+        bookService.deleteReview(Long.valueOf(reviewId), Long.valueOf(userId));
+        return ResponseEntity.noContent().build();
+    }
 }

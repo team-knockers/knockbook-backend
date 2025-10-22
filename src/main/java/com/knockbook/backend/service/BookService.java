@@ -160,6 +160,11 @@ public class BookService {
                 .build();
     }
 
+    @Transactional
+    public void deleteReview(Long reviewId, Long userId) {
+        bookReviewRepository.softDeleteById(reviewId, userId);
+    }
+
     private List<BookReviewImage> uploadImages(Long reviewId, List<MultipartFile> images) {
         if (images == null || images.isEmpty()) return Collections.emptyList();
 
