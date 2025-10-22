@@ -2,6 +2,7 @@ package com.knockbook.backend.controller;
 
 import com.knockbook.backend.domain.BookReview;
 import com.knockbook.backend.domain.BookReviewImage;
+import com.knockbook.backend.domain.BookWishlistAction;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.BookService;
 import jakarta.validation.constraints.Max;
@@ -267,11 +268,11 @@ public class BookController {
             @PathVariable String userId,
             @PathVariable String bookId
     ) {
-        final var changed = bookService.addToWishlist(Long.valueOf(userId), Long.valueOf(bookId));
+        final var action = bookService.addToWishlist(Long.valueOf(userId), Long.valueOf(bookId));
         final var response = BookWishlistActionResponse.builder()
                 .bookId(bookId)
-                .wishlisted(true)
-                .action(changed ? "added" : "already_exists")
+                .wishlisted(action == BookWishlistAction.ADDED || action == BookWishlistAction.ALREADY_EXISTS)
+                .action(action.name())
                 .build();
 
         return ResponseEntity.ok(response);
@@ -283,11 +284,11 @@ public class BookController {
             @PathVariable String userId,
             @PathVariable String bookId
     ) {
-        final var changed = bookService.removeFromWishlist(Long.valueOf(userId), Long.valueOf(bookId));
+        final var action = bookService.removeFromWishlist(Long.valueOf(userId), Long.valueOf(bookId));
         final var response = BookWishlistActionResponse.builder()
                 .bookId(bookId)
-                .wishlisted(false)
-                .action(changed ? "removed" : "not_found")
+                .wishlisted(action == BookWishlistAction.ADDED || action == BookWishlistAction.ALREADY_EXISTS)
+                .action(action.name())
                 .build();
 
         return ResponseEntity.ok(response);

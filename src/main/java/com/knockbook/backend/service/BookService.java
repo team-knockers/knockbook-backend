@@ -113,15 +113,17 @@ public class BookService {
     }
 
     @Transactional
-    public boolean addToWishlist(Long userId, Long bookId) {
+    public BookWishlistAction addToWishlist(Long userId, Long bookId) {
+        final var changed = bookRepository.activateBookWishlist(userId, bookId);
 
-        return bookRepository.activateBookWishlist(userId, bookId);
+        return changed ? BookWishlistAction.ADDED : BookWishlistAction.ALREADY_EXISTS;
     }
 
     @Transactional
-    public boolean removeFromWishlist(Long userId, Long bookId) {
+    public BookWishlistAction removeFromWishlist(Long userId, Long bookId) {
+        final var changed = bookRepository.deactivateBookWishlist(userId, bookId);
 
-        return bookRepository.deactivateBookWishlist(userId, bookId);
+        return changed ? BookWishlistAction.REMOVED : BookWishlistAction.NOT_FOUND;
     }
 
     public boolean hasBookInWishlist(Long userId, Long bookId) {
