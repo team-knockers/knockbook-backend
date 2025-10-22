@@ -5,15 +5,18 @@ import com.knockbook.backend.domain.BookReviewImage;
 import com.knockbook.backend.domain.BookWishlistAction;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.BookService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -25,6 +28,7 @@ public class BookController {
     @Autowired
     private BookService bookService;
 
+    // API-BOOKS-01 - Retrieve paginated book summaries for a user with optional filters and sorting
     @PreAuthorize("#userId == authentication.name")
     @GetMapping(path = "/{userId}")
     public ResponseEntity<GetBooksSummaryResponse> getBooksSummary(
@@ -69,6 +73,7 @@ public class BookController {
         return ResponseEntity.ok(response);
     }
 
+    // API-BOOKS-02 - Retrieve detailed information for a specific book
     @PreAuthorize("#userId == authentication.name")
     @GetMapping(path = "/{userId}/{bookId}")
     public ResponseEntity<GetBookDetailsResponse> getBookDetails(
@@ -88,6 +93,7 @@ public class BookController {
         return ResponseEntity.ok(response);
     }
 
+    // API-BOOKS-03 - Retrieve paginated reviews for a specific book, optionally filtered by transaction type and MBTI
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}/{bookId}/reviews")
     public ResponseEntity<GetBookReviewsResponse> getBookReviews(
@@ -152,6 +158,7 @@ public class BookController {
         return ResponseEntity.ok(response);
     }
 
+    // API-BOOKS-04 - Retrieve aggregated review statistics for a specific book
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}/{bookId}/reviews/statistics")
     public ResponseEntity<GetBookReviewStatisticsResponse> getBookReviewStatistics(
@@ -201,6 +208,7 @@ public class BookController {
         return ResponseEntity.ok(response);
     }
 
+    // API-BOOKS-05 - Like a specific review for the current user
     @PreAuthorize("#userId == authentication.name")
     @PutMapping("/{userId}/{bookId}/reviews/{reviewId}/likes")
     public ResponseEntity<BookReviewsLikeResponse> likeReview(
@@ -213,6 +221,7 @@ public class BookController {
         return ResponseEntity.ok(response);
     }
 
+    // API-BOOKS-06 - Remove a like from a specific review for the current user
     @PreAuthorize("#userId == authentication.name")
     @DeleteMapping("/{userId}/{bookId}/reviews/{reviewId}/likes")
     public ResponseEntity<Void> unlikeReview(
@@ -225,6 +234,71 @@ public class BookController {
         return ResponseEntity.noContent().build();
     }
 
+    // API-BOOKS-07 - Add a specific book to the user's wishlist
+    @PreAuthorize("#userId == authentication.name")
+    @PutMapping("/{userId}/{bookId}/wish")
+    public ResponseEntity<BookWishlistActionResponse> addToWishlist(
+            @PathVariable String userId,
+            @PathVariable String bookId
+    ) {
+        final var action = bookService.addToWishlist(Long.valueOf(userId), Long.valueOf(bookId));
+        final var response = BookWishlistActionResponse.builder()
+                .bookId(bookId)
+                .wishlisted(action == BookWishlistAction.ADDED || action == BookWishlistAction.ALREADY_EXISTS)
+                .action(action.name())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    // API-BOOKS-08 - Remove a specific book from the user's wishlist
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/{userId}/{bookId}/wish")
+    public ResponseEntity<BookWishlistActionResponse> removeFromWishlist(
+            @PathVariable String userId,
+            @PathVariable String bookId
+    ) {
+        final var action = bookService.removeFromWishlist(Long.valueOf(userId), Long.valueOf(bookId));
+        final var response = BookWishlistActionResponse.builder()
+                .bookId(bookId)
+                .wishlisted(action == BookWishlistAction.ADDED || action == BookWishlistAction.ALREADY_EXISTS)
+                .action(action.name())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    // API-BOOKS-09 - Check if a specific book is in the user's wishlist
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/{bookId}/wish")
+    public ResponseEntity<BookWishStatusResponse> hasBookInWishlist(
+            @PathVariable String userId,
+            @PathVariable String bookId
+    ) {
+        final var wished = bookService.hasBookInWishlist(Long.valueOf(userId), Long.valueOf(bookId));
+        final var response = BookWishStatusResponse.builder()
+                .wished(wished)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    // API-BOOKS-10 - Retrieve all books in the user's wishlist
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/wishlist")
+    public ResponseEntity<List<BookSummaryDto>> getUserWishlist(
+            @PathVariable String userId
+    ) {
+        final var bookSummaries = bookService.getUserWishlist(Long.valueOf(userId));
+
+        final var response = bookSummaries.stream()
+                .map(BookDtoMapper::toSummaryDto)
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    // API-BOOKS-11 - Retrieve all book categories
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}/categories")
     public ResponseEntity<List<BookCategoryDto>> getAllCategories(
@@ -243,6 +317,7 @@ public class BookController {
         return ResponseEntity.ok(response);
     }
 
+    // API-BOOKS-12 - Retrieve all subcategories for a given category code
     @PreAuthorize("#userId == authentication.name")
     @GetMapping("/{userId}/categories/{categoryCodeName}/subcategories")
     public ResponseEntity<List<BookSubcategoryDto>> getSubcategories(
@@ -262,65 +337,55 @@ public class BookController {
         return ResponseEntity.ok(response);
     }
 
+    // API-BOOKS-13 - Create a review for a specific book with optional images
     @PreAuthorize("#userId == authentication.name")
-    @PutMapping("/{userId}/{bookId}/wish")
-    public ResponseEntity<BookWishlistActionResponse> addToWishlist(
+    @PostMapping(value = "/{userId}/{bookId}/reviews", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<BookReviewDto> createReview(
             @PathVariable String userId,
-            @PathVariable String bookId
+            @PathVariable String bookId,
+            @RequestPart("review") @Valid BookReviewCreateRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
     ) {
-        final var action = bookService.addToWishlist(Long.valueOf(userId), Long.valueOf(bookId));
-        final var response = BookWishlistActionResponse.builder()
-                .bookId(bookId)
-                .wishlisted(action == BookWishlistAction.ADDED || action == BookWishlistAction.ALREADY_EXISTS)
-                .action(action.name())
+        final var review = BookReview.builder()
+                .userId(Long.valueOf(userId))
+                .bookId(Long.valueOf(bookId))
+                .transactionType(BookReview.TransactionType.valueOf(request.getTransactionType().toUpperCase()))
+                .content(request.getContent())
+                .rating(request.getRating())
+                .build();
+
+        final var savedReview = bookService.createReview(review, images);
+
+        final var response = BookReviewDto.builder()
+                .id(String.valueOf(savedReview.getId()))
+                .bookId(String.valueOf(savedReview.getBookId()))
+                .userId(String.valueOf(savedReview.getUserId()))
+                .displayName(savedReview.getDisplayName())
+                .mbti(savedReview.getMbti())
+                .transactionType(savedReview.getTransactionType().name())
+                .content(savedReview.getContent())
+                .rating(savedReview.getRating())
+                .likesCount(savedReview.getLikesCount())
+                .createdAt(savedReview.getCreatedAt())
+                .imageUrls(savedReview.getImageUrls() == null
+                        ? List.of()
+                        : savedReview.getImageUrls().stream()
+                        .map(BookReviewImage::getImageUrl)
+                        .toList())
+                .likedByMe(false)
                 .build();
 
         return ResponseEntity.ok(response);
     }
 
+    // API-BOOKS-14 - Soft delete a specific review for the current user
     @PreAuthorize("#userId == authentication.name")
-    @DeleteMapping("/{userId}/{bookId}/wish")
-    public ResponseEntity<BookWishlistActionResponse> removeFromWishlist(
-            @PathVariable String userId,
-            @PathVariable String bookId
+    @DeleteMapping("/{userId}/reviews/{reviewId}")
+    public ResponseEntity<Void> deleteReview(
+            @PathVariable("userId") String userId,
+            @PathVariable String reviewId
     ) {
-        final var action = bookService.removeFromWishlist(Long.valueOf(userId), Long.valueOf(bookId));
-        final var response = BookWishlistActionResponse.builder()
-                .bookId(bookId)
-                .wishlisted(action == BookWishlistAction.ADDED || action == BookWishlistAction.ALREADY_EXISTS)
-                .action(action.name())
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PreAuthorize("#userId == authentication.name")
-    @GetMapping("/{userId}/{bookId}/wish")
-    public ResponseEntity<BookWishStatusResponse> hasBookInWishlist(
-            @PathVariable String userId,
-            @PathVariable String bookId
-    ) {
-        final var wished = bookService.hasBookInWishlist(Long.valueOf(userId), Long.valueOf(bookId));
-        final var response = BookWishStatusResponse.builder()
-                .wished(wished)
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PreAuthorize("#userId == authentication.name")
-    @GetMapping("/{userId}/wishlist")
-    public ResponseEntity<List<BookSummaryDto>> getUserWishlist(
-            @PathVariable String userId
-    ) {
-        final var bookSummaries = bookService.getUserWishlist(Long.valueOf(userId));
-
-        // BookSummary -> BookSummaryDto
-        final var response = bookSummaries.stream()
-                .map(BookDtoMapper::toSummaryDto)
-                .toList();
-
-        // 3) ResponseEntity로 반환
-        return ResponseEntity.ok(response);
+        bookService.deleteReview(Long.valueOf(reviewId), Long.valueOf(userId));
+        return ResponseEntity.noContent().build();
     }
 }

@@ -10,7 +10,7 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA default constructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE) // Builder only
-@Builder
+@Builder(toBuilder = true)
 public class BookReviewEntity {
 
     public enum TransactionType { PURCHASE, RENTAL }

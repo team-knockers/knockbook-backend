@@ -1,5 +1,6 @@
 package com.knockbook.backend.service;
 
+import com.knockbook.backend.component.ImgbbUploader;
 import com.knockbook.backend.domain.*;
 import com.knockbook.backend.dto.BookReviewsLikeResponse;
 import com.knockbook.backend.exception.BookNotFoundException;
@@ -7,15 +8,20 @@ import com.knockbook.backend.exception.CategoryNotFoundException;
 import com.knockbook.backend.repository.BookCategoryRepository;
 import com.knockbook.backend.repository.BookRepository;
 import com.knockbook.backend.repository.BookReviewRepository;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+
+@Log4j2
 @Service
 public class BookService {
 
@@ -27,6 +33,9 @@ public class BookService {
 
     @Autowired
     private BookCategoryRepository bookCategoryRepository;
+
+    @Autowired
+    private ImgbbUploader imgbbUploader;
 
     @Autowired
     private UserService userService;
@@ -132,5 +141,45 @@ public class BookService {
 
     public List<BookSummary> getUserWishlist(Long userId) {
         return bookRepository.findAllWishlistedBookIdsByUserId(userId);
+    }
+
+    @Transactional
+    public BookReview createReview(BookReview review, List<MultipartFile> images) {
+
+        final var savedReview = bookReviewRepository.save(review);
+        final var userInfo = userService.getUser(review.getUserId());
+
+        // try image upload
+        final var uploadedImages = uploadImages(savedReview.getId(), images);
+
+        // toBulider
+        return savedReview.toBuilder()
+                .imageUrls(uploadedImages)
+                .displayName(userInfo.getDisplayName())
+                .mbti(userInfo.getMbti())
+                .build();
+    }
+
+    @Transactional
+    public void deleteReview(Long reviewId, Long userId) {
+        bookReviewRepository.softDeleteById(reviewId, userId);
+    }
+
+    private List<BookReviewImage> uploadImages(Long reviewId, List<MultipartFile> images) {
+        if (images == null || images.isEmpty()) return Collections.emptyList();
+
+        return IntStream.range(0, images.size())
+                .mapToObj(i -> {
+                    try {
+                        String imageUrl = imgbbUploader.upload(images.get(i));
+
+                        return bookReviewRepository.saveImageAndReturnDomain(reviewId, imageUrl, i + 1);
+                    } catch (Exception e) {
+                        log.warn("Image upload failed: index={}, reviewId={}", i, reviewId, e);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 }
