@@ -175,7 +175,7 @@ public class BookService {
 
                         return bookReviewRepository.saveImageAndReturnDomain(reviewId, imageUrl, i + 1);
                     } catch (Exception e) {
-                        log.warn("이미지 업로드 실패: index={}, reviewId={}", i, reviewId, e);
+                        log.warn("Image upload failed: index={}, reviewId={}", i, reviewId, e);
                         return null;
                     }
                 })

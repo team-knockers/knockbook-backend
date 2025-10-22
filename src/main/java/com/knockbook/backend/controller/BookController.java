@@ -318,12 +318,10 @@ public class BookController {
     ) {
         final var bookSummaries = bookService.getUserWishlist(Long.valueOf(userId));
 
-        // BookSummary -> BookSummaryDto
         final var response = bookSummaries.stream()
                 .map(BookDtoMapper::toSummaryDto)
                 .toList();
 
-        // 3) ResponseEntity로 반환
         return ResponseEntity.ok(response);
     }
 
