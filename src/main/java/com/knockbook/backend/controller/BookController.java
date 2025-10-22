@@ -5,15 +5,18 @@ import com.knockbook.backend.domain.BookReviewImage;
 import com.knockbook.backend.domain.BookWishlistAction;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.BookService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -321,6 +324,46 @@ public class BookController {
                 .toList();
 
         // 3) ResponseEntity로 반환
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PostMapping(value = "/{userId}/{bookId}/reviews", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<BookReviewDto> createReview(
+            @PathVariable String userId,
+            @PathVariable String bookId,
+            @RequestPart("review") @Valid BookReviewCreateRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
+    ) {
+        final var review = BookReview.builder()
+                .userId(Long.valueOf(userId))
+                .bookId(Long.valueOf(bookId))
+                .transactionType(BookReview.TransactionType.valueOf(request.getTransactionType().toUpperCase()))
+                .content(request.getContent())
+                .rating(request.getRating())
+                .build();
+
+        final var savedReview = bookService.createReview(review, images);
+
+        final var response = BookReviewDto.builder()
+                .id(String.valueOf(savedReview.getId()))
+                .bookId(String.valueOf(savedReview.getBookId()))
+                .userId(String.valueOf(savedReview.getUserId()))
+                .displayName(savedReview.getDisplayName())
+                .mbti(savedReview.getMbti())
+                .transactionType(savedReview.getTransactionType().name())
+                .content(savedReview.getContent())
+                .rating(savedReview.getRating())
+                .likesCount(savedReview.getLikesCount())
+                .createdAt(savedReview.getCreatedAt())
+                .imageUrls(savedReview.getImageUrls() == null
+                        ? List.of()
+                        : savedReview.getImageUrls().stream()
+                        .map(BookReviewImage::getImageUrl)
+                        .toList())
+                .likedByMe(false)
+                .build();
+
         return ResponseEntity.ok(response);
     }
 }

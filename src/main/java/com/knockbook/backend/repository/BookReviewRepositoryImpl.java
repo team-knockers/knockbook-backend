@@ -12,6 +12,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@Log4j2
 @Repository
 @RequiredArgsConstructor
 public class BookReviewRepositoryImpl implements BookReviewRepository  {
@@ -35,6 +37,50 @@ public class BookReviewRepositoryImpl implements BookReviewRepository  {
     private static final QBookReviewImageEntity I = QBookReviewImageEntity.bookReviewImageEntity;
     private static final QBookReviewLikeEntity L = QBookReviewLikeEntity.bookReviewLikeEntity;
     private static final QUserEntity U = QUserEntity.userEntity;
+
+    @Override
+    public BookReview save(BookReview review) {
+        final var entity = BookReviewEntity.builder()
+                .bookId(review.getBookId())
+                .userId(review.getUserId())
+                .transactionType(BookReviewEntity.TransactionType.valueOf(review.getTransactionType().name()))
+                .body(review.getContent())
+                .rating(review.getRating())
+                .status(BookReviewEntity.Status.VISIBLE)
+                .likesCount(0)
+                .build();
+
+        em.persist(entity);
+        em.flush();
+        em.refresh(entity);
+
+        return BookReview.builder()
+                .id(entity.getId())
+                .bookId(entity.getBookId())
+                .userId(entity.getUserId())
+                .transactionType(BookReview.TransactionType.valueOf(entity.getTransactionType().name()))
+                .content(entity.getBody())
+                .rating(entity.getRating())
+                .likesCount(0)
+                .createdAt(entity.getCreatedAt())
+                .build();
+    }
+
+    @Override
+    public BookReviewImage saveImageAndReturnDomain(Long reviewId, String imageUrl, int sortOrder) {
+        BookReviewImageEntity entity = BookReviewImageEntity.builder()
+                .bookReviewId(reviewId)
+                .imageUrl(imageUrl)
+                .sortOrder(sortOrder)
+                .build();
+
+        em.persist(entity);
+
+        return BookReviewImage.builder()
+                .imageUrl(entity.getImageUrl())
+                .sortOrder(entity.getSortOrder())
+                .build();
+    }
 
     @Override
     public Page<BookReview> findAllBy(Long bookId, Pageable pageable,

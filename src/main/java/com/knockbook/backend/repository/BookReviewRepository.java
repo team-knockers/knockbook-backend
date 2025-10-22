@@ -1,6 +1,7 @@
 package com.knockbook.backend.repository;
 
 import com.knockbook.backend.domain.BookReview;
+import com.knockbook.backend.domain.BookReviewImage;
 import com.knockbook.backend.domain.BookReviewStatistic;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,16 @@ import java.util.List;
 import java.util.Set;
 
 public interface BookReviewRepository {
+
+    /**
+     * Save a book review entity.
+     */
+    BookReview save(BookReview review);
+
+    /**
+     * Save a book review image entity and return its corresponding domain object.
+     */
+    BookReviewImage saveImageAndReturnDomain(Long reviewId, String imageUrl, int sortOrder);
 
     /**
      * Returns paginated book reviews with optional filters, including images and likes count
