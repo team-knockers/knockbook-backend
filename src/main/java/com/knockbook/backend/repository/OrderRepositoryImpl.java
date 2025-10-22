@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -22,10 +24,14 @@ public class OrderRepositoryImpl implements OrderRepository {
     private final EntityManager em;
     private final JPAQueryFactory qf;
 
+    private static final ZoneId ZONE_SEOUL = ZoneId.of("Asia/Seoul");
     private static final DateTimeFormatter YMD = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final QOrderEntity qOrder = QOrderEntity.orderEntity;
     private static final QOrderItemEntity qOrderItem = QOrderItemEntity.orderItemEntity;
     private static final QUserAddressEntity qAddress = QUserAddressEntity.userAddressEntity;
+
+    private final BookPurchaseHistoryRepository purchaseHistoryRepo;
+    private final BookRentalHistoryRepository rentalHistoryRepo;
 
     @Override
     @Transactional
@@ -312,6 +318,46 @@ public class OrderRepositoryImpl implements OrderRepository {
 
         em.flush();
         return findDraftById(order.getUserId(), order.getId()).orElseThrow();
+    }
+
+    @Override
+    @Transactional
+    public OrderAggregate updateStatusesOnly(Long userId,
+                                             Long orderId,
+                                             OrderAggregate.Status statusOrNull,
+                                             OrderAggregate.RentalStatus rentalStatusOrNull) {
+        final var cb = em.getCriteriaBuilder();
+        final var cq = cb.createQuery(OrderEntity.class);
+        final var root = cq.from(OrderEntity.class);
+        cq.select(root).where(cb.and(cb.equal(root.get("id"), orderId),
+                cb.equal(root.get("userId"), userId)));
+        final var orderEntity = em.createQuery(cq).setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .getResultStream().findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
+
+        if (statusOrNull != null) {
+            orderEntity.setStatus(OrderEntity.OrderStatus.valueOf(statusOrNull.name()));
+            if (statusOrNull == OrderAggregate.Status.COMPLETED) {
+                orderEntity.setCompletedAt(LocalDateTime.now(ZONE_SEOUL));
+            }
+        }
+        if (rentalStatusOrNull != null) {
+            orderEntity.setRentalStatus(OrderEntity.RentalStatus.valueOf(rentalStatusOrNull.name()));
+        }
+        em.merge(orderEntity);
+
+        var items = findItemsByOrderId(orderId);
+        return orderEntity.toDomain(items);
+    }
+
+    @Override
+    public List<OrderItem> findItemsByOrderId(Long orderId) {
+        final var cb = em.getCriteriaBuilder();
+        final var cq = cb.createQuery(OrderItemEntity.class);
+        final var root = cq.from(OrderItemEntity.class);
+        cq.select(root).where(cb.equal(root.get("orderId"), orderId));
+        return em.createQuery(cq).getResultList().stream()
+                .map(OrderItemEntity::toModel).toList();
     }
 
     @Override

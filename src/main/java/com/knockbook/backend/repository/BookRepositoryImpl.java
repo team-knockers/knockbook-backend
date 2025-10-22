@@ -19,7 +19,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -33,6 +35,23 @@ public class BookRepositoryImpl implements BookRepository {
     public Optional<Book> findById(Long id) {
         return Optional.ofNullable(em.find(BookEntity.class, id))
                 .map(BookEntityMapper::toDomain);
+    }
+
+    @Override
+    public Map<Long, BookEntity> findByIdsAsMap(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Map.of();
+        }
+        final var cb = em.getCriteriaBuilder();
+        final var cq = cb.createQuery(BookEntity.class);
+        final var root = cq.from(BookEntity.class);
+        cq.select(root).where(root.get("id").in(ids));
+        final var list = em.createQuery(cq).getResultList();
+        final var map = new HashMap<Long, BookEntity>(list.size() * 2);
+        for (var b : list) {
+            map.put(b.getId(), b);
+        }
+        return map;
     }
 
     @Override

@@ -4,17 +4,17 @@ import com.knockbook.backend.domain.CouponIssuance;
 import com.knockbook.backend.domain.OrderAggregate;
 import com.knockbook.backend.domain.OrderItem;
 import com.knockbook.backend.exception.InvalidCartItemsException;
+import com.knockbook.backend.exception.NoOrderStatusToUpdateException;
 import com.knockbook.backend.exception.OrderNotFoundException;
 import com.knockbook.backend.exception.UserAddressNotFoundException;
-import com.knockbook.backend.repository.CartRepository;
-import com.knockbook.backend.repository.OrderRepository;
-import com.knockbook.backend.repository.UserAddressRepository;
+import com.knockbook.backend.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +25,9 @@ public class OrderService {
     private final CouponService couponService;
     private final PointsService pointsService;
     private final UserAddressRepository userAddressRepository;
+    private final BookRepository bookRepository;
+    private final BookPurchaseHistoryRepository purchaseHistoryRepository;
+    private final BookRentalHistoryRepository rentalHistoryRepository;
 
     @Transactional
     public OrderAggregate createDraftFromCart(final Long userId,
@@ -167,6 +170,67 @@ public class OrderService {
         return orderRepository.saveAggregate(updated);
     }
 
+    @Transactional
+    public OrderAggregate updateStatuses(final Long userId,
+                                         final Long orderId,
+                                         final String statusOrNull,
+                                         final String rentalStatusOrNull) {
+
+        OrderAggregate.Status status = null;
+        OrderAggregate.RentalStatus rentalStatus = null;
+
+        if (statusOrNull != null && !statusOrNull.isBlank()) {
+            status = OrderAggregate.Status.valueOf(statusOrNull);
+        }
+
+        if (rentalStatusOrNull != null && !rentalStatusOrNull.isBlank()) {
+            rentalStatus = OrderAggregate.RentalStatus.valueOf(rentalStatusOrNull);
+        }
+
+        if (status == null && rentalStatus == null) {
+            throw new NoOrderStatusToUpdateException(orderId);
+        }
+
+        final var updated = orderRepository.updateStatusesOnly(userId, orderId, status, rentalStatus);
+        final var items   = updated.getItems();
+
+        final var bookIds = items.stream()
+                .filter(i -> i.getRefType() == OrderItem.RefType.BOOK_PURCHASE
+                        || i.getRefType() == OrderItem.RefType.BOOK_RENTAL)
+                .map(OrderItem::getRefId).filter(Objects::nonNull).distinct().toList();
+        final var bookMap = bookRepository.findByIdsAsMap(bookIds);
+
+        final var now = Instant.now();
+
+        if (status == OrderAggregate.Status.COMPLETED) {
+            items.stream().filter(i -> i.getRefType() == OrderItem.RefType.BOOK_PURCHASE)
+                    .forEach(i -> {
+                        final var b = bookMap.get(i.getRefId());
+                        if (b != null) {
+                            purchaseHistoryRepository.upsertPurchase(
+                                    userId, b.getId(), b.getTitle(), b.getAuthor(),
+                                    b.getCoverThumbnailUrl(), now);
+                        }
+                    });
+        }
+
+        if (rentalStatus == OrderAggregate.RentalStatus.DELIVERED) {
+            items.stream().filter(i -> i.getRefType() == OrderItem.RefType.BOOK_RENTAL)
+                    .forEach(i -> {
+                        final var b = bookMap.get(i.getRefId());
+                        if (b != null) {
+                            final var days  = i.getRentalDays();
+                            final var end = now.plus(days, java.time.temporal.ChronoUnit.DAYS);
+                            rentalHistoryRepository.upsertRental(
+                                    userId, b.getId(), b.getTitle(), b.getAuthor(),
+                                    b.getCoverThumbnailUrl(), now, end, days);
+                        }
+                    });
+        }
+
+        return updated;
+    }
+
     private CouponIssuance resolveIssuance(final Long userId,
                                            final String issuanceIdRaw) {
         if (issuanceIdRaw == null || issuanceIdRaw.isBlank()) {
@@ -260,7 +324,6 @@ public class OrderService {
                 .items(order.getItems())
                 .build();
     }
-
 
     private int eligibleAmountByScope(OrderAggregate o, String scope) {
         if (scope == null || scope.equalsIgnoreCase("ALL") || scope.equalsIgnoreCase("CART")) {

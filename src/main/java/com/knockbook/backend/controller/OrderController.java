@@ -118,4 +118,17 @@ public class OrderController {
         final var dto = OrderResponse.toResponse(domain);
         return ResponseEntity.ok(dto);
     }
+
+    @PatchMapping("/{orderId}/status")
+    @PreAuthorize("#userId == authentication.name")
+    public ResponseEntity<OrderResponse> updateStatuses(
+            @PathVariable final String userId,
+            @PathVariable final String orderId,
+            @RequestParam(required = false) final String status,
+            @RequestParam(required = false) final String rentalStatus) {
+
+        final var agg = orderService.updateStatuses(
+                Long.valueOf(userId), Long.valueOf(orderId), status, rentalStatus);
+        return ResponseEntity.ok(OrderResponse.toResponse(agg));
+    }
 }
