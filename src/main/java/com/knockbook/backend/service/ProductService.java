@@ -2,6 +2,7 @@ package com.knockbook.backend.service;
 
 import com.knockbook.backend.domain.*;
 import com.knockbook.backend.dto.CreateProductInquiryRequest;
+import com.knockbook.backend.dto.CreateProductReviewRequest;
 import com.knockbook.backend.exception.ProductNotFoundException;
 import com.knockbook.backend.repository.ProductInquiryRepository;
 import com.knockbook.backend.repository.ProductRepository;
@@ -12,8 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +48,27 @@ public class ProductService {
         return productReviewRepository.findProductReviews(
                 productId, userId, pageable
         );
+     }
+
+     @Transactional
+     public ProductReview createReview (
+             Long productId,
+             Long userId,
+             CreateProductReviewRequest req
+     ) {
+        return productReviewRepository.insertReview(
+                productId, userId, req.getBody(), req.getRating()
+        );
+     }
+
+     @Transactional
+     public void deleteReview (
+             Long productId,
+             Long reviewId,
+             Long userId
+     ) {
+         final var ok = productReviewRepository.deleteReview(productId, reviewId, userId);
+         if (!ok) { throw new IllegalStateException("Not owner or already deleted"); }
      }
 
      public Page<ProductInquiry> getProductInquiries(
