@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -200,7 +202,7 @@ public class OrderService {
                 .map(OrderItem::getRefId).filter(Objects::nonNull).distinct().toList();
         final var bookMap = bookRepository.findByIdsAsMap(bookIds);
 
-        final var now = Instant.now();
+        final var now = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toInstant();
 
         if (status == OrderAggregate.Status.COMPLETED) {
             items.stream().filter(i -> i.getRefType() == OrderItem.RefType.BOOK_PURCHASE)
@@ -208,7 +210,8 @@ public class OrderService {
                         final var b = bookMap.get(i.getRefId());
                         if (b != null) {
                             purchaseHistoryRepository.upsertPurchase(
-                                    userId, b.getId(), b.getTitle(), b.getAuthor(),
+                                    userId, orderId,
+                                    b.getId(), b.getTitle(), b.getAuthor(),
                                     b.getCoverThumbnailUrl(), now);
                         }
                     });
@@ -217,13 +220,14 @@ public class OrderService {
         if (rentalStatus == OrderAggregate.RentalStatus.DELIVERED) {
             items.stream().filter(i -> i.getRefType() == OrderItem.RefType.BOOK_RENTAL)
                     .forEach(i -> {
-                        final var b = bookMap.get(i.getRefId());
-                        if (b != null) {
+                        final var book = bookMap.get(i.getRefId());
+                        if (book != null) {
                             final var days  = i.getRentalDays();
                             final var end = now.plus(days, java.time.temporal.ChronoUnit.DAYS);
                             rentalHistoryRepository.upsertRental(
-                                    userId, b.getId(), b.getTitle(), b.getAuthor(),
-                                    b.getCoverThumbnailUrl(), now, end, days);
+                                    userId, orderId,
+                                    book.getId(), book.getTitle(), book.getAuthor(),
+                                    book.getCoverThumbnailUrl(), now, end, days);
                         }
                     });
         }

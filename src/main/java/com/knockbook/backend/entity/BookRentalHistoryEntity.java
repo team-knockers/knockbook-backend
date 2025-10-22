@@ -22,6 +22,9 @@ public class BookRentalHistoryEntity {
     @Column(name="user_id", nullable=false)
     private Long userId;
 
+    @Column(name="order_id")
+    private Long orderId;
+
     @Column(name="book_id", nullable=false)
     private Long bookId;
 

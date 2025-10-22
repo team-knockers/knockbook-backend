@@ -78,19 +78,7 @@ public class CartRepositoryImpl implements CartRepository {
                 )
                 .fetch();
 
-        return rows.stream().map(it -> CartItem.builder()
-                .id(it.getId())
-                .refType(CartItem.RefType.valueOf(it.getRefType().name()))
-                .refId(it.getRefId())
-                .titleSnapshot(it.getTitleSnapshot())
-                .thumbnailUrl(it.getThumbnailUrl())
-                .listPriceSnapshot(it.getListPrice())
-                .salePriceSnapshot(it.getSalePrice())
-                .rentalPriceSnapshot(it.getRentalPrice())
-                .pointsRate(it.getPointsRate())
-                .quantity(it.getQuantity())
-                .build()
-        ).toList();
+        return rows.stream().map(CartItemEntity::toDomain).toList();
     }
 
     @Override

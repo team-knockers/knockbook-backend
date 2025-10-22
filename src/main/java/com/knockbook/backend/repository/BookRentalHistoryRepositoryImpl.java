@@ -21,6 +21,7 @@ public class BookRentalHistoryRepositoryImpl implements BookRentalHistoryReposit
     @Override
     @Transactional
     public void upsertRental(final Long userId,
+                             final Long orderId,
                              final Long bookId,
                              final String title,
                              final String author,
@@ -28,41 +29,31 @@ public class BookRentalHistoryRepositoryImpl implements BookRentalHistoryReposit
                              final Instant rentalStart,
                              final Instant rentalEnd,
                              final int rentalDays) {
+
         final var cb = em.getCriteriaBuilder();
         final var cq = cb.createQuery(BookRentalHistoryEntity.class);
         final var root = cq.from(BookRentalHistoryEntity.class);
         cq.select(root).where(cb.and(
                 cb.equal(root.get("userId"), userId),
+                cb.equal(root.get("orderId"), orderId),
                 cb.equal(root.get("bookId"), bookId)
         ));
+        final var exists = !em.createQuery(cq)
+                .setLockMode(LockModeType.PESSIMISTIC_READ)
+                .setMaxResults(1).getResultList().isEmpty();
+        if (exists) { return; }
 
-        final var q = em.createQuery(cq);
-        q.setLockMode(LockModeType.PESSIMISTIC_WRITE);
-        final var list = q.getResultList();
-
-        if (list.isEmpty()) {
-            final var e = BookRentalHistoryEntity.builder()
-                    .userId(userId).bookId(bookId)
-                    .bookTitle(title).bookAuthor(author).bookImageUrl(imageUrl)
-                    .rentalCount(1)
-                    .lastRentalStartAt(Date.from(rentalStart))
-                    .lastRentalEndAt(Date.from(rentalEnd))
-                    .lastRentalDays(rentalDays)
-                    .createdAt(new Date()).updatedAt(new Date())
-                    .build();
-            em.persist(e);
-        } else {
-            final var e = list.get(0);
-            e.setBookTitle(title);
-            e.setBookAuthor(author);
-            e.setBookImageUrl(imageUrl);
-            e.setRentalCount(e.getRentalCount() + 1);
-            e.setLastRentalStartAt(Date.from(rentalStart));
-            e.setLastRentalEndAt(Date.from(rentalEnd));
-            e.setLastRentalDays(rentalDays);
-            e.setUpdatedAt(new Date());
-            em.merge(e);
-        }
+        final var now = new Date();
+        final var e = BookRentalHistoryEntity.builder()
+                .userId(userId).orderId(orderId).bookId(bookId)
+                .bookTitle(title).bookAuthor(author).bookImageUrl(imageUrl)
+                .rentalCount(1) // 항상 1로 고정
+                .lastRentalStartAt(Date.from(rentalStart))
+                .lastRentalEndAt(Date.from(rentalEnd))
+                .lastRentalDays(rentalDays)
+                .createdAt(now).updatedAt(now)
+                .build();
+        em.persist(e);
     }
 
     @Override
@@ -78,3 +69,4 @@ public class BookRentalHistoryRepositoryImpl implements BookRentalHistoryReposit
                 .stream().map(BookRentalHistoryEntity::toDomain).toList();
     }
 }
+

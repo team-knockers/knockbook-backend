@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface BookRentalHistoryRepository {
     void upsertRental(final Long userId,
+                      final Long orderId,
                       final Long bookId,
                       final  String title,
                       final String author,

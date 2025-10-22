@@ -1,5 +1,6 @@
 package com.knockbook.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.knockbook.backend.domain.BookPurchaseHistory;
 import lombok.*;
 
@@ -16,7 +17,11 @@ public class BookPurchaseHistoryDTO {
     private String bookAuthor;
     private String bookImageUrl;
     private Integer purchaseCount;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "Asia/Seoul")
     private Instant firstPurchasedAt;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "Asia/Seoul")
     private Instant lastPurchasedAt;
 
     public static BookPurchaseHistoryDTO fromDomain(BookPurchaseHistory d) {

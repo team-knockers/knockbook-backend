@@ -21,43 +21,36 @@ public class BookPurchaseHistoryRepositoryImpl implements BookPurchaseHistoryRep
     @Override
     @Transactional
     public void upsertPurchase(final Long userId,
+                               final Long orderId,
                                final Long bookId,
                                final String title,
                                final String author,
                                final String imageUrl,
                                final Instant purchasedAt) {
+
         final var cb = em.getCriteriaBuilder();
         final var cq = cb.createQuery(BookPurchaseHistoryEntity.class);
         final var root = cq.from(BookPurchaseHistoryEntity.class);
         cq.select(root).where(cb.and(
                 cb.equal(root.get("userId"), userId),
+                cb.equal(root.get("orderId"), orderId),
                 cb.equal(root.get("bookId"), bookId)
         ));
+        final var exists = !em.createQuery(cq)
+                .setLockMode(LockModeType.PESSIMISTIC_READ)
+                .setMaxResults(1).getResultList().isEmpty();
+        if (exists) { return; }
 
-        final var q = em.createQuery(cq);
-        q.setLockMode(LockModeType.PESSIMISTIC_WRITE);
-        final var list = q.getResultList();
-
-        if (list.isEmpty()) {
-            final var e = BookPurchaseHistoryEntity.builder()
-                    .userId(userId).bookId(bookId)
-                    .bookTitle(title).bookAuthor(author).bookImageUrl(imageUrl)
-                    .purchaseCount(1)
-                    .firstPurchasedAt(Date.from(purchasedAt))
-                    .lastPurchasedAt(Date.from(purchasedAt))
-                    .createdAt(new Date()).updatedAt(new Date())
-                    .build();
-            em.persist(e);
-        } else {
-            var e = list.get(0);
-            e.setBookTitle(title);
-            e.setBookAuthor(author);
-            e.setBookImageUrl(imageUrl);
-            e.setPurchaseCount(e.getPurchaseCount() + 1);
-            e.setLastPurchasedAt(Date.from(purchasedAt));
-            e.setUpdatedAt(new Date());
-            em.merge(e);
-        }
+        final var now = new Date();
+        final var e = BookPurchaseHistoryEntity.builder()
+                .userId(userId).orderId(orderId).bookId(bookId)
+                .bookTitle(title).bookAuthor(author).bookImageUrl(imageUrl)
+                .purchaseCount(1)
+                .firstPurchasedAt(Date.from(purchasedAt))
+                .lastPurchasedAt(Date.from(purchasedAt))
+                .createdAt(now).updatedAt(now)
+                .build();
+        em.persist(e);
     }
 
     @Override
@@ -73,3 +66,4 @@ public class BookPurchaseHistoryRepositoryImpl implements BookPurchaseHistoryRep
                 .stream().map(BookPurchaseHistoryEntity::toDomain).toList();
     }
 }
+

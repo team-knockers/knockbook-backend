@@ -43,7 +43,7 @@ public class BookRepositoryImpl implements BookRepository {
     }
 
     @Override
-    public Map<Long, BookEntity> findByIdsAsMap(List<Long> ids) {
+    public Map<Long, Book> findByIdsAsMap(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Map.of();
         }
@@ -52,9 +52,9 @@ public class BookRepositoryImpl implements BookRepository {
         final var root = cq.from(BookEntity.class);
         cq.select(root).where(root.get("id").in(ids));
         final var list = em.createQuery(cq).getResultList();
-        final var map = new HashMap<Long, BookEntity>(list.size() * 2);
-        for (var b : list) {
-            map.put(b.getId(), b);
+        final var map = new HashMap<Long, Book>(list.size() * 2);
+        for (var bookEntity : list) {
+            map.put(bookEntity.getId(), BookEntityMapper.toDomain(bookEntity));
         }
         return map;
     }
