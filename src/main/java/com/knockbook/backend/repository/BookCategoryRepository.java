@@ -4,8 +4,11 @@ import com.knockbook.backend.domain.BookCategory;
 import com.knockbook.backend.domain.BookSubcategory;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface BookCategoryRepository {
+
+    Optional<BookCategory> findBy(Long id);
 
     /**
      * Retrieve all categories (excluding subcategories)

@@ -28,15 +28,6 @@ public class BookRentalHistoryEntity {
     @Column(name="book_id", nullable=false)
     private Long bookId;
 
-    @Column(name="book_title", nullable=false)
-    private String bookTitle;
-
-    @Column(name="book_author", nullable=false)
-    private String bookAuthor;
-
-    @Column(name="book_image_url")
-    private String bookImageUrl;
-
     @Column(name="rental_count", nullable=false)
     private Integer rentalCount;
 
@@ -64,9 +55,6 @@ public class BookRentalHistoryEntity {
                 .id(id)
                 .userId(userId)
                 .bookId(bookId)
-                .bookTitle(bookTitle)
-                .bookAuthor(bookAuthor)
-                .bookImageUrl(bookImageUrl)
                 .rentalCount(rentalCount)
                 .lastRentalStartAt(lastRentalStartAt.toInstant())
                 .lastRentalEndAt(lastRentalEndAt.toInstant())
@@ -79,9 +67,6 @@ public class BookRentalHistoryEntity {
                 .id(d.getId())
                 .userId(d.getUserId())
                 .bookId(d.getBookId())
-                .bookTitle(d.getBookTitle())
-                .bookAuthor(d.getBookAuthor())
-                .bookImageUrl(d.getBookImageUrl())
                 .rentalCount(d.getRentalCount() == null ? 1 : d.getRentalCount())
                 .lastRentalStartAt(Date.from(nz(d.getLastRentalStartAt())))
                 .lastRentalEndAt(Date.from(nz(d.getLastRentalEndAt())))
