@@ -3,6 +3,7 @@ package com.knockbook.backend.repository;
 import com.knockbook.backend.domain.BookReview;
 import com.knockbook.backend.domain.BookReviewImage;
 import com.knockbook.backend.domain.BookReviewStatistic;
+import com.knockbook.backend.domain.MemberLifeBookReview;
 import com.knockbook.backend.entity.*;
 import com.knockbook.backend.exception.CommentNotFoundException;
 import com.querydsl.core.types.Order;
@@ -434,6 +435,39 @@ public class BookReviewRepositoryImpl implements BookReviewRepository  {
                 .scoreCounts(scoreCounts)
                 .mbtiCounts(mbtiCounts)
                 .build();
+    }
+
+    @Override
+    public Optional<MemberLifeBookReview> findRandomFiveStarReview() {
+        final var reviewIds = queryFactory
+                .select(R.id)
+                .from(R)
+                .where(R.rating.eq(5)
+                        .and(R.status.eq(BookReviewEntity.Status.VISIBLE))
+                        .and(R.deletedAt.isNull()))
+                .fetch();
+
+        if (reviewIds.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Long randomId = reviewIds.get(new Random().nextInt(reviewIds.size()));
+
+        BookReviewEntity entity = queryFactory
+                .selectFrom(R)
+                .where(R.id.eq(randomId))
+                .fetchOne();
+
+        if (entity == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(MemberLifeBookReview.builder()
+                .id(entity.getId())
+                .bookId(entity.getBookId())
+                .userId(entity.getUserId())
+                .content(entity.getBody())
+                .build());
     }
 
     /**

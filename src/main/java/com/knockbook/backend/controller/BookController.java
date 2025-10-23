@@ -388,4 +388,23 @@ public class BookController {
         bookService.deleteReview(Long.valueOf(reviewId), Long.valueOf(userId));
         return ResponseEntity.noContent().build();
     }
+
+    // API-BOOKS-15 - Retrieve a random life book and its note (temporarily implemented using a random review)
+    @PreAuthorize("#userId == authentication.name")
+    @GetMapping("/{userId}/random-life-book")
+    public ResponseEntity<RandomLifeBookResponse> getMemberLifeBookReview(
+            @PathVariable("userId") String userId
+    ) {
+        final var review = bookService.getMemberLifeBookReview();
+        final var response =  RandomLifeBookResponse.builder()
+                .id(String.valueOf(review.getId()))
+                .userId(String.valueOf(review.getUserId()))
+                .displayName(review.getDisplayName())
+                .bookId(String.valueOf(review.getBookId()))
+                .coverThumbnailUrl(review.getCoverThumbnailUrl())
+                .content(review.getContent())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 }
