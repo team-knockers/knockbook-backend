@@ -10,6 +10,14 @@ import java.util.Optional;
 public interface OrderRepository {
     OrderAggregate saveDraftFromCart(final OrderAggregate aggregate,
                                      final List<CartItem> items);
+
+    OrderAggregate saveDraftWithItems(final OrderAggregate aggregate,
+                                      final List<OrderItem> items);
+
+    OrderAggregate replaceDraftWithItems(final OrderAggregate existing,
+                                         final List<OrderItem> items,
+                                         final boolean resetDiscounts);
+
     OrderAggregate saveAggregate(final OrderAggregate aggregate); // save timeline
 
     Optional<OrderAggregate> findDraftById(final Long userId,
