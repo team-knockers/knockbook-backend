@@ -391,12 +391,15 @@ public class BookController {
 
     // API-BOOKS-15 - Retrieve a random life book and its note (temporarily implemented using a random review)
     @PreAuthorize("#userId == authentication.name")
-    @GetMapping("/{userId}/random-life-book")
-    public ResponseEntity<RandomLifeBookResponse> getMemberLifeBookReview(
-            @PathVariable("userId") String userId
+    @GetMapping("/{userId}/reviews/random")
+    public ResponseEntity<GetRandomBookReviewResponse> getRandomReview(
+            @PathVariable("userId") String userId,
+            @RequestParam(required = false) String rating
     ) {
-        final var review = bookService.getMemberLifeBookReview();
-        final var response =  RandomLifeBookResponse.builder()
+        final var ratingParam = rating != null ? Integer.valueOf(rating) : null;
+        final var review = bookService.getRandomReview(ratingParam);
+
+        final var response =  GetRandomBookReviewResponse.builder()
                 .id(String.valueOf(review.getId()))
                 .userId(String.valueOf(review.getUserId()))
                 .displayName(review.getDisplayName())

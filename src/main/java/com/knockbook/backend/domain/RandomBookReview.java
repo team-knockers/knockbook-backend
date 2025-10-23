@@ -8,7 +8,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
-public class MemberLifeBookReview {
+public class RandomBookReview {
     private Long id;
     private Long userId;
     private String displayName;

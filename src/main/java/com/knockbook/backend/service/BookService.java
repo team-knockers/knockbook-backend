@@ -5,6 +5,7 @@ import com.knockbook.backend.domain.*;
 import com.knockbook.backend.dto.BookReviewsLikeResponse;
 import com.knockbook.backend.exception.BookNotFoundException;
 import com.knockbook.backend.exception.CategoryNotFoundException;
+import com.knockbook.backend.exception.RandomReviewNotFoundException;
 import com.knockbook.backend.repository.BookCategoryRepository;
 import com.knockbook.backend.repository.BookRepository;
 import com.knockbook.backend.repository.BookReviewRepository;
@@ -169,10 +170,10 @@ public class BookService {
         bookReviewRepository.softDeleteById(reviewId, userId);
     }
 
-    public MemberLifeBookReview getMemberLifeBookReview() {
+    public RandomBookReview getRandomReview(Integer rating) {
 
-        final var review = bookReviewRepository.findRandomFiveStarReview()
-                .orElseThrow(() -> new IllegalStateException("No 5-star book review found"));
+        final var review = bookReviewRepository.findRandomReviewByRating(rating)
+                .orElseThrow(() -> new RandomReviewNotFoundException(rating));
 
         final var userInfo = userService.getUser(review.getUserId());
         final var bookInfo = bookRepository.findById(review.getBookId())

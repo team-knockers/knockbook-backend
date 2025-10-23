@@ -3,7 +3,7 @@ package com.knockbook.backend.repository;
 import com.knockbook.backend.domain.BookReview;
 import com.knockbook.backend.domain.BookReviewImage;
 import com.knockbook.backend.domain.BookReviewStatistic;
-import com.knockbook.backend.domain.MemberLifeBookReview;
+import com.knockbook.backend.domain.RandomBookReview;
 import com.knockbook.backend.entity.*;
 import com.knockbook.backend.exception.CommentNotFoundException;
 import com.querydsl.core.types.Order;
@@ -438,22 +438,28 @@ public class BookReviewRepositoryImpl implements BookReviewRepository  {
     }
 
     @Override
-    public Optional<MemberLifeBookReview> findRandomFiveStarReview() {
+    public Optional<RandomBookReview> findRandomReviewByRating(Integer rating) {
+
+        BooleanExpression predicate = R.status.eq(BookReviewEntity.Status.VISIBLE)
+                .and(R.deletedAt.isNull());
+
+        if (rating != null) {
+            predicate = predicate.and(R.rating.eq(rating));
+        }
+
         final var reviewIds = queryFactory
                 .select(R.id)
                 .from(R)
-                .where(R.rating.eq(5)
-                        .and(R.status.eq(BookReviewEntity.Status.VISIBLE))
-                        .and(R.deletedAt.isNull()))
+                .where(predicate)
                 .fetch();
 
         if (reviewIds.isEmpty()) {
             return Optional.empty();
         }
 
-        Long randomId = reviewIds.get(new Random().nextInt(reviewIds.size()));
+        final var randomId = reviewIds.get(new Random().nextInt(reviewIds.size()));
 
-        BookReviewEntity entity = queryFactory
+        final var entity = queryFactory
                 .selectFrom(R)
                 .where(R.id.eq(randomId))
                 .fetchOne();
@@ -462,7 +468,7 @@ public class BookReviewRepositoryImpl implements BookReviewRepository  {
             return Optional.empty();
         }
 
-        return Optional.of(MemberLifeBookReview.builder()
+        return Optional.of(RandomBookReview.builder()
                 .id(entity.getId())
                 .bookId(entity.getBookId())
                 .userId(entity.getUserId())
