@@ -12,10 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -262,10 +264,11 @@ public class LoungePostController {
 
     // API-LOUNGE-11: Create a lounge post
     @PreAuthorize("#userId == authentication.name")
-    @PostMapping("/{userId}/posts")
+    @PostMapping(value = "/{userId}/posts", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<LoungePostCreateResponse> createLoungePost(
             @PathVariable String userId,
-            @RequestBody @Valid LoungePostCreateRequest request
+            @RequestPart("post") @Valid LoungePostCreateRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
     ) {
         // 1) Request DTO → Domain
         final var post = LoungePost.builder()
@@ -273,13 +276,12 @@ public class LoungePostController {
                 .title(request.getTitle())
                 .subtitle(request.getSubtitle())
                 .content(request.getContent())
-                .previewImageUrl(request.getPreviewImageUrl())
                 .status(LoungePost.Status.VISIBLE)
                 .likeCount(0)
                 .build();
 
         // 2) Call service to save the post
-        final var saved = loungePostService.createPost(post);
+        final var saved = loungePostService.createPost(post, images);
 
         // 3) Instant → LocalDateTime
         final var createdAt = toLocalDateTime(saved.getCreatedAt());

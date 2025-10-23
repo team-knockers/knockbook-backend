@@ -1,5 +1,6 @@
 package com.knockbook.backend.service;
 
+import com.knockbook.backend.component.ImgbbUploader;
 import com.knockbook.backend.domain.*;
 import com.knockbook.backend.exception.CommentNotFoundException;
 import com.knockbook.backend.exception.PostNotFoundException;
@@ -13,9 +14,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,15 +37,19 @@ public class LoungePostService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private ImgbbUploader imgbb;
+
+
     @Transactional
-    public LoungePost createPost(LoungePost post) {
-        if (post == null)
+    public LoungePost createPost(LoungePost post, List<MultipartFile> images) {
+        if (post == null) {
             throw new IllegalArgumentException("Post must not be null");
+        }
 
         final var trimmedTitle = post.getTitle() == null ? null : post.getTitle().trim();
         final var trimmedSubtitle = post.getSubtitle() == null ? null : post.getSubtitle().trim();
         final var trimmedContent = post.getContent() == null ? null : post.getContent().trim();
-        final var trimmedPreviewImageUrl = post.getPreviewImageUrl() == null ? null : post.getPreviewImageUrl().trim();
 
         if (trimmedTitle == null || trimmedTitle.isEmpty()) {
             throw new IllegalArgumentException("Title must not be empty");
@@ -50,11 +58,41 @@ public class LoungePostService {
             throw new IllegalArgumentException("Content must not be empty");
         }
 
+        // 1. Upload images and replace blob URLs
+        String processedContent = trimmedContent;
+
+        if (images != null && !images.isEmpty()) {
+            final var blobUrlPattern = Pattern.compile("blob:[a-zA-Z0-9\\-:/.]+");
+
+            for (final MultipartFile file : images) {
+                if (file == null || file.isEmpty()) {
+                    continue;
+                }
+
+                // 1) Find the next blob URL
+                final var matcher = blobUrlPattern.matcher(processedContent);
+                if (!matcher.find()) {
+                    break; // 더 이상 blob URL이 없으면 중단
+                }
+
+
+                // 2) Upload and replace URL
+                final var uploadedUrl = imgbb.upload(file);
+                processedContent = processedContent.replaceFirst(blobUrlPattern.pattern(), uploadedUrl);
+            }
+        }
+
+        // 2. Extract the first image URL → previewImageUrl
+        final var previewImageUrl = extractFirstImageUrl(processedContent);
+
+        // 3. Save the post
         final var postToSave = post.toBuilder()
                 .title(trimmedTitle)
                 .subtitle(trimmedSubtitle)
-                .content(trimmedContent)
-                .previewImageUrl(trimmedPreviewImageUrl)
+                .content(processedContent) // ← 핵심 수정: 치환된 content 저장
+                .previewImageUrl(previewImageUrl)
+                .status(LoungePost.Status.VISIBLE)
+                .likeCount(0)
                 .build();
 
         try {
@@ -209,5 +247,15 @@ public class LoungePostService {
 
     public boolean isPostLikedByUser(Long userId, Long postId) {
         return postLikeRepo.existsByUserIdAndPostIdAndIsLikedTrue(userId, postId);
+    }
+
+    // Helper: Extracts the first image URL from the given content
+    private String extractFirstImageUrl(String content) {
+        if (content == null) {
+            return null;
+        }
+        final var pattern = Pattern.compile("https?://[^\\s)'\"]+\\.(png|jpg|jpeg|gif)");
+        final var matcher = pattern.matcher(content);
+        return matcher.find() ? matcher.group() : null;
     }
 }

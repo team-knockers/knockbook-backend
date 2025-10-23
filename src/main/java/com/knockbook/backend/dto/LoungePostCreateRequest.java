@@ -16,6 +16,4 @@ public class LoungePostCreateRequest {
 
     @NotBlank
     private String content;
-
-    private String previewImageUrl;
 }
