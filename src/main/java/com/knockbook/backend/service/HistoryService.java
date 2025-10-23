@@ -113,10 +113,10 @@ public class HistoryService {
 
         for (final var bookId : uniqueBookIds) {
             final var bookOpt = bookRepository.findById(bookId);
-            if (bookOpt.isEmpty()) continue;
+            if (bookOpt.isEmpty()) { continue; }
 
             final var book = bookOpt.get();
-            final var categoryId = book.getCategoryId(); // ✅ book에는 categoryId만 존재
+            final var categoryId = book.getCategoryId();
 
             String displayName = categoryNameCache.get(categoryId);
             if (displayName == null) {
