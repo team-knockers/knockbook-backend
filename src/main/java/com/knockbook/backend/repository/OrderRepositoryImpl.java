@@ -38,7 +38,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     public OrderAggregate saveDraftFromCart(OrderAggregate aggregate, List<CartItem> items) {
         final var order = OrderEntity.fromModel(aggregate);
 
-        final var defaultAddressId = qf
+        final Long defaultAddressId = qf
                 .select(qAddress.id)
                 .from(qAddress)
                 .where(
@@ -49,14 +49,13 @@ public class OrderRepositoryImpl implements OrderRepository {
                 .fetchFirst();
 
         order.setShippingAddressId(defaultAddressId);
+
         em.persist(order);
         em.flush();
-        final var orderId = order.getId();
 
         em.refresh(order);
         final var createdAt = order.getCreatedAt();
-        final var orderNo = "O" + createdAt.format(YMD) + String.format("%06d", order.getId());
-
+        final var orderNo   = "O" + createdAt.format(YMD) + String.format("%06d", order.getId());
         qf.update(qOrder)
                 .set(qOrder.orderNo, orderNo)
                 .where(qOrder.id.eq(order.getId()))
@@ -64,21 +63,19 @@ public class OrderRepositoryImpl implements OrderRepository {
         em.refresh(order);
 
         final var savedDomainItems = new ArrayList<OrderItem>();
-        int subtotal = 0, discount = 0, rental = 0, total = 0, points = 0, count = 0;
+        int subtotal = 0, discount = 0, rental = 0, points = 0, count = 0;
 
         for (final var s : items) {
-            final var unitList   = nz(s.getListPriceSnapshot());
-            final var unitSale   = nz(s.getSalePriceSnapshot());
-            final var unitRental = nz(s.getRentalPriceSnapshot());
-            final var qty        = (s.getQuantity() == null ? 1 : s.getQuantity());
+            final int unitList   = nz(s.getListPriceSnapshot());
+            final int unitSale   = nz(s.getSalePriceSnapshot());
+            final int unitRental = nz(s.getRentalPriceSnapshot());
+            final int qty        = (s.getQuantity() == null ? 1 : s.getQuantity());
 
-            final int lineSubtotal;
-            final int lineDiscount;
-            final int lineTotal;
+            final int lineSubtotal, lineDiscount, lineTotal;
             switch (s.getRefType()) {
                 case BOOK_PURCHASE, PRODUCT -> {
                     lineSubtotal = (unitList > 0 ? unitList : unitSale) * qty;
-                    final var effective = (unitSale > 0 ? unitSale : unitList);
+                    final int effective = (unitSale > 0 ? unitSale : unitList);
                     lineTotal = effective * qty;
                     lineDiscount = Math.max(0, lineSubtotal - lineTotal);
                 }
@@ -90,17 +87,17 @@ public class OrderRepositoryImpl implements OrderRepository {
                 }
                 default -> throw new IllegalStateException("Unexpected refType: " + s.getRefType());
             }
-            final var pointsRate = nz(s.getPointsRate());
-            final var pointsItem = (lineTotal * pointsRate) / 100;
+
+            final int pointsRate = nz(s.getPointsRate());
+            final int pointsItem = (lineTotal * pointsRate) / 100;
 
             subtotal += lineSubtotal;
             discount += lineDiscount;
-            total    += lineTotal;
             points   += pointsItem;
             count    += qty;
 
             final var entity = OrderItemEntity.builder()
-                    .orderId(orderId)
+                    .orderId(order.getId())
                     .refType(OrderItemEntity.RefType.valueOf(s.getRefType().name()))
                     .refId(s.getRefId())
                     .titleSnapshot(s.getTitleSnapshot())
@@ -128,8 +125,187 @@ public class OrderRepositoryImpl implements OrderRepository {
         order.setCouponDiscountAmount(0);
         order.setTotalAmount(subtotal - discount + nz(order.getShippingAmount()));
         order.setPointsEarned(points);
+
+        em.flush();
+        return order.toDomain(savedDomainItems);
+    }
+
+    @Override
+    @Transactional
+    public OrderAggregate saveDraftWithItems(OrderAggregate aggregate, List<OrderItem> items) {
+        final var order = OrderEntity.fromModel(aggregate);
+
+        final var defaultAddressId = qf
+                .select(qAddress.id)
+                .from(qAddress)
+                .where(
+                        qAddress.userId.eq(aggregate.getUserId()),
+                        qAddress.isDefault.isTrue()
+                )
+                .orderBy(qAddress.id.desc())
+                .fetchFirst();
+
+        if (defaultAddressId != null) {
+            order.setShippingAddressId(defaultAddressId);
+        } else {
+            order.setShippingAddressId(null);
+        }
+
+        em.persist(order);
+        em.flush();
+        em.refresh(order);
+
+        final var createdAt = order.getCreatedAt();
+        final var orderNo = "O" + createdAt.format(YMD) + String.format("%06d", order.getId());
+        qf.update(qOrder).set(qOrder.orderNo, orderNo).where(qOrder.id.eq(order.getId())).execute();
+        em.refresh(order);
+
+        int subtotal = 0, discount = 0, total = 0, points = 0, count = 0;
+        int rental = 0;
+
+        final var savedDomainItems = new ArrayList<OrderItem>(items.size());
+        for (final var it : items) {
+            final var unitList = nz(it.getListPriceSnapshot());
+            final var unitSale = nz(it.getSalePriceSnapshot());
+            final var qty      = (it.getQuantity() == null ? 1 : it.getQuantity());
+
+            final int lineSubtotal, lineDiscount, lineTotal;
+            switch (it.getRefType()) {
+                case BOOK_PURCHASE, PRODUCT -> {
+                    lineSubtotal = (unitList > 0 ? unitList : unitSale) * qty;
+                    final var effective = (unitSale > 0 ? unitSale : unitList);
+                    lineTotal = effective * qty;
+                    lineDiscount = Math.max(0, lineSubtotal - lineTotal);
+                }
+                default -> throw new IllegalStateException("Unsupported refType: " + it.getRefType());
+            }
+
+            final var pointsRate = nz(it.getPointsRate());
+            final var pointsItem = (lineTotal * pointsRate) / 100;
+
+            subtotal += lineSubtotal;
+            discount += lineDiscount;
+            total    += lineTotal;
+            points   += pointsItem;
+            count    += qty;
+
+            final var entity = OrderItemEntity.builder()
+                    .orderId(order.getId())
+                    .refType(OrderItemEntity.RefType.valueOf(it.getRefType().name()))
+                    .refId(it.getRefId())
+                    .titleSnapshot(it.getTitleSnapshot())
+                    .thumbnailUrl(it.getThumbnailUrl())
+                    .listPriceSnapshot(unitList)
+                    .salePriceSnapshot(unitSale)
+                    .quantity(qty)
+                    .rentalDays(0)
+                    .rentalPriceSnapshot(0)
+                    .pointsRate(pointsRate)
+                    .pointsEarnedItem(pointsItem)
+                    .lineSubtotalAmount(lineSubtotal)
+                    .lineDiscountAmount(lineDiscount)
+                    .lineTotalAmount(lineTotal)
+                    .build();
+
+            em.persist(entity);
+            savedDomainItems.add(entity.toModel());
+        }
+
+        order.setItemCount(count);
+        order.setSubtotalAmount(subtotal);
+        order.setDiscountAmount(discount);
+        order.setRentalAmount(rental);
+        order.setCouponDiscountAmount(0);
+        order.setTotalAmount(subtotal - discount + nz(order.getShippingAmount()));
+        order.setPointsEarned(points);
         em.flush();
 
+        return order.toDomain(savedDomainItems);
+    }
+
+    @Override
+    @Transactional
+    public OrderAggregate replaceDraftWithItems(OrderAggregate existing,
+                                                List<OrderItem> items,
+                                                boolean resetDiscounts) {
+        final var order = em.find(OrderEntity.class, existing.getId());
+        if (order == null || !order.getUserId().equals(existing.getUserId())) {
+            throw new IllegalStateException("ORDER_NOT_OWNED");
+        }
+
+        qf.delete(qOrderItem).where(qOrderItem.orderId.eq(order.getId())).execute();
+
+        int subtotal = 0, discount = 0, total = 0, points = 0, count = 0;
+        int rental = 0;
+
+        final var savedDomainItems = new ArrayList<OrderItem>(items.size());
+        for (final var it : items) {
+            final var unitList   = nz(it.getListPriceSnapshot());
+            final var unitSale   = nz(it.getSalePriceSnapshot());
+            final var qty        = (it.getQuantity() == null ? 1 : it.getQuantity());
+
+            final int lineSubtotal;
+            final int lineDiscount;
+            final int lineTotal;
+
+            switch (it.getRefType()) {
+                case BOOK_PURCHASE, PRODUCT -> {
+                    lineSubtotal = (unitList > 0 ? unitList : unitSale) * qty;
+                    final var effective = (unitSale > 0 ? unitSale : unitList);
+                    lineTotal = effective * qty;
+                    lineDiscount = Math.max(0, lineSubtotal - lineTotal);
+                }
+                default -> throw new IllegalStateException("Unsupported refType: " + it.getRefType());
+            }
+
+            final var pointsRate = nz(it.getPointsRate());
+            final var pointsItem = (lineTotal * pointsRate) / 100;
+
+            subtotal += lineSubtotal;
+            discount += lineDiscount;
+            total    += lineTotal;
+            points   += pointsItem;
+            count    += qty;
+
+            final var entity = OrderItemEntity.builder()
+                    .orderId(order.getId())
+                    .refType(OrderItemEntity.RefType.valueOf(it.getRefType().name()))
+                    .refId(it.getRefId())
+                    .titleSnapshot(it.getTitleSnapshot())
+                    .thumbnailUrl(it.getThumbnailUrl())
+                    .listPriceSnapshot(unitList)
+                    .salePriceSnapshot(unitSale)
+                    .quantity(qty)
+                    .rentalDays(0)
+                    .rentalPriceSnapshot(0)
+                    .pointsRate(pointsRate)
+                    .pointsEarnedItem(pointsItem)
+                    .lineSubtotalAmount(lineSubtotal)
+                    .lineDiscountAmount(lineDiscount)
+                    .lineTotalAmount(lineTotal)
+                    .build();
+
+            em.persist(entity);
+            savedDomainItems.add(entity.toModel());
+        }
+
+        order.setItemCount(count);
+        order.setSubtotalAmount(subtotal);
+        order.setDiscountAmount(discount);
+        order.setCouponDiscountAmount(0);
+        order.setRentalAmount(rental);
+        order.setTotalAmount(subtotal - discount + nz(order.getShippingAmount()));
+        order.setPointsEarned(points);
+
+        if (resetDiscounts) {
+            if (order.getAppliedCouponIssuanceId() != null) {
+                order.setAppliedCouponIssuanceId(null);
+                em.flush();
+            }
+            order.setPointsSpent(0);
+        }
+
+        em.flush();
         return order.toDomain(savedDomainItems);
     }
 

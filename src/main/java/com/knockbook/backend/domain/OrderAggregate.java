@@ -45,6 +45,26 @@ public class OrderAggregate {
 
     private List<OrderItem> items;
 
+    public static OrderAggregate newDraft(Long userId) {
+        return OrderAggregate.builder()
+                .id(null)
+                .userId(userId)
+                .cartId(null)
+                .status(Status.PENDING)
+                .paymentStatus(PaymentStatus.READY)
+                .itemCount(0)
+                .subtotalAmount(0)
+                .discountAmount(0)
+                .couponDiscountAmount(0)
+                .shippingAmount(0)
+                .rentalAmount(0)
+                .totalAmount(0)
+                .pointsSpent(0)
+                .pointsEarned(0)
+                .items(List.of())
+                .build();
+    }
+
     // return a new object with coupons, points, and discounts reset
     public OrderAggregate withDiscountsReset() {
         return OrderAggregate.builder()

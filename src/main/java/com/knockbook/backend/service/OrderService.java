@@ -1,12 +1,7 @@
 package com.knockbook.backend.service;
 
-import com.knockbook.backend.domain.CouponIssuance;
-import com.knockbook.backend.domain.OrderAggregate;
-import com.knockbook.backend.domain.OrderItem;
-import com.knockbook.backend.exception.InvalidCartItemsException;
-import com.knockbook.backend.exception.NoOrderStatusToUpdateException;
-import com.knockbook.backend.exception.OrderNotFoundException;
-import com.knockbook.backend.exception.UserAddressNotFoundException;
+import com.knockbook.backend.domain.*;
+import com.knockbook.backend.exception.*;
 import com.knockbook.backend.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +22,10 @@ public class OrderService {
     private final CouponService couponService;
     private final PointsService pointsService;
     private final UserAddressRepository userAddressRepository;
+
     private final BookRepository bookRepository;
+    private final ProductRepository productRepository;
+
     private final BookPurchaseHistoryRepository purchaseHistoryRepository;
     private final BookRentalHistoryRepository rentalHistoryRepository;
 
@@ -45,23 +43,30 @@ public class OrderService {
             return orderRepository.replaceDraftFromCart(existing.get(), items, /*resetDiscounts=*/true);
         }
 
-        final var aggregate = OrderAggregate.builder()
-                .id(null)
-                .userId(userId)
-                .cartId(null)
-                .status(OrderAggregate.Status.PENDING)
-                .paymentStatus(OrderAggregate.PaymentStatus.READY)
-                .itemCount(0)
-                .subtotalAmount(0)
-                .discountAmount(0)
-                .shippingAmount(0)
-                .rentalAmount(0)
-                .totalAmount(0)
-                .pointsSpent(0)
-                .pointsEarned(0)
-                .build();
-
+        final var aggregate = OrderAggregate.newDraft(userId);
         return orderRepository.saveDraftFromCart(aggregate, items);
+    }
+
+    @Transactional
+    public OrderAggregate createDraftDirect(final Long userId,
+                                            final OrderDirectRefType refType,
+                                            final Long refId,
+                                            final Integer quantityOrNull) {
+
+        final int qty = (quantityOrNull == null || quantityOrNull < 1) ? 1 : quantityOrNull;
+
+        final OrderItem item = switch (refType) {
+            case BOOK_PURCHASE -> buildBookPurchaseItem(refId, qty);
+            case PRODUCT      -> buildProductItem(refId, qty);
+        };
+
+        final var existing = orderRepository.findPendingDraftByUser(userId);
+        if (existing.isPresent()) {
+            return orderRepository.replaceDraftWithItems(existing.get(), List.of(item), /*resetDiscounts*/ true);
+        }
+
+        final var aggregate = OrderAggregate.newDraft(userId);
+        return orderRepository.saveDraftWithItems(aggregate, List.of(item));
     }
 
     public OrderAggregate getById(final Long userId,
@@ -101,7 +106,8 @@ public class OrderService {
 
     @Transactional
     public OrderAggregate applyPoints(final Long userId,
-                                      final Long orderId, final Integer requestedPoints) {
+                                      final Long orderId,
+                                      final Integer requestedPoints) {
         final var draft = orderRepository.findDraftById(userId, orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
@@ -123,7 +129,8 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderAggregate removePoints(final Long userId, final Long orderId) {
+    public OrderAggregate removePoints(final Long userId,
+                                       final Long orderId) {
         final var draft = orderRepository.findDraftById(userId, orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
@@ -136,7 +143,9 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderAggregate applyAddress(final Long userId, final Long orderId, final Long addressId) {
+    public OrderAggregate applyAddress(final Long userId,
+                                       final Long orderId,
+                                       final Long addressId) {
 
         final var orderOpt = orderRepository.findByIdAndUserIdForUpdate(userId, orderId);
         final var order = orderOpt.orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
@@ -231,6 +240,61 @@ public class OrderService {
         return updated;
     }
 
+    private OrderItem buildBookPurchaseItem(final Long bookId,
+                                            final int qty) {
+        final var book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new BookNotFoundException(bookId.toString()));
+        final int list  = nz(book.getPurchaseAmount());
+        final int sale  = nz(book.getDiscountedPurchaseAmount());
+        final int prate = PointsPolicy.of(CartItem.RefType.BOOK_PURCHASE);
+
+        return OrderItem.builder()
+                .orderId(null)
+                .refType(OrderItem.RefType.BOOK_PURCHASE)
+                .refId(book.getId())
+                .titleSnapshot(book.getTitle())
+                .thumbnailUrl(book.getCoverThumbnailUrl())
+                .listPriceSnapshot(list)
+                .salePriceSnapshot(sale)
+                .rentalPriceSnapshot(0)
+                .quantity(qty)
+                .rentalDays(0)
+                .pointsRate(prate)
+                .pointsEarnedItem(0)
+                .lineSubtotalAmount(0)
+                .lineDiscountAmount(0)
+                .lineTotalAmount(0)
+                .build();
+    }
+
+    private OrderItem buildProductItem(final Long productId,
+                                       final int qty) {
+        final var pResult = productRepository.findProductById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+        final var p = pResult.getProductSummary();
+        final int list  = nz(p.getUnitPriceAmount());
+        final int sale  = nz(p.getSalePriceAmount());
+        final int prate = PointsPolicy.of(CartItem.RefType.PRODUCT);
+
+        return OrderItem.builder()
+                .orderId(null)
+                .refType(OrderItem.RefType.PRODUCT)
+                .refId(p.getId())
+                .titleSnapshot(p.getName())
+                .thumbnailUrl(p.getThumbnailUrl())
+                .listPriceSnapshot(list)
+                .salePriceSnapshot(sale)
+                .rentalPriceSnapshot(0)
+                .quantity(qty)
+                .rentalDays(0)
+                .pointsRate(prate)
+                .pointsEarnedItem(0)
+                .lineSubtotalAmount(0)
+                .lineDiscountAmount(0)
+                .lineTotalAmount(0)
+                .build();
+    }
+
     private CouponIssuance resolveIssuance(final Long userId,
                                            final String issuanceIdRaw) {
         if (issuanceIdRaw == null || issuanceIdRaw.isBlank()) {
@@ -254,8 +318,8 @@ public class OrderService {
         if (ci.getExpiresAt() != null && now.isAfter(ci.getExpiresAt())) {
             throw new IllegalStateException("COUPON_EXPIRED");
         }
-        // scope 매칭 & 최소주문금액 체크
-        final var eligible = eligibleAmountByScope(order, ci.getScope()); // (아래 함수)
+
+        final var eligible = eligibleAmountByScope(order, ci.getScope());
         if (ci.getMinOrderAmount() != null && eligible < ci.getMinOrderAmount()) {
             throw new IllegalStateException("MIN_ORDER_NOT_MET");
         }

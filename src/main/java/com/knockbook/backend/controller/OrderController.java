@@ -1,5 +1,6 @@
 package com.knockbook.backend.controller;
 
+import com.knockbook.backend.domain.OrderDirectRefType;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.OrderService;
 import jakarta.validation.Valid;
@@ -26,6 +27,21 @@ public class OrderController {
         final var cartItemIds = req.getCartItemIds();
         final var domain = orderService.createDraftFromCart(userIdLong, cartItemIds);
         final var dto = OrderResponse.toResponse(domain);
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/draft")
+    @PreAuthorize("#userId == authentication.name")
+    public ResponseEntity<OrderResponse> createDraftDirect(
+            @PathVariable final String userId,
+            @Valid @RequestBody final CreateOrderDirectRequest req) {
+
+        final var agg = orderService.createDraftDirect(
+                Long.valueOf(userId),
+                OrderDirectRefType.valueOf(req.getRefType()),
+                Long.valueOf(req.getRefId()),
+                req.getQuantity());
+        final var dto = OrderResponse.toResponse(agg);
         return ResponseEntity.ok(dto);
     }
 
