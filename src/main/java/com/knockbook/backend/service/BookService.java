@@ -169,6 +169,21 @@ public class BookService {
         bookReviewRepository.softDeleteById(reviewId, userId);
     }
 
+    public MemberLifeBookReview getMemberLifeBookReview() {
+
+        final var review = bookReviewRepository.findRandomFiveStarReview()
+                .orElseThrow(() -> new IllegalStateException("No 5-star book review found"));
+
+        final var userInfo = userService.getUser(review.getUserId());
+        final var bookInfo = bookRepository.findById(review.getBookId())
+                .orElseThrow(() -> new BookNotFoundException(review.getBookId().toString()));
+
+        return review.toBuilder()
+                .displayName(userInfo.getDisplayName())
+                .coverThumbnailUrl(bookInfo.getCoverThumbnailUrl())
+                .build();
+    }
+
     private List<BookReviewImage> uploadImages(Long reviewId, List<MultipartFile> images) {
         if (images == null || images.isEmpty()) return Collections.emptyList();
 

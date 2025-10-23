@@ -3,10 +3,12 @@ package com.knockbook.backend.repository;
 import com.knockbook.backend.domain.BookReview;
 import com.knockbook.backend.domain.BookReviewImage;
 import com.knockbook.backend.domain.BookReviewStatistic;
+import com.knockbook.backend.domain.MemberLifeBookReview;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface BookReviewRepository {
@@ -75,4 +77,10 @@ public interface BookReviewRepository {
      * Returns book review stats: avg rating, total, score counts, and MBTI counts.
      */
     BookReviewStatistic findBookReviewStatisticsBy(Long bookId);
+
+    /**
+     * Retrieves a random review with a rating of 5 for any book.
+     * If no such review exists, returns Optional.empty().
+     */
+    Optional<MemberLifeBookReview> findRandomFiveStarReview();
 }
