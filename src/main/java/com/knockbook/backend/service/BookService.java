@@ -172,11 +172,11 @@ public class BookService {
     public MemberLifeBookReview getMemberLifeBookReview() {
 
         final var review = bookReviewRepository.findRandomFiveStarReview()
-                        .orElseThrow(() -> new IllegalStateException("리뷰 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalStateException("No 5-star book review found"));
 
         final var userInfo = userService.getUser(review.getUserId());
         final var bookInfo = bookRepository.findById(review.getBookId())
-                .orElseThrow(() -> new IllegalStateException("책 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BookNotFoundException(review.getBookId().toString()));
 
         return review.toBuilder()
                 .displayName(userInfo.getDisplayName())
