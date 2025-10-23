@@ -32,6 +32,8 @@ public interface BookReviewRepository {
     Page<BookReview> findAllBy(Long bookId, Pageable pageable,
                                      String transactionType, Boolean sameMbti, String currentUserMbti);
 
+    List<BookReview> findAllBy(Long userId);
+
     /**
      * Finds review IDs liked by the given user (used for likedByMe check)
      */

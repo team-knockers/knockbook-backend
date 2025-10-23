@@ -77,6 +77,10 @@ public class BookService {
         return bookReviewRepository.findAllBy(bookId, pageable, transactionType, sameMbti, currentUserMbti);
     }
 
+    public List<BookReview> getAllReviewsByUser(Long userId) {
+        return bookReviewRepository.findAllBy(userId);
+    }
+
     public BookReviewStatistic getBookReviewStatistics(Long bookId) {
         return bookReviewRepository.findBookReviewStatisticsBy(bookId);
     }

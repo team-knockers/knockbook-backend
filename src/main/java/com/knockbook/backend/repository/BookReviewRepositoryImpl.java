@@ -205,6 +205,77 @@ public class BookReviewRepositoryImpl implements BookReviewRepository  {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<BookReview> findAllBy(Long userId) {
+        final var predicate = R.userId.eq(userId)
+                .and(R.status.eq(BookReviewEntity.Status.VISIBLE))
+                .and(R.deletedAt.isNull());
+
+        final var reviewWithUserTuples = queryFactory
+                .select(R, U.displayName, U.mbti)
+                .from(R)
+                .leftJoin(U).on(U.id.eq(R.userId))
+                .where(predicate)
+                .orderBy(R.createdAt.desc(), R.id.desc())
+                .fetch();
+
+        if (reviewWithUserTuples.isEmpty()) {
+            return List.of();
+        }
+
+        final var reviewIds = reviewWithUserTuples.stream()
+                .map(t -> t.get(R))
+                .filter(Objects::nonNull)
+                .map(BookReviewEntity::getId)
+                .filter(Objects::nonNull)
+                .toList();
+
+        final var imageEntities = queryFactory
+                .selectFrom(I)
+                .where(I.bookReviewId.in(reviewIds).and(I.deletedAt.isNull()))
+                .orderBy(I.bookReviewId.asc(), I.sortOrder.asc())
+                .fetch();
+
+        final var imagesByReviewId = imageEntities.stream()
+                .collect(Collectors.groupingBy(
+                        BookReviewImageEntity::getBookReviewId,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        return reviewWithUserTuples.stream()
+                .map(t -> {
+                    final var re = t.get(R);
+                    if (re == null) return null;
+
+                    final var images = Optional.ofNullable(imagesByReviewId.get(re.getId()))
+                            .orElse(List.of())
+                            .stream()
+                            .map(img -> BookReviewImage.builder()
+                                    .imageUrl(img.getImageUrl())
+                                    .sortOrder(img.getSortOrder())
+                                    .build())
+                            .toList();
+
+                    return BookReview.builder()
+                            .id(re.getId())
+                            .bookId(re.getBookId())
+                            .userId(re.getUserId())
+                            .displayName(t.get(U.displayName))
+                            .mbti(t.get(U.mbti))
+                            .transactionType(BookReview.TransactionType.valueOf(re.getTransactionType().name()))
+                            .content(re.getBody())
+                            .rating(re.getRating())
+                            .likesCount(re.getLikesCount())
+                            .imageUrls(images)
+                            .createdAt(re.getCreatedAt())
+                            .build();
+                })
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    @Override
     public Set<Long> findLikedReviewIdsBy(Long userId, List<Long> reviewIds) {
         if (userId == null || reviewIds == null || reviewIds.isEmpty()) {
             return Collections.emptySet();
