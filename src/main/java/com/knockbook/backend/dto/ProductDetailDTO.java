@@ -20,6 +20,7 @@ public class ProductDetailDTO {
     private Double averageRating;
     private Integer reviewCount;
     private Integer stockQty;
+    private Boolean wishedByMe;
 
     private List<String> galleryImageUrls;
     private List<String> descriptionImageUrls;
