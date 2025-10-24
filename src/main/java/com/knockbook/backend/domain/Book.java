@@ -49,6 +49,4 @@ public class Book {
     private Integer rentalCount;
     private BigDecimal averageRating;
     private Integer ratingCount;
-    private Integer rentalPoint;
-    private Integer purchasePoint;
 }

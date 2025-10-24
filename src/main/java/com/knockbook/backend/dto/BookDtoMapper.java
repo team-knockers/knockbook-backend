@@ -2,6 +2,8 @@ package com.knockbook.backend.dto;
 
 import com.knockbook.backend.domain.Book;
 import com.knockbook.backend.domain.BookSummary;
+import com.knockbook.backend.domain.CartItem;
+import com.knockbook.backend.domain.PointsPolicy;
 
 import java.math.BigDecimal;
 
@@ -62,6 +64,16 @@ public final class BookDtoMapper {
                 ? b.getTotalVolumes() + "권"
                 : null;
 
+        final var rentalPointRate = PointsPolicy.of(CartItem.RefType.BOOK_RENTAL);
+        final var purchasePointRate = PointsPolicy.of(CartItem.RefType.BOOK_PURCHASE);
+
+        final var rentalPoint = b.getRentalAmount() != null
+                ? (int) Math.floor(b.getRentalAmount() * rentalPointRate / 100.0)
+                : 0;
+        final var purchasePoint = b.getDiscountedPurchaseAmount() != null
+                ? (int) Math.floor(b.getDiscountedPurchaseAmount() * purchasePointRate / 100.0)
+                : 0;
+
         return GetBookDetailsResponse.builder()
                 .id(String.valueOf(b.getId()))
                 .title(b.getTitle())
@@ -90,8 +102,8 @@ public final class BookDtoMapper {
                 .rentalCount(b.getRentalCount())
                 .averageRating(roundToFirstDecimal(b.getAverageRating()))
                 .ratingCount(b.getRatingCount())
-                .purchasePoint(b.getPurchasePoint())
-                .rentalPoint(b.getRentalPoint())
+                .purchasePoint(purchasePoint)
+                .rentalPoint(rentalPoint)
                 .build();
     }
 
