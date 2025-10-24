@@ -95,6 +95,7 @@ public class LoungePostController {
         // 3) Map domain object to DTO
         final var response = GetLoungePostDetailsResponse.builder()
                 .id(String.valueOf(postDetails.getId()))
+                .userId(String.valueOf(postDetails.getUserId()))
                 .displayName(postDetails.getDisplayName())
                 .avatarUrl(postDetails.getAvatarUrl())
                 .bio(postDetails.getBio())

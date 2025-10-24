@@ -14,6 +14,7 @@ import java.time.LocalDate;
 public class GetLoungePostDetailsResponse {
 
     private String id;
+    private String userId;
     private String displayName;
     private String avatarUrl; // nullable
     private String bio; // nullable
