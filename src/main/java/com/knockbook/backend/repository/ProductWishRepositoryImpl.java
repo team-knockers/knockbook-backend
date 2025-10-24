@@ -125,4 +125,16 @@ public class ProductWishRepositoryImpl implements ProductWishRepository{
         return v == null ? null : v.setScale(1, RoundingMode.HALF_UP).doubleValue();
     }
 
+    @Override
+    public boolean isWishedOrNot(
+            Long userId,
+            Long productId
+    ) {
+        final var WishRowExists = query.selectOne()
+                .from(W)
+                .where(W.userId.eq(userId).and(W.productId.eq(productId)))
+                .fetchFirst() != null;
+
+        return WishRowExists;
+    }
 }
