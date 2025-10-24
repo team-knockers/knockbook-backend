@@ -8,7 +8,7 @@ import lombok.*;
 @Builder
 public class ReviewedItem {
 
-    public enum ItemType { BOOK_PURCHASE, BOOK_RENTAL, PRODUCT }
+    public enum ItemType { BOOK, PRODUCT }
 
     private ItemType itemType;
     private String id;

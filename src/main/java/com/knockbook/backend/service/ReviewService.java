@@ -19,9 +19,7 @@ public class ReviewService {
     public List<ReviewedItem> getReviewedItemIdsAll(final Long userId) {
         final var reviewedBookItems = bookReviewRepo.findAllBy(userId).stream()
                 .map(r -> ReviewedItem.builder()
-                        .itemType(r.getTransactionType().name().contains("RENTAL") ?
-                                ReviewedItem.ItemType.BOOK_RENTAL
-                                : ReviewedItem.ItemType.BOOK_PURCHASE)
+                        .itemType(ReviewedItem.ItemType.BOOK)
                         .id(String.valueOf(r.getBookId()))
                         .build())
                 .toList();
