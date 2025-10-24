@@ -13,7 +13,7 @@ public final class BookEntityMapper {
 
     /**
      * domain.Book → entity.BookEntity
-     * POST: Create new entity with default values
+     * Create new entity with default values
      */
     public static BookEntity toBookEntityForInsert(Book d) {
         if (d == null) {
@@ -63,7 +63,7 @@ public final class BookEntityMapper {
 
     /**
      * domain.Book → entity.BookEntity
-     *  PATCH: Update existing entity (partial overwrite)
+     * Update existing entity (partial overwrite)
      */
     public static BookEntity toBookEntityForPatch(Book d, BookEntity e) {
         if (d == null || e == null) {
