@@ -41,6 +41,16 @@ public class BookService {
     @Autowired
     private UserService userService;
 
+    @Transactional
+    public Book createBook(Book book) {
+        return bookRepository.save(book);
+    }
+
+    @Transactional
+    public Book updateBook(Book book) {
+        return bookRepository.save(book);
+    }
+
     public Page<BookSummary> getBooksSummary(
             String categoryCodeName, String subcategoryCodeName, Pageable pageable,
             String searchBy, String searchKeyword, Integer maxPrice, Integer minPrice) {

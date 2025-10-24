@@ -11,7 +11,11 @@ import java.util.Optional;
 
 public interface BookRepository {
 
-    // TODO: 추후 save() 작성 (현재단계에서 맞지 않음)
+
+    /**
+     * Insert a new book or update an existing book.
+     */
+    Book save(final Book book);
 
     /**
      * Find a book by its ID.
