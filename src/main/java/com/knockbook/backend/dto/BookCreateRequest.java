@@ -1,52 +1,75 @@
-package com.knockbook.backend.domain;
+package com.knockbook.backend.dto;
 
-import lombok.AccessLevel;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder(toBuilder = true)
-public class Book {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class BookCreateRequest {
 
     public enum Status { VISIBLE, HIDDEN }
-    public enum Availability { AVAILABLE, OUT_OF_STOCK }
 
-    private Long id;
+    @NotBlank
     private String title;
+
+    @NotBlank
     private String author;
+
+    @NotBlank
     private String publisher;
+
+    @NotNull
     private LocalDate publishedAt;
+
+    @NotNull
     private Integer sellableStockQty;
+
+    @NotNull
     private Integer rentableStockQty;
-    private Long categoryId;
-    private Long subcategoryId;
+
+    @NotBlank
+    private String categoryId;
+
+    @NotBlank
+    private String subcategoryId;
+
     private String introductionTitle;
     private String introductionDetail;
     private String tableOfContents;
     private String publisherReview;
+
+    @NotBlank
+    @Size(min = 13, max = 13)
+    @Pattern(regexp = "\\d{13}")
     private String isbn13;
+
     private Integer pageCount;
     private Integer width;
     private Integer height;
     private Integer thickness;
     private Integer weight;
     private Integer totalVolumes;
+
+    @NotNull
     private Integer rentalAmount;
+    @NotNull
     private Integer purchaseAmount;
+    @NotNull
     private Integer discountedPurchaseAmount;
+    @NotBlank
     private String coverThumbnailUrl;
+    @NotBlank
     private String coverImageUrl;
-    private Availability rentalAvailability;
-    private Availability purchaseAvailability;
+
     private Status status;
-    private Integer viewCount;
-    private Integer salesCount;
-    private Integer rentalCount;
-    private BigDecimal averageRating;
-    private Integer ratingCount;
 }

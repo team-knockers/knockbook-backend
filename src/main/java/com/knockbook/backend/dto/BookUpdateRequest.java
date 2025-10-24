@@ -11,23 +11,33 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BookSummaryDto {
+public class BookUpdateRequest {
 
-    private String id;
+    public enum Status { VISIBLE, HIDDEN }
+
     private String title;
     private String author;
     private String publisher;
     private LocalDate publishedAt;
+    private Integer sellableStockQty;
+    private Integer rentableStockQty;
     private String categoryId;
     private String subcategoryId;
+    private String introductionTitle;
+    private String introductionDetail;
+    private String tableOfContents;
+    private String publisherReview;
+    private String isbn13;
+    private Integer pageCount;
+    private Integer width;
+    private Integer height;
+    private Integer thickness;
+    private Integer weight;
+    private Integer totalVolumes;
     private Integer rentalAmount;
     private Integer purchaseAmount;
     private Integer discountedPurchaseAmount;
     private String coverThumbnailUrl;
-    private String rentalAvailability;
-    private String purchaseAvailability;
-    private Integer viewCount;
-    private Integer salesCount;
-    private Integer rentalCount;
-    private Double averageRating;
+    private String coverImageUrl;
+    private Status status;
 }

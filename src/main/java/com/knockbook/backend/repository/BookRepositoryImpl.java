@@ -3,6 +3,7 @@ package com.knockbook.backend.repository;
 import com.knockbook.backend.domain.Book;
 import com.knockbook.backend.domain.BookSummary;
 import com.knockbook.backend.entity.*;
+import com.knockbook.backend.exception.BookNotFoundException;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -35,6 +37,33 @@ public class BookRepositoryImpl implements BookRepository {
     private static final QBookCategoryEntity category = QBookCategoryEntity.bookCategoryEntity;
     private static final QBookSubcategoryEntity subcategory = QBookSubcategoryEntity.bookSubcategoryEntity;
     private static final QBookWishlistEntity wishlist = QBookWishlistEntity.bookWishlistEntity;
+
+    @Override
+    @Transactional
+    public Book save(Book book) {
+        if (book.getId() == null) {
+            // INSERT
+            final var entity = BookEntityMapper.toBookEntityForInsert(book);
+            em.persist(entity);
+            em.flush();
+
+            return BookEntityMapper.toDomain(entity);
+
+        } else {
+            // PATCH
+            final var existingEntity = em.find(BookEntity.class, book.getId());
+            if (existingEntity == null) {
+                throw new BookNotFoundException(book.getId().toString());
+            }
+
+            final var updatedEntity = BookEntityMapper.toBookEntityForPatch(book, existingEntity);
+            final var merged = em.merge(updatedEntity);
+            em.flush();
+
+            final var refreshed = em.find(BookEntity.class, merged.getId());
+            return BookEntityMapper.toDomain(refreshed);
+        }
+    }
 
     @Override
     public Optional<Book> findById(Long id) {

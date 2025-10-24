@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA default constructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE) // Builder only
-@Builder
+@Builder(toBuilder = true)
 public class BookEntity {
 
     public enum Status { VISIBLE, HIDDEN }

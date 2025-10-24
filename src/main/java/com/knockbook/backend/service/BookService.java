@@ -41,6 +41,16 @@ public class BookService {
     @Autowired
     private UserService userService;
 
+    @Transactional
+    public Book createBook(Book book) {
+        return bookRepository.save(book);
+    }
+
+    @Transactional
+    public Book updateBook(Book book) {
+        return bookRepository.save(book);
+    }
+
     public Page<BookSummary> getBooksSummary(
             String categoryCodeName, String subcategoryCodeName, Pageable pageable,
             String searchBy, String searchKeyword, Integer maxPrice, Integer minPrice) {
@@ -50,18 +60,8 @@ public class BookService {
     }
 
     public Book getBookDetails(Long id) {
-        final var rentalPointRate = PointsPolicy.of(CartItem.RefType.BOOK_RENTAL);
-        final var purchasePointRate = PointsPolicy.of(CartItem.RefType.BOOK_PURCHASE);
-        final var res = bookRepository.findById(id)
+        return bookRepository.findById(id)
                 .orElseThrow(() -> new BookNotFoundException(String.valueOf(id)));
-
-        final var rentalPoint = (int) Math.floor(res.getRentalAmount() * rentalPointRate / 100.0);
-        final var purchasePoint = (int) Math.floor(res.getDiscountedPurchaseAmount() * purchasePointRate / 100.0);
-
-        return res.toBuilder()
-                .rentalPoint(rentalPoint)
-                .purchasePoint(purchasePoint)
-                .build();
     }
 
     public Page<BookReview> getBookReviews(Long bookId, Pageable pageable, String transactionType,

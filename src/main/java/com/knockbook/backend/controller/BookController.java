@@ -410,4 +410,36 @@ public class BookController {
 
         return ResponseEntity.ok(response);
     }
+
+    // API-BOOKS-16 - Create a new book
+    @PreAuthorize("#userId == authentication.name")
+    @PostMapping("/{userId}/books")
+    public ResponseEntity<GetBookDetailsResponse> createBook(
+            @PathVariable("userId") String userId,
+            @RequestBody @Valid BookCreateRequest request
+    ) {
+        final var book = BookDtoMapper.toDomainForCreate(request);
+
+        final var savedBook = bookService.createBook(book);
+        final var response = BookDtoMapper.toDetailDto(savedBook);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // API-BOOKS-17 - Update an existing book
+    @PreAuthorize("#userId == authentication.name")
+    @PatchMapping("/{userId}/{bookId}")
+    public ResponseEntity<GetBookDetailsResponse> updateBook(
+            @PathVariable("userId") String userId,
+            @PathVariable String bookId,
+            @RequestBody BookUpdateRequest request
+    ) {
+        final var existingBook = bookService.getBookDetails(Long.valueOf(bookId));
+        final var updatedBook = BookDtoMapper.toDomainForPatch(request, existingBook);
+
+        final var savedBook = bookService.updateBook(updatedBook);
+        final var response = BookDtoMapper.toDetailDto(savedBook);
+
+        return ResponseEntity.ok(response);
+    }
 }
