@@ -6,7 +6,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class RandomLifeBookResponse {
+public class GetRandomBookReviewResponse {
     private String id;
     private String userId;
     private String displayName;

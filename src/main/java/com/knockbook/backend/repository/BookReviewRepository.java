@@ -3,7 +3,7 @@ package com.knockbook.backend.repository;
 import com.knockbook.backend.domain.BookReview;
 import com.knockbook.backend.domain.BookReviewImage;
 import com.knockbook.backend.domain.BookReviewStatistic;
-import com.knockbook.backend.domain.MemberLifeBookReview;
+import com.knockbook.backend.domain.RandomBookReview;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -79,8 +79,8 @@ public interface BookReviewRepository {
     BookReviewStatistic findBookReviewStatisticsBy(Long bookId);
 
     /**
-     * Retrieves a random review with a rating of 5 for any book.
+     * Retrieves a random review by rating
      * If no such review exists, returns Optional.empty().
      */
-    Optional<MemberLifeBookReview> findRandomFiveStarReview();
+    Optional<RandomBookReview> findRandomReviewByRating(Integer rating);
 }
