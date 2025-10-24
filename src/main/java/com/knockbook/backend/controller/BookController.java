@@ -1,6 +1,5 @@
 package com.knockbook.backend.controller;
 
-import com.knockbook.backend.domain.Book;
 import com.knockbook.backend.domain.BookReview;
 import com.knockbook.backend.domain.BookReviewImage;
 import com.knockbook.backend.domain.BookWishlistAction;
