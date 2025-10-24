@@ -17,7 +17,6 @@ public class BookPurchaseHistoryDTO {
     private String bookAuthor;
     private String bookImageUrl;
     private Integer purchaseCount;
-    private Boolean reviewdByMe;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "Asia/Seoul")
     private Instant firstPurchasedAt;
