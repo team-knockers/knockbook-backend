@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -134,6 +135,20 @@ public class ProductReviewRepositoryImpl implements ProductReviewRepository{
                 .build();
 
         return result;
+    }
+
+    @Override
+    public List<Long> findProductIdsReviewedByUser(Long userId) {
+        return query
+                .select(PR.productId)
+                .from(PR)
+                .where(
+                        PR.userId.eq(userId)
+                                .and(PR.status.eq(ProductReviewEntity.Status.VISIBLE))
+                                .and(PR.deletedAt.isNull())
+                )
+                .distinct()
+                .fetch();
     }
 
     @Override
