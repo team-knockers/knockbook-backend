@@ -9,7 +9,7 @@ import lombok.*;
 @Builder
 public class ReviewedItemDTO {
 
-    private String itemType; // BOOK_RENTAL, BOOK_PURCHASE, PRODUCT
+    private String itemType; // BOOK, PRODUCT
     private String id;
 
     public static ReviewedItemDTO fromModel(ReviewedItem item) {
