@@ -26,7 +26,7 @@ public class UserController {
         final var user = userService.getUser(Long.valueOf(userId));
         return ResponseEntity.ok()
                 .body(UserResponse.builder()
-                       .id(user.getId().toString())
+                        .id(user.getId().toString())
                         .email(user.getEmail())
                         .displayName(user.getDisplayName())
                         .avartarUrl(user.getAvatarUrl())
