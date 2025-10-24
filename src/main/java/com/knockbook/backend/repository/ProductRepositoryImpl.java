@@ -3,13 +3,10 @@ package com.knockbook.backend.repository;
 import com.knockbook.backend.domain.ProductDetail;
 import com.knockbook.backend.domain.ProductResult;
 import com.knockbook.backend.domain.ProductSummary;
-import com.knockbook.backend.entity.ProductEntity;
-import com.knockbook.backend.entity.ProductImageEntity;
-import com.knockbook.backend.entity.QProductCategoryEntity;
-import com.knockbook.backend.entity.QProductEntity;
-import com.knockbook.backend.entity.QProductImageEntity;
+import com.knockbook.backend.entity.*;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,6 +29,7 @@ public class ProductRepositoryImpl implements ProductRepository {
     private static final QProductEntity P = QProductEntity.productEntity;
     private static final QProductImageEntity PI = QProductImageEntity.productImageEntity;
     private static final QProductCategoryEntity PC = QProductCategoryEntity.productCategoryEntity;
+    private static final QProductWishlistEntity PW = QProductWishlistEntity.productWishlistEntity;
 
     @Override
     public Page<ProductSummary> findProductSummaries(
@@ -39,7 +37,8 @@ public class ProductRepositoryImpl implements ProductRepository {
             String searchKeyword,
             Integer minPrice,
             Integer maxPrice,
-            Pageable pageable
+            Pageable pageable,
+            Long userId
     ) {
         // Step 1: Base filters (ACTIVE + not deleted)
         final var predicate = new BooleanBuilder()
@@ -59,6 +58,11 @@ public class ProductRepositoryImpl implements ProductRepository {
         // Step 3: Sorting (translate Pageable → QueryDSL OrderSpecifiers)
         final var orderSpecifiers = toOrderSpecifiers(pageable, P);
 
+        final var wishedByMeExpr = JPAExpressions.selectOne()
+                .from(PW)
+                .where(P.productId.eq(PW.productId).and(PW.userId.eq(userId)))
+                .exists();
+
         // Step 4: Fetch page content (join category for code_name; join first GALLERY image as thumbnail)
         final var rows = query
                 .select(
@@ -73,7 +77,8 @@ public class ProductRepositoryImpl implements ProductRepository {
                         P.availability,
                         P.averageRating,
                         P.reviewCount,
-                        PI.imageUrl // thumbnail (GALLERY, sort_order=1)
+                        PI.imageUrl, // thumbnail (GALLERY, sort_order=1)
+                        wishedByMeExpr
                 )
                 .from(P)
                 .leftJoin(PC).on(PC.categoryId.eq(P.categoryId))
@@ -120,6 +125,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                         .averageRating(toScale(t.get(P.averageRating)))
                         .reviewCount(t.get(P.reviewCount))
                         .thumbnailUrl(t.get(PI.imageUrl))
+                        .wishedByMe(Boolean.TRUE.equals(t.get(wishedByMeExpr)))
                         .build())
                 .toList();
 
@@ -128,7 +134,9 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
-    public Optional<ProductResult> findProductById(Long productId) {
+    public Optional<ProductResult> findProductById(
+            Long productId
+    ) {
         // Step 1: Base row fetch (ACTIVE + not deleted)
         final var t = query
                 .select(

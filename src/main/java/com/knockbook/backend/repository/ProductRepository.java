@@ -12,8 +12,11 @@ public interface ProductRepository {
             String searchKeyword,
             Integer minPrice,
             Integer maxPrice,
-            Pageable pageable
+            Pageable pageable,
+            Long userId
     );
 
-    Optional<ProductResult> findProductById(Long productId);
+    Optional<ProductResult> findProductById(
+            Long productId
+    );
 }

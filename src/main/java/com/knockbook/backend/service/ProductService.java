@@ -28,16 +28,24 @@ public class ProductService {
             String searchKeyword,
             Integer minPrice,
             Integer maxPrice,
-            Pageable pageable
+            Pageable pageable,
+            Long userId
     ) {
         return productRepository.findProductSummaries(
-                category, searchKeyword, minPrice, maxPrice, pageable
+                category, searchKeyword, minPrice, maxPrice, pageable, userId
         );
     }
 
-     public ProductResult getProduct(Long productId) {
-         return productRepository.findProductById(productId)
+     public ProductResult getProduct(
+             Long productId,
+             Long userId
+     ) {
+         final var result = productRepository.findProductById(productId)
                  .orElseThrow(()-> new ProductNotFoundException(productId));
+         final var isWished = productWishRepository.isWishedOrNot(userId, productId);
+         result.getProductSummary().setWishedByMe(isWished);
+         return result;
+
      }
 
      public ProductReviewsResult getProductReviews (

@@ -14,4 +14,8 @@ public interface ProductWishRepository {
     ProductWishlist findWishlist (
             Long userId
     );
+    boolean isWishedOrNot (
+            Long userId,
+            Long productId
+    );
 }

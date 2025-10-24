@@ -26,4 +26,9 @@ public class ProductSummary {
     private Integer reviewCount;
 
     private String thumbnailUrl;
+    private Boolean wishedByMe;
+
+    public void setWishedByMe(final Boolean value) {
+        wishedByMe = value;
+    }
 }

@@ -17,4 +17,5 @@ public class ProductSummaryDTO {
     private Integer reviewCount;
     private String thumbnailUrl;
     private String availability;
+    private Boolean wishedByMe;
 }
