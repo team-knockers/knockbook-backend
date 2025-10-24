@@ -37,6 +37,8 @@ public class ProductController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String order
             ) {
+        final long userIdLong = Long.parseLong(userId);
+
         // Step 1: Normalize paging inputs
         final var safePage = Math.max(1, page) - 1;
         final var safeSize = Math.max(1, size);
@@ -52,7 +54,7 @@ public class ProductController {
 
         // Step 4: Call the service
         final var result = productService.getProductList(
-                category, searchKeyword, minPrice, maxPrice, pageable
+                category, searchKeyword, minPrice, maxPrice, pageable, userIdLong
         );
 
         // Step 4: Map domain -> response DTO
@@ -65,6 +67,7 @@ public class ProductController {
                 .reviewCount(s.getReviewCount())
                 .thumbnailUrl(s.getThumbnailUrl())
                 .availability(s.getAvailability() == null ? null : s.getAvailability().name())
+                .wishedByMe(s.getWishedByMe())
                 .build()
         ).toList();
 
@@ -87,8 +90,10 @@ public class ProductController {
             @PathVariable("productId") Long productId,
             @PathVariable("userId") String userId
     ){
+        final long userIdLong = Long.parseLong(userId);
+
         // Step 1: Call the service
-        final var result = productService.getProduct(productId);
+        final var result = productService.getProduct(productId, userIdLong);
         final var s = result.getProductSummary();
         final var d = result.getProductDetail();
 
@@ -104,6 +109,7 @@ public class ProductController {
                 .averageRating(s.getAverageRating())
                 .reviewCount(s.getReviewCount())
                 .stockQty(s.getStockQty())
+                .wishedByMe(Boolean.TRUE.equals(s.getWishedByMe()))
                 .galleryImageUrls(d.getGalleryImageUrls())
                 .descriptionImageUrls(d.getDescriptionImageUrls())
                 .build();
