@@ -102,6 +102,11 @@ public class LoungePostService {
         }
     }
 
+    @Transactional
+    public void hardDeletePost(Long postId, Long userId) {
+        postRepo.deleteByIdAndUserId(postId, userId);
+    }
+
     public Page<LoungePostSummary> getPostsSummary(Pageable pageable) {
 
         final var page = postRepo.findPostsByPageable(pageable);

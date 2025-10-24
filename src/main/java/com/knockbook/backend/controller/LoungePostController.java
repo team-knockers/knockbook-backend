@@ -296,6 +296,17 @@ public class LoungePostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // API-LOUNGE-12: Delete a lounge post
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/{userId}/posts/{postId}")
+    public ResponseEntity<Void> deleteLoungePost(
+            @PathVariable String userId,
+            @PathVariable String postId
+    ) {
+        loungePostService.hardDeletePost(Long.valueOf(postId), Long.valueOf(userId));
+        return ResponseEntity.noContent().build();
+    }
+
     // Helper: Change Instant to LocalDate
     private static LocalDate toLocalDate(Instant instant) {
         return instant == null ? null : LocalDate.ofInstant(instant, ZoneId.of("Asia/Seoul"));
