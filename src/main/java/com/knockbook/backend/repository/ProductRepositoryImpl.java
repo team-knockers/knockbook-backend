@@ -1,5 +1,6 @@
 package com.knockbook.backend.repository;
 
+import com.knockbook.backend.domain.ProductCreateSpec;
 import com.knockbook.backend.domain.ProductDetail;
 import com.knockbook.backend.domain.ProductResult;
 import com.knockbook.backend.domain.ProductSummary;
@@ -8,6 +9,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -23,7 +25,7 @@ import java.util.Optional;
 @Repository
 @RequiredArgsConstructor
 public class ProductRepositoryImpl implements ProductRepository {
-
+    private final EntityManager em;
     private final JPAQueryFactory query;
     // QueryDSL Q-types (entity metamodels)
     private static final QProductEntity P = QProductEntity.productEntity;
@@ -224,6 +226,109 @@ public class ProductRepositoryImpl implements ProductRepository {
 
         return Optional.of(result);
 
+    }
+
+    @Override
+    public ProductResult createProduct(ProductCreateSpec spec) {
+        final var categoryIdList = query
+                .select(PC.categoryId)
+                .from(PC)
+                .where(
+                        PC.codeName.eq(spec.getCategoryCode()),
+                        PC.deletedAt.isNull()
+                )
+                .limit(1)
+                .fetch();
+
+        if (categoryIdList.isEmpty()) {
+            throw new IllegalArgumentException("Invalid categoryCode: " + spec.getCategoryCode());
+        }
+
+        final var categoryId = categoryIdList.getFirst();
+
+        final var productEntity = ProductEntity.builder()
+                .categoryId(categoryId)
+                .sku(spec.getSku())
+                .name(spec.getName())
+                .stockQty(spec.getStockQty())
+                .unitPriceAmount(spec.getUnitPriceAmount())
+                .salePriceAmount(spec.getSalePriceAmount())
+                .manufacturerName(spec.getManufacturerName())
+                .isImported(spec.getIsImported())
+                .importCountry(spec.getImportCountry())
+                .releasedAt(spec.getReleasedAt())
+                .status(spec.getStatus())
+                .availability(spec.getAvailability())
+                .averageRating(new BigDecimal("0.0"))
+                .reviewCount(0)
+                .build();
+
+        em.persist(productEntity);
+        em.flush();
+        final var newProductId = productEntity.getProductId();
+
+        for (int i = 0; i < spec.getGalleryImageUrls().size(); i++) {
+            final var url = spec.getGalleryImageUrls().get(i);
+
+            final var galleryImage = ProductImageEntity.builder()
+                    .productId(newProductId)
+                    .sortOrder(i + 1)
+                    .imageUsage(ProductImageEntity.ImageUsage.GALLERY)
+                    .imageUrl(url)
+                    .altText(spec.getName())
+                    .build();
+
+            em.persist(galleryImage);
+        }
+
+        for (int i = 0; i < spec.getDescriptionImageUrls().size(); i++) {
+            final var url = spec.getDescriptionImageUrls().get(i);
+
+            final var descImage = ProductImageEntity.builder()
+                    .productId(newProductId)
+                    .sortOrder(i + 1)
+                    .imageUsage(ProductImageEntity.ImageUsage.DESCRIPTION)
+                    .imageUrl(url)
+                    .altText(spec.getName())
+                    .build();
+
+            em.persist(descImage);
+        }
+
+        em.flush();
+
+        final var detail = ProductDetail.builder()
+                .id(newProductId)
+                .manufacturerName(spec.getManufacturerName())
+                .isImported(spec.getIsImported())
+                .importCountry(spec.getImportCountry())
+                .galleryImageUrls(spec.getGalleryImageUrls())
+                .descriptionImageUrls(spec.getDescriptionImageUrls())
+                .build();
+
+        final var summary = ProductSummary.builder()
+                .id(newProductId)
+                .categoryId(categoryId)
+                .sku(spec.getSku())
+                .name(spec.getName())
+                .unitPriceAmount(spec.getUnitPriceAmount())
+                .salePriceAmount(spec.getSalePriceAmount())
+                .stockQty(spec.getStockQty())
+                .status(ProductSummary.Status.valueOf(spec.getStatus().name()))
+                .availability(ProductSummary.Availability.valueOf(spec.getAvailability().name()))
+                .averageRating(0.0d)
+                .reviewCount(0)
+                .thumbnailUrl(
+                        spec.getGalleryImageUrls().isEmpty()
+                                ? null
+                                : spec.getGalleryImageUrls().getFirst()
+                )
+                .build();
+
+        return ProductResult.builder()
+                .productDetail(detail)
+                .productSummary(summary)
+                .build();
     }
 
     // ===== Helpers =====

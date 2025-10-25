@@ -3,6 +3,7 @@ package com.knockbook.backend.controller;
 import com.knockbook.backend.domain.ProductReviewSortBy;
 import com.knockbook.backend.domain.ProductSortBy;
 import com.knockbook.backend.domain.SortOrder;
+import com.knockbook.backend.domain.ProductCreateSpec;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.ProductService;
 import jakarta.validation.Valid;
@@ -330,5 +331,57 @@ public class ProductController {
                 .build();
 
         return ResponseEntity.ok(body);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PostMapping("/admin/{userId}")
+    public ResponseEntity<ProductDetailDTO> createProduct(
+            @PathVariable("userId") String userId,
+            @RequestBody @Valid CreateProductRequest req
+    ) {
+        final var uid = Long.parseLong(userId);
+
+        final var spec = ProductCreateSpec.builder()
+                .categoryCode(req.getCategoryCode())
+                .sku(req.getSku())
+                .name(req.getName())
+                .stockQty(req.getStockQty())
+                .unitPriceAmount(req.getUnitPriceAmount())
+                .salePriceAmount(req.getSalePriceAmount())
+                .manufacturerName(req.getManufacturerName())
+                .isImported(req.getIsImported())
+                .importCountry(req.getImportCountry())
+                .releasedAt(req.getReleasedAt())
+                .status(req.getStatus())
+                .availability(req.getAvailability())
+                .galleryImageUrls(req.getGalleryImageUrls())
+                .descriptionImageUrls(req.getDescriptionImageUrls())
+                .build();
+
+        final var result = productService.createProduct(uid, spec);
+
+        result.getProductSummary().setWishedByMe(null);
+
+        final var summary = result.getProductSummary();
+        final var detail = result.getProductDetail();
+
+        final var product = ProductDetailDTO.builder()
+                .productId(summary.getId().toString())
+                .name(summary.getName())
+                .unitPriceAmount(summary.getUnitPriceAmount())
+                .salePriceAmount(summary.getSalePriceAmount())
+                .manufacturerName(detail.getManufacturerName())
+                .isImported(detail.getIsImported())
+                .importCountry(detail.getImportCountry())
+                .averageRating(summary.getAverageRating())
+                .reviewCount(summary.getReviewCount())
+                .stockQty(summary.getStockQty())
+                .wishedByMe(summary.getWishedByMe())
+                .galleryImageUrls(detail.getGalleryImageUrls())
+                .descriptionImageUrls(detail.getDescriptionImageUrls())
+                .build();
+
+        final var location = URI.create("/products/" + result.getProductSummary().getId());
+        return ResponseEntity.created(location).body(product);
     }
 }

@@ -1,5 +1,6 @@
 package com.knockbook.backend.repository;
 
+import com.knockbook.backend.domain.ProductCreateSpec;
 import com.knockbook.backend.domain.ProductResult;
 import com.knockbook.backend.domain.ProductSummary;
 import org.springframework.data.domain.Page;
@@ -19,4 +20,6 @@ public interface ProductRepository {
     Optional<ProductResult> findProductById(
             Long productId
     );
+
+    ProductResult createProduct(ProductCreateSpec spec);
 }

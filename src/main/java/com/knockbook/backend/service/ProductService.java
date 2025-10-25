@@ -130,4 +130,9 @@ public class ProductService {
     ) {
         return productWishRepository.findWishlist(userId);
     }
+
+    @Transactional
+    public ProductResult createProduct(Long userId, ProductCreateSpec spec) {
+        return productRepository.createProduct(spec);
+    }
 }
