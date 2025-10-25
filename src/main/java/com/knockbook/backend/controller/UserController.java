@@ -29,7 +29,7 @@ public class UserController {
                         .id(user.getId().toString())
                         .email(user.getEmail())
                         .displayName(user.getDisplayName())
-                        .avartarUrl(user.getAvatarUrl())
+                        .avatarUrl(user.getAvatarUrl())
                         .mbti(user.getMbti())
                         .bio(user.getBio())
                         .favoriteBookCategories(user.getFavoriteBookCategories())
