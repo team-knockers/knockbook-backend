@@ -4,6 +4,7 @@ import com.knockbook.backend.domain.LoungePost;
 import com.knockbook.backend.domain.LoungePostSummary;
 import com.knockbook.backend.entity.LoungePostEntity;
 import com.knockbook.backend.entity.QLoungePostEntity;
+import com.knockbook.backend.exception.PostNotFoundException;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -126,6 +127,20 @@ public class LoungePostRepositoryImpl implements LoungePostRepository{
         final var totalItems = total == null ? 0L : total;
 
         return new PageImpl<>(content, pageable, totalItems);
+    }
+
+    @Override
+    public void deleteByIdAndUserId(Long postId, Long userId) {
+        final var entity = query.selectFrom(qPost)
+                .where(qPost.id.eq(postId)
+                        .and(qPost.userId.eq(userId)))
+                .fetchOne();
+
+        if (entity != null) {
+            em.remove(entity);
+        } else {
+            throw new PostNotFoundException(String.valueOf(postId));
+        }
     }
 
     private OrderSpecifier<?>[] toOrderSpecifiers(Sort sort) {

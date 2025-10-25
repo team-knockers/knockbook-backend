@@ -95,6 +95,7 @@ public class LoungePostController {
         // 3) Map domain object to DTO
         final var response = GetLoungePostDetailsResponse.builder()
                 .id(String.valueOf(postDetails.getId()))
+                .userId(String.valueOf(postDetails.getUserId()))
                 .displayName(postDetails.getDisplayName())
                 .avatarUrl(postDetails.getAvatarUrl())
                 .bio(postDetails.getBio())
@@ -294,6 +295,17 @@ public class LoungePostController {
 
         // 5) Return response
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // API-LOUNGE-12: Delete a lounge post
+    @PreAuthorize("#userId == authentication.name")
+    @DeleteMapping("/{userId}/posts/{postId}")
+    public ResponseEntity<Void> deleteLoungePost(
+            @PathVariable String userId,
+            @PathVariable String postId
+    ) {
+        loungePostService.hardDeletePost(Long.valueOf(postId), Long.valueOf(userId));
+        return ResponseEntity.noContent().build();
     }
 
     // Helper: Change Instant to LocalDate

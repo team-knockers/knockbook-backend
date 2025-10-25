@@ -23,4 +23,9 @@ public interface LoungePostRepository {
      * Find posts with pagination.
      */
     Page<LoungePostSummary> findPostsByPageable(final Pageable pageable);
+
+    /**
+     * Hard delete a lounge post entity.
+     */
+    void deleteByIdAndUserId(Long postId, Long userId);
 }
