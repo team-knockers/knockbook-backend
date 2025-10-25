@@ -17,7 +17,7 @@ public class UserResponse {
     private String email;
     @NotBlank
     private String displayName;
-    private String avartarUrl;
+    private String avatarUrl;
     private String mbti;
     private String bio;
     private List<String> favoriteBookCategories;
