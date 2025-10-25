@@ -2,13 +2,16 @@ package com.knockbook.backend.controller;
 
 import com.knockbook.backend.domain.User;
 import com.knockbook.backend.dto.ChangePasswordRequest;
+import com.knockbook.backend.dto.UploadAvatarResponse;
 import com.knockbook.backend.dto.VerifyPasswordRequest;
 import com.knockbook.backend.dto.UserResponse;
 import com.knockbook.backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -76,5 +79,16 @@ public class UserController {
     ) {
         userService.verifyPassword(Long.valueOf(userId), req.getPassword());
         return ResponseEntity.noContent().build(); // 204
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PostMapping(path="/{userId}/avatar", consumes= MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UploadAvatarResponse> uploadAvatar(
+            @PathVariable String userId,
+            @RequestPart("file") MultipartFile file) {
+        final var url = userService.uploadAvatar(Long.valueOf(userId), file);
+        final var dto = UploadAvatarResponse.builder()
+                .avatarUrl(url).build();
+        return ResponseEntity.ok(dto);
     }
 }
