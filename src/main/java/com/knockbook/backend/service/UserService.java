@@ -1,5 +1,6 @@
 package com.knockbook.backend.service;
 
+import com.knockbook.backend.component.ImgbbUploader;
 import com.knockbook.backend.domain.User;
 import com.knockbook.backend.exception.CredentialNotFoundException;
 import com.knockbook.backend.exception.IdentityNotFoundException;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +24,7 @@ public class UserService {
     final private IdentityRepository identityRepository;
     final private CredentialRepository credentialRepository;
     final private CouponService couponService;
+    final private ImgbbUploader imgbbUploader;
 
     @Transactional
     public User registerUser(final String email,
@@ -81,5 +84,16 @@ public class UserService {
 
     public void updateProfile(final User patch) {
         userRepository.update(patch);
+    }
+
+    @Transactional
+    public String uploadAvatar(Long userId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("EMPTY_FILE");
+        }
+        final String url = imgbbUploader.upload(file);
+        userRepository.update(User.builder()
+                .id(userId).avatarUrl(url).build());
+        return url;
     }
 }
