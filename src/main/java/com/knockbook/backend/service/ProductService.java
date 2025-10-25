@@ -135,4 +135,9 @@ public class ProductService {
     public ProductResult createProduct(Long userId, ProductCreateSpec spec) {
         return productRepository.createProduct(spec);
     }
+
+    @Transactional
+    public ProductResult updateProduct(Long userId, Long productId, ProductUpdateSpec spec) {
+        return productRepository.updateProduct(productId, spec);
+    }
 }

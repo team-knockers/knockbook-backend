@@ -1,9 +1,6 @@
 package com.knockbook.backend.repository;
 
-import com.knockbook.backend.domain.ProductCreateSpec;
-import com.knockbook.backend.domain.ProductDetail;
-import com.knockbook.backend.domain.ProductResult;
-import com.knockbook.backend.domain.ProductSummary;
+import com.knockbook.backend.domain.*;
 import com.knockbook.backend.entity.*;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
@@ -323,6 +320,102 @@ public class ProductRepositoryImpl implements ProductRepository {
                                 ? null
                                 : spec.getGalleryImageUrls().getFirst()
                 )
+                .build();
+
+        return ProductResult.builder()
+                .productDetail(detail)
+                .productSummary(summary)
+                .build();
+    }
+
+    @Override
+    public ProductResult updateProduct(Long productId, ProductUpdateSpec spec) {
+
+        final var existing = em.find(ProductEntity.class, productId);
+        if (existing == null || existing.getDeletedAt() != null) {
+            throw new IllegalArgumentException("Product not found or deleted: " + productId);
+        }
+
+    final var patchedEntity = ProductEntity.builder()
+                .productId(existing.getProductId())
+                .categoryId(existing.getCategoryId())
+                .sku(existing.getSku())
+                .name(existing.getName())
+                .stockQty(spec.getStockQty() != null ? spec.getStockQty() : existing.getStockQty())
+                .unitPriceAmount(spec.getUnitPriceAmount() != null ? spec.getUnitPriceAmount() : existing.getUnitPriceAmount())
+                .salePriceAmount(spec.getSalePriceAmount() != null ? spec.getSalePriceAmount() : existing.getSalePriceAmount())
+                .manufacturerName(existing.getManufacturerName())
+                .isImported(existing.getIsImported())
+                .importCountry(existing.getImportCountry())
+                .createdAt(existing.getCreatedAt())
+                .updatedAt(existing.getUpdatedAt())
+                .deletedAt(existing.getDeletedAt())
+                .releasedAt(existing.getReleasedAt())
+                .status(spec.getStatus() != null ? spec.getStatus() : existing.getStatus())
+                .availability(spec.getAvailability() != null ? spec.getAvailability() : existing.getAvailability())
+                .averageRating(existing.getAverageRating())
+                .reviewCount(existing.getReviewCount())
+                .build();
+
+        final var merged = em.merge(patchedEntity);
+        em.flush();
+
+        final var refreshed = em.find(ProductEntity.class, merged.getProductId());
+
+        final var galleryUrls = query
+                .select(QProductImageEntity.productImageEntity.imageUrl)
+                .from(QProductImageEntity.productImageEntity)
+                .where(
+                        QProductImageEntity.productImageEntity.productId.eq(productId)
+                                .and(QProductImageEntity.productImageEntity.imageUsage.eq(ProductImageEntity.ImageUsage.GALLERY))
+                )
+                .orderBy(QProductImageEntity.productImageEntity.sortOrder.asc())
+                .fetch();
+
+        final var descriptionUrls = query
+                .select(QProductImageEntity.productImageEntity.imageUrl)
+                .from(QProductImageEntity.productImageEntity)
+                .where(
+                        QProductImageEntity.productImageEntity.productId.eq(productId)
+                                .and(QProductImageEntity.productImageEntity.imageUsage.eq(ProductImageEntity.ImageUsage.DESCRIPTION))
+                )
+                .orderBy(QProductImageEntity.productImageEntity.sortOrder.asc())
+                .fetch();
+
+        final var detail = ProductDetail.builder()
+                .id(refreshed.getProductId())
+                .manufacturerName(refreshed.getManufacturerName())
+                .isImported(refreshed.getIsImported())
+                .importCountry(refreshed.getImportCountry())
+                .galleryImageUrls(galleryUrls)
+                .descriptionImageUrls(descriptionUrls)
+                .build();
+
+        final var summary = ProductSummary.builder()
+                .id(refreshed.getProductId())
+                .categoryId(refreshed.getCategoryId())
+                .sku(refreshed.getSku())
+                .name(refreshed.getName())
+                .unitPriceAmount(refreshed.getUnitPriceAmount())
+                .salePriceAmount(refreshed.getSalePriceAmount())
+                .stockQty(refreshed.getStockQty())
+                .status(
+                        refreshed.getStatus() == null ? null
+                                : ProductSummary.Status.valueOf(refreshed.getStatus().name())
+                )
+                .availability(
+                        refreshed.getAvailability() == null ? null
+                                : ProductSummary.Availability.valueOf(refreshed.getAvailability().name())
+                )
+                .averageRating(
+                        refreshed.getAverageRating() == null
+                                ? 0.0d
+                                : refreshed.getAverageRating()
+                                .setScale(1, java.math.RoundingMode.HALF_UP)
+                                .doubleValue()
+                )
+                .reviewCount(refreshed.getReviewCount())
+                .thumbnailUrl(galleryUrls.isEmpty() ? null : galleryUrls.getFirst())
                 .build();
 
         return ProductResult.builder()

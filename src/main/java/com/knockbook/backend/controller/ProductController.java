@@ -1,9 +1,6 @@
 package com.knockbook.backend.controller;
 
-import com.knockbook.backend.domain.ProductReviewSortBy;
-import com.knockbook.backend.domain.ProductSortBy;
-import com.knockbook.backend.domain.SortOrder;
-import com.knockbook.backend.domain.ProductCreateSpec;
+import com.knockbook.backend.domain.*;
 import com.knockbook.backend.dto.*;
 import com.knockbook.backend.service.ProductService;
 import jakarta.validation.Valid;
@@ -383,5 +380,47 @@ public class ProductController {
 
         final var location = URI.create("/products/" + result.getProductSummary().getId());
         return ResponseEntity.created(location).body(product);
+    }
+
+    @PreAuthorize("#userId == authentication.name")
+    @PatchMapping("/admin/{userId}/{productId}")
+    public ResponseEntity<ProductDetailDTO> updateProduct(
+            @PathVariable("userId") String userId,
+            @PathVariable("productId") Long productId,
+            @RequestBody @Valid UpdateProductRequest req
+    ) {
+        final var uid = Long.parseLong(userId);
+
+        final var spec = ProductUpdateSpec.builder()
+                .unitPriceAmount(req.getUnitPriceAmount())
+                .salePriceAmount(req.getSalePriceAmount())
+                .stockQty(req.getStockQty())
+                .status(req.getStatus())
+                .availability(req.getAvailability())
+                .build();
+
+        final var result = productService.updateProduct(uid, productId, spec);
+
+        result.getProductSummary().setWishedByMe(null);
+        final var summary = result.getProductSummary();
+        final var detail = result.getProductDetail();
+
+        final var dto = ProductDetailDTO.builder()
+                .productId(summary.getId().toString())
+                .name(summary.getName())
+                .unitPriceAmount(summary.getUnitPriceAmount())
+                .salePriceAmount(summary.getSalePriceAmount())
+                .manufacturerName(detail.getManufacturerName())
+                .isImported(detail.getIsImported())
+                .importCountry(detail.getImportCountry())
+                .averageRating(summary.getAverageRating())
+                .reviewCount(summary.getReviewCount())
+                .stockQty(summary.getStockQty())
+                .wishedByMe(summary.getWishedByMe()) // null 내려감
+                .galleryImageUrls(detail.getGalleryImageUrls())
+                .descriptionImageUrls(detail.getDescriptionImageUrls())
+                .build();
+
+        return ResponseEntity.ok(dto);
     }
 }
