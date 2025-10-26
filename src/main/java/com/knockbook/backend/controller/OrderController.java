@@ -135,8 +135,8 @@ public class OrderController {
         return ResponseEntity.ok(dto);
     }
 
-    @PatchMapping("/{orderId}/status")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
+    @PatchMapping("/{orderId}/status")
     public ResponseEntity<OrderResponse> updateStatuses(
             @PathVariable final String userId,
             @PathVariable final String orderId,
