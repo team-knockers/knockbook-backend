@@ -13,6 +13,7 @@ import java.util.List;
 public class User {
 
     public enum Status { ACTIVE, PENDING, LOCKED }
+    public enum Role { USER, ADMIN, MODERATOR }
 
     private Long id;
     private String email;
@@ -20,6 +21,7 @@ public class User {
     private String avatarUrl;
     private String mbti;
     private String bio;
+    private Role role;
     private List<String> favoriteBookCategories;
     private Status status;
 }
