@@ -72,9 +72,10 @@ public class LocalAuthController {
         final var registrationToken = req.getRegistrationToken();
         final var subject = localAuthService.getSubjectFromRegistrationToken(registrationToken);
         final var user = userService.registerUser(subject, req.getPassword(), req.getDisplayName());
+        final var role = user.getRole().name();
 
         // issues refresh and access token
-        final var tokens = tokenService.issueTokens(user.getId().toString());
+        final var tokens = tokenService.issueTokens(subject, role);
 
         // set refresh token as HttpOnly cookie
         final var cookieName = TokenService.refreshTokenCookieName;
@@ -100,7 +101,8 @@ public class LocalAuthController {
             throws JOSEException {
         final var user = userService.getUser(req.getEmail(), req.getPassword());
         final var subject = user.getId().toString();
-        final var tokens = tokenService.issueTokens(subject);
+        final var role = user.getRole().name();
+        final var tokens = tokenService.issueTokens(subject, role);
 
         // set refresh token as HttpOnly cookie
         final var cookieName = TokenService.refreshTokenCookieName;
