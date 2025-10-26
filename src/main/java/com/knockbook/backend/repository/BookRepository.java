@@ -17,6 +17,8 @@ public interface BookRepository {
      */
     Book save(final Book book);
 
+    Page<Book> findAllPaged(Pageable pageable);
+
     /**
      * Find a book by its ID.
      */

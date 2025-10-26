@@ -1,14 +1,14 @@
 package com.knockbook.backend.repository;
 
-import com.knockbook.backend.domain.ProductCreateSpec;
-import com.knockbook.backend.domain.ProductResult;
-import com.knockbook.backend.domain.ProductSummary;
-import com.knockbook.backend.domain.ProductUpdateSpec;
+import com.knockbook.backend.domain.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 
 public interface ProductRepository {
+
+    Page<Product> findAllPaged(Pageable pageable);
+
     Page<ProductSummary> findProductSummaries(
             String category,
             String searchKeyword,

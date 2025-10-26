@@ -1,5 +1,6 @@
 package com.knockbook.backend.entity;
 
+import com.knockbook.backend.domain.Product;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -75,4 +76,27 @@ public class ProductEntity {
     @Builder.Default
     @Column(name = "review_count", nullable = false)
     private Integer reviewCount = 0;
+
+    public Product toDomain() {
+        return Product.builder()
+                .productId(productId)
+                .categoryId(categoryId)
+                .sku(sku)
+                .name(name)
+                .stockQty(stockQty)
+                .unitPriceAmount(unitPriceAmount)
+                .salePriceAmount(salePriceAmount)
+                .manufacturerName(manufacturerName)
+                .isImported(isImported)
+                .importCountry(importCountry)
+                .createdAt(createdAt)
+                .updatedAt(updatedAt)
+                .deletedAt(deletedAt)
+                .releasedAt(releasedAt)
+                .status(Product.Status.valueOf(status.name()))
+                .availability(Product.Availability.valueOf(availability.name()))
+                .averageRating(averageRating)
+                .reviewCount(reviewCount)
+                .build();
+    }
 }

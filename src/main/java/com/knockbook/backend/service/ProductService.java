@@ -11,6 +11,7 @@ import com.knockbook.backend.repository.ProductWishRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,11 @@ public class ProductService {
     private final ProductReviewRepository productReviewRepository;
     private final ProductInquiryRepository productInquiryRepository;
     private final ProductWishRepository productWishRepository;
+
+    public Page<Product> getAllPaged(int page, int size) {
+        final var pageRequest = PageRequest.of(page - 1, size);
+        return productRepository.findAllPaged(pageRequest); // 1-based -> 0-based
+    }
 
     public Page<ProductSummary> getProductList(
             String category,

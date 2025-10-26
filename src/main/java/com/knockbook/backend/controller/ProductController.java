@@ -6,6 +6,7 @@ import com.knockbook.backend.service.ProductService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -417,5 +418,15 @@ public class ProductController {
                 .build();
 
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN','MODERATOR')")
+    public ResponseEntity<Page<ListProductsResponse>> listProducts(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        final var domains = productService.getAllPaged(page, size);
+        final var dtos = domains.map(ListProductsResponse::fromDomain);
+        return ResponseEntity.ok(dtos);
     }
 }
