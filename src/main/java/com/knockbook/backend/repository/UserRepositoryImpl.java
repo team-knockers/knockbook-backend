@@ -3,7 +3,6 @@ package com.knockbook.backend.repository;
 import com.knockbook.backend.domain.User;
 import com.knockbook.backend.entity.*;
 import com.knockbook.backend.exception.UserNotFoundException;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -53,16 +52,7 @@ public class UserRepositoryImpl implements UserRepository {
                 .where(qFavoriteCode.userId.eq(id))
                 .fetch();
 
-        final var user = User.builder()
-                .id(userEntity.getId())
-                .email(userEntity.getEmail())
-                .displayName(userEntity.getDisplayName())
-                .avatarUrl(userEntity.getAvatarUrl())
-                .mbti(userEntity.getMbti())
-                .bio(userEntity.getBio())
-                .favoriteBookCategories(favoriteCodes)
-                .status(User.Status.valueOf(userEntity.getStatus().name()))
-                .build();
+        final var user = userEntity.toDomain(favoriteCodes);
 
         return Optional.of(user);
     }

@@ -1,9 +1,11 @@
 package com.knockbook.backend.entity;
 
+import com.knockbook.backend.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -14,6 +16,7 @@ import java.time.Instant;
 public class UserEntity {
 
     public enum Status {ACTIVE, PENDING, LOCKED}
+    public enum Role {USER, ADMIN, MODERATOR}
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,6 +35,14 @@ public class UserEntity {
     @Column(name = "mbti", length = 4)
     private String mbti;
 
+    @Column(name = "bio", length = 160)
+    private String bio;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    @Builder.Default
+    private Role role = Role.USER;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private Status status;
@@ -45,6 +56,17 @@ public class UserEntity {
     @Column(name = "deleted_at", insertable = false, updatable = true)
     private Instant deletedAt;
 
-    @Column(name = "bio", length = 160)
-    private String bio;
+    public User toDomain(List<String> favoriteCategories) {
+        return User.builder()
+                .id(id)
+                .email(email)
+                .displayName(displayName)
+                .avatarUrl(avatarUrl)
+                .mbti(mbti)
+                .role(User.Role.valueOf(role.name()))
+                .bio(bio)
+                .favoriteBookCategories(favoriteCategories)
+                .status(User.Status.valueOf(status.name()))
+                .build();
+    }
 }

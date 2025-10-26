@@ -27,16 +27,8 @@ public class UserController {
     public ResponseEntity<UserResponse> getUser(
             @PathVariable("userId") String userId) {
         final var user = userService.getUser(Long.valueOf(userId));
-        return ResponseEntity.ok()
-                .body(UserResponse.builder()
-                        .id(user.getId().toString())
-                        .email(user.getEmail())
-                        .displayName(user.getDisplayName())
-                        .avatarUrl(user.getAvatarUrl())
-                        .mbti(user.getMbti())
-                        .bio(user.getBio())
-                        .favoriteBookCategories(user.getFavoriteBookCategories())
-                        .build());
+        final var dto = UserResponse.fromDomain(user);
+        return ResponseEntity.ok().body(dto);
     }
 
     @PreAuthorize("#userId == authentication.name")
