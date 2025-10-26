@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -56,8 +57,14 @@ public class AccessTokenFilter extends OncePerRequestFilter {
         try {
             final var claims = jwtComponent.parseJWS(jws, JWTComponent.Audience.ACCESS_TOKEN_HANDLER);
             final var subject = claims.getSubject();
+            final var role = new GrantedAuthority() {
+                @Override
+                public String getAuthority() {
+                    return claims.getClaim("role").toString();
+                }
+            };
 
-            final var auth = new UsernamePasswordAuthenticationToken(subject, null, List.of());
+            final var auth = new UsernamePasswordAuthenticationToken(subject, null, List.of(role));
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
 

@@ -412,10 +412,9 @@ public class BookController {
     }
 
     // API-BOOKS-16 - Create a new book
-    @PreAuthorize("#userId == authentication.name")
-    @PostMapping("/{userId}/books")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
+    @PostMapping
     public ResponseEntity<GetBookDetailsResponse> createBook(
-            @PathVariable("userId") String userId,
             @RequestBody @Valid BookCreateRequest request
     ) {
         final var book = BookDtoMapper.toDomainForCreate(request);
@@ -427,10 +426,9 @@ public class BookController {
     }
 
     // API-BOOKS-17 - Update an existing book
-    @PreAuthorize("#userId == authentication.name")
-    @PatchMapping("/{userId}/{bookId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
+    @PatchMapping("/{bookId}")
     public ResponseEntity<GetBookDetailsResponse> updateBook(
-            @PathVariable("userId") String userId,
             @PathVariable String bookId,
             @RequestBody BookUpdateRequest request
     ) {

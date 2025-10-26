@@ -330,14 +330,11 @@ public class ProductController {
         return ResponseEntity.ok(body);
     }
 
-    @PreAuthorize("#userId == authentication.name")
-    @PostMapping("/admin/{userId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
+    @PostMapping()
     public ResponseEntity<ProductDetailDTO> createProduct(
-            @PathVariable("userId") String userId,
             @RequestBody @Valid CreateProductRequest req
     ) {
-        final var uid = Long.parseLong(userId);
-
         final var spec = ProductCreateSpec.builder()
                 .categoryCode(req.getCategoryCode())
                 .sku(req.getSku())
@@ -355,7 +352,7 @@ public class ProductController {
                 .descriptionImageUrls(req.getDescriptionImageUrls())
                 .build();
 
-        final var result = productService.createProduct(uid, spec);
+        final var result = productService.createProduct(spec);
 
         result.getProductSummary().setWishedByMe(null);
 
@@ -382,14 +379,12 @@ public class ProductController {
         return ResponseEntity.created(location).body(product);
     }
 
-    @PreAuthorize("#userId == authentication.name")
-    @PatchMapping("/admin/{userId}/{productId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
+    @PatchMapping("/{productId}")
     public ResponseEntity<ProductDetailDTO> updateProduct(
-            @PathVariable("userId") String userId,
             @PathVariable("productId") Long productId,
             @RequestBody @Valid UpdateProductRequest req
     ) {
-        final var uid = Long.parseLong(userId);
 
         final var spec = ProductUpdateSpec.builder()
                 .unitPriceAmount(req.getUnitPriceAmount())
@@ -399,7 +394,7 @@ public class ProductController {
                 .availability(req.getAvailability())
                 .build();
 
-        final var result = productService.updateProduct(uid, productId, spec);
+        final var result = productService.updateProduct(productId, spec);
 
         result.getProductSummary().setWishedByMe(null);
         final var summary = result.getProductSummary();

@@ -33,11 +33,11 @@ public class TokenService {
     public static final Duration refreshTokenValidPeriod = Duration.ofHours(12);
     public static final String refreshTokenCookieName = "refresh_token";
 
-    public TokenResult issueTokens(final String subject)
+    public TokenResult issueTokens(final String subject, final String role)
             throws JOSEException {
         return TokenResult.builder()
-                .accessToken(issueAccessToken(subject))
-                .refreshToken(issueRefreshToken(subject))
+                .accessToken(issueAccessToken(subject, role))
+                .refreshToken(issueRefreshToken(subject, role))
                 .build();
     }
 
@@ -46,9 +46,10 @@ public class TokenService {
         final var audience = JWTComponent.Audience.REFRESH_TOKEN_HANDLER;
         final var claims = jwtComponent.parseJWS(refreshToken, audience);
         final var subject = claims.getSubject();
+        final var role = claims.getClaim("role").toString();
         return TokenResult.builder()
-                .accessToken(issueAccessToken(subject))
-                .refreshToken(issueRefreshToken(subject))
+                .accessToken(issueAccessToken(subject, role))
+                .refreshToken(issueRefreshToken(subject, role))
                 .build();
     }
 
@@ -62,7 +63,7 @@ public class TokenService {
         }
     }
 
-    private String issueAccessToken(final String subject) throws JOSEException {
+    private String issueAccessToken(final String subject, final String role) throws JOSEException {
         final var now = Instant.now();
         final var expirationTime = now.plus(accessTokenValidPeriod);
         final var accessClaims = new JWTClaimsSet.Builder()
@@ -71,11 +72,12 @@ public class TokenService {
                 .issueTime(Date.from(now))
                 .expirationTime(Date.from(expirationTime))
                 .audience(JWTComponent.Audience.ACCESS_TOKEN_HANDLER.toString())
+                .claim("role", role)
                 .build();
         return jwtComponent.issueJWS(accessClaims);
     }
 
-    private String issueRefreshToken(final String subject) throws JOSEException {
+    private String issueRefreshToken(final String subject, final String role) throws JOSEException {
         final var now = Instant.now();
         final var expirationTime = now.plus(refreshTokenValidPeriod);
         final var refreshClaims = new JWTClaimsSet.Builder()
@@ -84,6 +86,7 @@ public class TokenService {
                 .issueTime(Date.from(now))
                 .expirationTime(Date.from(expirationTime))
                 .audience(JWTComponent.Audience.REFRESH_TOKEN_HANDLER.toString())
+                .claim("role", role)
                 .build();
         return jwtComponent.issueJWS(refreshClaims);
     }

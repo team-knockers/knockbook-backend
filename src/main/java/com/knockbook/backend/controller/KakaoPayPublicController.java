@@ -2,6 +2,7 @@ package com.knockbook.backend.controller;
 
 import com.knockbook.backend.service.KakaoPayService;
 import com.knockbook.backend.service.TokenService;
+import com.knockbook.backend.service.UserService;
 import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,7 @@ public class KakaoPayPublicController {
 
     private final KakaoPayService kakaoPayService;
     private final TokenService tokenService;
+    private final UserService userService;
 
     @Value("${app.frontend.base-url}")
     private String frontendBaseUrl;
@@ -32,8 +34,10 @@ public class KakaoPayPublicController {
             @RequestParam("pg_token") String pgToken) throws JOSEException {
 
         final var result = kakaoPayService.approve(orderId, pgToken);
-        final var userId = String.valueOf(result.getUserId());
-        final var tokens = tokenService.issueTokens(userId);
+        final var userId = result.getUserId();
+        final var role = userService.getUser(userId).getRole().name();
+        final var subject = String.valueOf(userId);
+        final var tokens = tokenService.issueTokens(subject, role);
 
         // set refresh token as HttpOnly cookie
         final var cookieName = TokenService.refreshTokenCookieName;
