@@ -8,6 +8,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -358,13 +359,15 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public List<OrderAggregate> findPaidByUser(Long userId) {
-        final var entities = qf
-                .selectFrom(qOrder)
-                .where(
-                        qOrder.userId.eq(userId),
-                        qOrder.paymentStatus.eq(com.knockbook.backend.entity.OrderEntity.PaymentStatus.PAID)
-                )
+    public List<OrderAggregate> findOrdersByUser(Long userId,
+                                                 OrderAggregate.PaymentStatus status) {
+
+        final OrderEntity.PaymentStatus ps = (status == null) ? null
+                : OrderEntity.PaymentStatus.valueOf(status.name());
+
+        final var entities = qf.selectFrom(qOrder)
+                .where(qOrder.userId.eq(userId),
+                        ps != null ? qOrder.paymentStatus.eq(ps) : null)
                 .orderBy(qOrder.id.desc())
                 .fetch();
 
@@ -377,8 +380,28 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
+    public List<OrderAggregate> findAllOrders(@Nullable OrderAggregate.PaymentStatus status) {
+        final OrderEntity.PaymentStatus ps = (status == null)
+                ? null
+                : OrderEntity.PaymentStatus.valueOf(status.name());
+
+        final var entities = qf.selectFrom(qOrder)
+                .where(ps != null ? qOrder.paymentStatus.eq(ps) : null)
+                .orderBy(qOrder.id.desc())
+                .fetch();
+
+        final var results = new ArrayList<OrderAggregate>(entities.size());
+        for (var e : entities) {
+            final var items = loadItems(e.getId());
+            results.add(e.toDomain(items));
+        }
+        return results;
+    }
+
+    @Override
     @Transactional
-    public OrderAggregate replaceDraftFromCart(OrderAggregate existing, List<CartItem> items, boolean resetDiscounts) {
+    public OrderAggregate replaceDraftFromCart(OrderAggregate existing, List<CartItem> items,
+                                               boolean resetDiscounts) {
         final var order = em.find(OrderEntity.class, existing.getId());
         if (order == null || !order.getUserId().equals(existing.getUserId())) {
             throw new IllegalStateException("ORDER_NOT_OWNED");

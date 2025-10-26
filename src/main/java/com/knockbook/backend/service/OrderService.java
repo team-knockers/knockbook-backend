@@ -76,8 +76,34 @@ public class OrderService {
     }
 
     @Transactional
-    public List<OrderAggregate> listPaidByUser(final Long userId) {
-        return orderRepository.findPaidByUser(userId);
+    public List<OrderAggregate> getOrdersByUser(final Long userId,
+                                                final String paymentStatus) {
+
+        OrderAggregate.PaymentStatus status = null;
+        if (paymentStatus != null && !paymentStatus.isBlank()) {
+            try {
+                status = OrderAggregate.PaymentStatus.valueOf(paymentStatus.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid paymentStatus");
+            }
+        }
+
+        return orderRepository.findOrdersByUser(userId, status);
+    }
+
+    @Transactional
+    public List<OrderAggregate> getAllOrders(final String paymentStatus) {
+
+        OrderAggregate.PaymentStatus status = null;
+        if (paymentStatus != null && !paymentStatus.isBlank()) {
+            try {
+                status = OrderAggregate.PaymentStatus.valueOf(paymentStatus.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid paymentStatus");
+            }
+        }
+
+        return orderRepository.findAllOrders(status);
     }
 
     @Transactional
