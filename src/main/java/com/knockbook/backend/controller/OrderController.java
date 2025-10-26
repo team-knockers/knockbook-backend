@@ -13,12 +13,12 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/users/{userId}/orders")
+@RequestMapping("/orders")
 public class OrderController {
 
     private final OrderService orderService;
 
-    @PostMapping("/draft-from-cart")
+    @PostMapping("/{userId}/draft-from-cart")
     @PreAuthorize("#userId == authentication.name")
     public ResponseEntity<OrderResponse> createDraftFromCart(
             @PathVariable final String userId,
@@ -30,7 +30,7 @@ public class OrderController {
         return ResponseEntity.ok(dto);
     }
 
-    @PostMapping("/draft")
+    @PostMapping("/{userId}/draft")
     @PreAuthorize("#userId == authentication.name")
     public ResponseEntity<OrderResponse> createDraftDirect(
             @PathVariable final String userId,
@@ -45,7 +45,7 @@ public class OrderController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/{orderId}")
+    @GetMapping("/{userId}/{orderId}")
     @PreAuthorize("#userId == authentication.name")
     public ResponseEntity<OrderResponse> getOrder(
             @PathVariable final String userId,
@@ -55,12 +55,13 @@ public class OrderController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/paid")
+    @GetMapping("/{userId}")
     @PreAuthorize("#userId == authentication.name")
-    public ResponseEntity<List<OrderResponse>> listPaidOrders(
-            @PathVariable final String userId) {
-
-        final var domains = orderService.listPaidByUser(Long.valueOf(userId));
+    public ResponseEntity<List<OrderResponse>> listOrders(
+            @PathVariable final String userId,
+            @RequestParam(required = false) String paymentStatus)
+    {
+        final var domains = orderService.getOrdersByUser(Long.valueOf(userId), paymentStatus);
         final var dtoList = domains.stream()
                 .map(OrderResponse::toResponse)
                 .toList();
@@ -68,7 +69,20 @@ public class OrderController {
         return ResponseEntity.ok(dtoList);
     }
 
-    @PostMapping("/{orderId}/coupon")
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
+    public ResponseEntity<List<OrderResponse>> listOrders(
+            @RequestParam(required = false) String paymentStatus)
+    {
+        final var domains = orderService.getAllOrders(paymentStatus);
+        final var dtoList = domains.stream()
+                .map(OrderResponse::toResponse)
+                .toList();
+
+        return ResponseEntity.ok(dtoList);
+    }
+
+    @PostMapping("/{userId}/{orderId}/coupon")
     @PreAuthorize("#userId == authentication.name")
     public ResponseEntity<OrderResponse> applyCoupon(
             @PathVariable final String userId,
@@ -83,7 +97,7 @@ public class OrderController {
         return ResponseEntity.ok(dto);
     }
 
-    @DeleteMapping("/{orderId}/coupon")
+    @DeleteMapping("/{userId}/{orderId}/coupon")
     @PreAuthorize("#userId == authentication.name")
     public ResponseEntity<OrderResponse> removeCoupon(
             @PathVariable final String userId,
@@ -95,7 +109,7 @@ public class OrderController {
         return ResponseEntity.ok(dto);
     }
 
-    @PostMapping("/{orderId}/points")
+    @PostMapping("/{userId}/{orderId}/points")
     @PreAuthorize("#userId == authentication.name")
     public ResponseEntity<OrderResponse> applyPoints(
             @PathVariable final String userId,
@@ -108,7 +122,7 @@ public class OrderController {
         return ResponseEntity.ok(dto);
     }
 
-    @DeleteMapping("/{orderId}/points")
+    @DeleteMapping("/{userId}/{orderId}/points")
     @PreAuthorize("#userId == authentication.name")
     public ResponseEntity<OrderResponse> removePoints(
             @PathVariable final String userId,
@@ -119,7 +133,7 @@ public class OrderController {
         return ResponseEntity.ok(dto);
     }
 
-    @PostMapping("/{orderId}/address")
+    @PostMapping("/{userId}/{orderId}/address")
     @PreAuthorize("#userId == authentication.name")
     public ResponseEntity<OrderResponse> applyAddress(
             @PathVariable final String userId,
@@ -136,7 +150,7 @@ public class OrderController {
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'MODERATOR')")
-    @PatchMapping("/{orderId}/status")
+    @PatchMapping("/{userId}/{orderId}/status")
     public ResponseEntity<OrderResponse> updateStatuses(
             @PathVariable final String userId,
             @PathVariable final String orderId,

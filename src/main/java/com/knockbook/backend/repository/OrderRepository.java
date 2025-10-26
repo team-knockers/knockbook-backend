@@ -22,21 +22,31 @@ public interface OrderRepository {
 
     Optional<OrderAggregate> findDraftById(final Long userId,
                                            final Long orderId);
+
     Optional<OrderAggregate> findPendingDraftByUser(final Long userId);
-    List<OrderAggregate> findPaidByUser(Long userId);
+
+    List<OrderAggregate> findOrdersByUser(final Long userId,
+                                          final OrderAggregate.PaymentStatus status);
+
+    // for payment approval
     Optional<OrderAggregate> findByIdAndUserIdForUpdate(final Long userId,
-                                                        final Long orderId); // for payment approval
+                                                        final Long orderId);
+
+    List<OrderAggregate> findAllOrders(final OrderAggregate.PaymentStatus status);
+
     Optional<OrderAggregate> findById(final Long orderId);
+
     Optional<OrderAggregate> findByIdForUpdate(final Long orderId);
 
     OrderAggregate replaceDraftFromCart(final OrderAggregate existing,
                                         final List<CartItem> items,
                                         final boolean resetDiscounts);
+
     OrderAggregate updateDraftAmountsAndCoupon(final OrderAggregate draft);
 
-    OrderAggregate updateStatusesOnly(Long userId, Long orderId,
-                                      OrderAggregate.Status statusOrNull,
-                                      OrderAggregate.RentalStatus rentalStatusOrNull);
+    OrderAggregate updateStatusesOnly(final Long userId, Long orderId,
+                                      final OrderAggregate.Status statusOrNull,
+                                      final OrderAggregate.RentalStatus rentalStatusOrNull);
 
-    List<OrderItem> findItemsByOrderId(Long orderId);
+    List<OrderItem> findItemsByOrderId(final Long orderId);
 }
