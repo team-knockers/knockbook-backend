@@ -66,6 +66,31 @@ public class BookRepositoryImpl implements BookRepository {
     }
 
     @Override
+    public Page<Book> findAllPaged(Pageable pageable) {
+        final var basePredicate = book.deletedAt.isNull();
+
+        final var entities = queryFactory
+                .selectFrom(book)
+                .where(basePredicate)
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(book.id.desc())
+                .fetch();
+
+        final Long total = queryFactory
+                .select(book.count())
+                .from(book)
+                .where(basePredicate)
+                .fetchOne();
+
+        final var content = entities.stream()
+                .map(BookEntityMapper::toDomain)
+                .toList();
+
+        return new PageImpl<>(content, pageable, total == null ? 0L : total);
+    }
+
+    @Override
     public Optional<Book> findById(Long id) {
         return Optional.ofNullable(em.find(BookEntity.class, id))
                 .map(BookEntityMapper::toDomain);

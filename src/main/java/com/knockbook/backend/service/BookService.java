@@ -12,6 +12,7 @@ import com.knockbook.backend.repository.BookReviewRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +41,11 @@ public class BookService {
 
     @Autowired
     private UserService userService;
+
+    public Page<Book> getAllPaged(int page, int size) {
+        final var pageRequest = PageRequest.of(page - 1, size);
+        return bookRepository.findAllPaged(pageRequest); // 1-based -> 0-based
+    }
 
     @Transactional
     public Book createBook(Book book) {

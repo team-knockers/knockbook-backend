@@ -31,6 +31,33 @@ public class ProductRepositoryImpl implements ProductRepository {
     private static final QProductWishlistEntity PW = QProductWishlistEntity.productWishlistEntity;
 
     @Override
+    public Page<Product> findAllPaged(Pageable pageable) {
+
+        final var predicate = P.deletedAt.isNull();
+        final var orderSpecifiers = toOrderSpecifiers(pageable, P);
+        final var entities = query
+                .selectFrom(P)
+                .where(predicate)
+                .orderBy(orderSpecifiers.toArray(OrderSpecifier[]::new))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        final Long total = query
+                .select(P.count())
+                .from(P)
+                .where(predicate)
+                .fetchOne();
+        final long totalElements = (total == null) ? 0L : total;
+
+        final var content = entities.stream()
+                .map(ProductEntity::toDomain)
+                .toList();
+
+        return new PageImpl<>(content, pageable, totalElements);
+    }
+
+    @Override
     public Page<ProductSummary> findProductSummaries(
             String category,
             String searchKeyword,
