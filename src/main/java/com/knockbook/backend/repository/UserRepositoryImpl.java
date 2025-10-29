@@ -31,6 +31,7 @@ public class UserRepositoryImpl implements UserRepository {
         return User.builder()
                 .id(userEntity.getId())
                 .email(userEntity.getEmail())
+                .role(User.Role.valueOf(userEntity.getRole().name()))
                 .displayName(userEntity.getDisplayName())
                 .build();
     }

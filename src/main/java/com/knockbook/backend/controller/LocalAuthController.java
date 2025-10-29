@@ -75,7 +75,7 @@ public class LocalAuthController {
         final var role = user.getRole().name();
 
         // issues refresh and access token
-        final var tokens = tokenService.issueTokens(subject, role);
+        final var tokens = tokenService.issueTokens(user.getId().toString(), role);
 
         // set refresh token as HttpOnly cookie
         final var cookieName = TokenService.refreshTokenCookieName;
