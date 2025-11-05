@@ -35,7 +35,7 @@ public class ProductController {
             @RequestParam @Min(1) int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String order
-            ) {
+    ) {
         final long userIdLong = Long.parseLong(userId);
 
         // Step 1: Normalize paging inputs
@@ -88,7 +88,7 @@ public class ProductController {
     public ResponseEntity<ProductDetailDTO> getProductDetail(
             @PathVariable("productId") Long productId,
             @PathVariable("userId") String userId
-    ){
+    ) {
         final long userIdLong = Long.parseLong(userId);
 
         // Step 1: Call the service
@@ -126,7 +126,7 @@ public class ProductController {
             @RequestParam(defaultValue = "desc") String order,
             @RequestParam @Min(1) int page,
             @RequestParam @Min(1) int size
-    ){
+    ) {
         final long userIdLong = Long.parseLong(userId);
 
         final var safePage = Math.max(1, page) - 1;
@@ -205,11 +205,9 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("#userId == authentication.name")
-    @GetMapping("/{productId}/inquiries/{userId}")
+    @GetMapping("/{productId}/inquiries")
     public ResponseEntity<GetProductInquiriesResponse> getProductInquiries(
             @PathVariable("productId") Long productId,
-            @PathVariable("userId") String userId,
             @RequestParam @Min(1) int page,
             @RequestParam @Min(1) int size
     ) {
