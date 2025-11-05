@@ -1,5 +1,6 @@
 # ---- build stage ----
-FROM openjdk:21-jdk-bookworm AS build
+# FROM openjdk:21-jdk-bookworm AS build
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /workspace
 
 # Gradle cache optimization
