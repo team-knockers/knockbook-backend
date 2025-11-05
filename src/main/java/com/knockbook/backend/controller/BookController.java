@@ -30,10 +30,8 @@ public class BookController {
     private BookService bookService;
 
     // API-BOOKS-01 - Retrieve paginated book summaries for a user with optional filters and sorting
-    @PreAuthorize("#userId == authentication.name")
-    @GetMapping(path = "/{userId}")
+    @GetMapping("/summaries")
     public ResponseEntity<GetBooksSummaryResponse> getBooksSummary(
-            @PathVariable("userId") String userId,
             @RequestParam("category") String category,
             @RequestParam("subcategory") String subcategory,
             @RequestParam("page") @Min(value = 1) int page,
@@ -75,10 +73,8 @@ public class BookController {
     }
 
     // API-BOOKS-02 - Retrieve detailed information for a specific book
-    @PreAuthorize("#userId == authentication.name")
-    @GetMapping(path = "/{userId}/{bookId}")
+    @GetMapping(path = "/{bookId}")
     public ResponseEntity<GetBookDetailsResponse> getBookDetails(
-            @PathVariable("userId") String userId,
             @PathVariable("bookId") String bookId
     ) {
         // 1) Convert input ID (String -> Long)
@@ -160,10 +156,8 @@ public class BookController {
     }
 
     // API-BOOKS-04 - Retrieve aggregated review statistics for a specific book
-    @PreAuthorize("#userId == authentication.name")
-    @GetMapping("/{userId}/{bookId}/reviews/statistics")
+    @GetMapping("/{bookId}/reviews/statistics")
     public ResponseEntity<GetBookReviewStatisticsResponse> getBookReviewStatistics(
-            @PathVariable("userId") String userId,
             @PathVariable("bookId") String bookId
     ) {
         // 1) Fetch aggregated statistics from service
@@ -211,26 +205,22 @@ public class BookController {
 
     // API-BOOKS-05 - Like a specific review for the current user
     @PreAuthorize("#userId == authentication.name")
-    @PutMapping("/{userId}/{bookId}/reviews/{reviewId}/likes")
+    @PutMapping("/{userId}/reviews/{reviewId}/likes")
     public ResponseEntity<BookReviewsLikeResponse> likeReview(
             @PathVariable String userId,
-            @PathVariable String bookId,
             @PathVariable String reviewId
     ) {
-
         var response = bookService.likeReview(Long.valueOf(userId), Long.valueOf(reviewId));
         return ResponseEntity.ok(response);
     }
 
     // API-BOOKS-06 - Remove a like from a specific review for the current user
     @PreAuthorize("#userId == authentication.name")
-    @DeleteMapping("/{userId}/{bookId}/reviews/{reviewId}/likes")
+    @DeleteMapping("/{userId}/reviews/{reviewId}/likes")
     public ResponseEntity<Void> unlikeReview(
             @PathVariable String userId,
-            @PathVariable String bookId,
             @PathVariable String reviewId
     ) {
-
         bookService.unlikeReview(Long.valueOf(userId), Long.valueOf(reviewId));
         return ResponseEntity.noContent().build();
     }
@@ -300,11 +290,8 @@ public class BookController {
     }
 
     // API-BOOKS-11 - Retrieve all book categories
-    @PreAuthorize("#userId == authentication.name")
-    @GetMapping("/{userId}/categories")
-    public ResponseEntity<List<BookCategoryDto>> getAllCategories(
-            @PathVariable String userId
-    ) {
+    @GetMapping("/categories")
+    public ResponseEntity<List<BookCategoryDto>> getAllCategories() {
         final var bookCategoryList = bookService.getAllCategories();
 
         final var response = bookCategoryList.stream()
@@ -319,10 +306,8 @@ public class BookController {
     }
 
     // API-BOOKS-12 - Retrieve all subcategories for a given category code
-    @PreAuthorize("#userId == authentication.name")
-    @GetMapping("/{userId}/categories/{categoryCodeName}/subcategories")
+    @GetMapping("/categories/{categoryCodeName}/subcategories")
     public ResponseEntity<List<BookSubcategoryDto>> getSubcategories(
-            @PathVariable String userId,
             @PathVariable String categoryCodeName
     ) {
         final var bookSubcategoryList = bookService.getSubcategoriesByCategoryCodeName(categoryCodeName);
@@ -391,10 +376,8 @@ public class BookController {
     }
 
     // API-BOOKS-15 - Retrieve a random life book and its note (temporarily implemented using a random review)
-    @PreAuthorize("#userId == authentication.name")
-    @GetMapping("/{userId}/reviews/random")
+    @GetMapping("/reviews/random")
     public ResponseEntity<GetRandomBookReviewResponse> getRandomReview(
-            @PathVariable("userId") String userId,
             @RequestParam(required = false) String rating
     ) {
         final var ratingParam = rating != null ? Integer.valueOf(rating) : null;
