@@ -8,4 +8,5 @@ import lombok.*;
 @Builder
 public class AccessTokenResponse {
     private String accessToken;
+    private String userId;
 }

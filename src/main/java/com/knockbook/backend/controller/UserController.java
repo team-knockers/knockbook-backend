@@ -28,7 +28,7 @@ public class UserController {
             @PathVariable("userId") String userId) {
         final var user = userService.getUser(Long.valueOf(userId));
         final var dto = UserResponse.fromDomain(user);
-        return ResponseEntity.ok().body(dto);
+        return ResponseEntity.ok(dto);
     }
 
     @PreAuthorize("#userId == authentication.name")
