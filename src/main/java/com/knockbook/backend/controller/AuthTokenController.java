@@ -35,10 +35,13 @@ public class AuthTokenController {
                 .maxAge(TokenService.refreshTokenValidPeriod)
                 .build();
 
+        final var subject = tokenService.getSubjectFromRefreshToken(refreshToken);
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(AccessTokenResponse.builder()
                         .accessToken(tokens.getAccessToken())
+                        .userId(subject)
                         .build());
     }
 

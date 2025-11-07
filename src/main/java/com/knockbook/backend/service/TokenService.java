@@ -63,6 +63,13 @@ public class TokenService {
         }
     }
 
+    public String getSubjectFromRefreshToken(final String refreshToken)
+            throws ParseException, JOSEException {
+        final var audience = JWTComponent.Audience.REFRESH_TOKEN_HANDLER;
+        final var claims = jwtComponent.parseJWS(refreshToken, audience);
+        return claims.getSubject();
+    }
+
     private String issueAccessToken(final String subject, final String role) throws JOSEException {
         final var now = Instant.now();
         final var expirationTime = now.plus(accessTokenValidPeriod);
